@@ -79,52 +79,21 @@ function showModal(type, data = null) {
                                required>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Quantidade *</label>
-                            <input type="number" 
-                                   id="ordem-quantidade"
-                                   min="1"
-                                   placeholder="0" 
-                                   class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:text-white transition-all"
-                                   required>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Volumes (Etiquetas) *</label>
-                            <input type="number" 
-                                   id="ordem-volumes"
-                                   min="1"
-                                   value="1"
-                                   placeholder="1" 
-                                   class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:text-white transition-all"
-                                   required>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Data Prevista *</label>
-                            <input type="date" 
-                                   id="ordem-data-prevista"
-                                   class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:text-white transition-all [color-scheme:light] dark:[color-scheme:dark]"
-                                   required>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Cliente *</label>
-                            <input type="text" 
-                                   id="ordem-cliente"
-                                   placeholder="Nome do cliente..." 
-                                   class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:text-white transition-all"
-                                   required>
-                        </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Quantidade *</label>
+                        <input type="number" 
+                               id="ordem-quantidade"
+                               min="1"
+                               placeholder="0" 
+                               class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:text-white transition-all"
+                               required>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Destino *</label>
-                        <input type="text" 
-                               id="ordem-destino"
-                               placeholder="Cidade - UF" 
-                               class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:text-white transition-all"
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Data Prevista *</label>
+                        <input type="date" 
+                               id="ordem-data-prevista"
+                               class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:text-white transition-all [color-scheme:light] dark:[color-scheme:dark]"
                                required>
                     </div>
 
