@@ -132,10 +132,7 @@ function showModal(type, data = null) {
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Operador Responsável</label>
                         <select id="ordem-operador" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:text-white transition-all">
                             <option value="">Selecione um operador...</option>
-                            <option value="Marcos Vieira">Marcos Vieira</option>
-                            <option value="Ana Silva">Ana Silva</option>
-                            <option value="João Pereira">João Pereira</option>
-                            <option value="Carlos Mendes">Carlos Mendes</option>
+                            <!-- Operadores carregados dinamicamente do Supabase via populate-operators.js -->
                         </select>
                     </div>
 
