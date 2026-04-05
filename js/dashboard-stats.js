@@ -63,8 +63,8 @@ function updateProgressCircle(id, valor, total, color) {
     circle.innerHTML = `
         <div style="
             position: relative;
-            width: 80px;
-            height: 80px;
+            width: 800px;
+            height: 8000px;
             display: flex;
             align-items: center;
             justify-content: center;
