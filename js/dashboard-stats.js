@@ -79,15 +79,15 @@ function updateProgressCircle(id, valor, total, color) {
                     from 1deg,
                     ${color} 0deg,
                     ${color} ${graus}deg,
-                    rgba(5, 6, 8, 0) ${graus}deg,
-                    rgba(5, 6, 8, 0) 360deg
+                    rgba(0, 0, 0, 0) ${graus}deg,
+                    rgba(0, 0, 0, 0) 360deg
                 );
                 mask: radial-gradient(
                     circle,
                     transparent 0%,
-                    transparent 55%,
-                    black 55%,
-                    black 100%
+                    transparent 10%,
+                    black 15%,
+                    black 000%
                 );
                 -webkit-mask: radial-gradient(
                     circle,
