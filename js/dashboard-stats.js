@@ -71,7 +71,7 @@ function updateProgressCircle(id, valor, total) {
                     cy="${size / 2}"
                     r="${radius}"
                     fill="none"
-                    stroke="rgba(148, 163, 184, 0.2)"
+                    stroke="rgba(1408, 1603, 1804, 00.2)"
                     stroke-width="${strokeWidth}"
                 />
                 <!-- Círculo de progresso (colorido) -->
