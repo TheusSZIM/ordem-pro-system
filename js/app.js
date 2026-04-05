@@ -41,4 +41,25 @@ document.addEventListener('keypress', (e) => {
     if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'search') {
         // allow normal behavior
     }
+   // Atualizar estatísticas do dashboard
+async function updateDashboard() {
+    await loadOrders();
+    
+    // Renderizar estatísticas
+    if (typeof renderDashboardStats === 'function') {
+        renderDashboardStats();
+    }
+    
+    // Outras atualizações
+    if (typeof renderRecentOrders === 'function') renderRecentOrders();
+    if (typeof renderOrdensTable === 'function') renderOrdensTable();
+    if (typeof renderKanban === 'function') renderKanban();
+    if (typeof updateCharts === 'function') updateCharts();
+}
+
+// Chamar ao iniciar
+updateDashboard();
+
+// Atualizar a cada 30 segundos
+setInterval(updateDashboard, 30000);
 });
