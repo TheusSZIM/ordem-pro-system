@@ -1,6 +1,6 @@
 // ============================================
-// RENDERIZAR ESTATÍSTICAS DO DASHBOARD
-// CÍRCULOS COMEÇANDO À ESQUERDA (9h)
+// RENDERIZAR ESTATÍSTICAS - VERSÃO SIMPLIFICADA
+// CÍRCULOS PERFEITAMENTE ALINHADOS
 // ============================================
 
 function renderDashboardStats() {
@@ -48,57 +48,64 @@ function updateStatCard(id, value) {
     }
 }
 
-// Atualizar Círculo de Progresso - ALINHADO CORRETAMENTE
+// Atualizar Círculo de Progresso - MÉTODO SIMPLIFICADO
 function updateProgressCircle(id, valor, total) {
     const circle = document.getElementById(id);
-    if (!circle) return;
+    if (!circle) {
+        console.warn('⚠️ Círculo não encontrado:', id);
+        return;
+    }
     
     const porcentagem = total > 0 ? Math.round((valor / total) * 100) : 0;
     
-    // Configuração do círculo
+    // Parâmetros do círculo
     const size = 80;
+    const center = size / 2;
     const strokeWidth = 8;
-    const radius = (size - strokeWidth) / 2;
+    const radius = center - strokeWidth / 2;
     const circumference = 2 * Math.PI * radius;
-    const progress = (porcentagem / 100) * circumference;
-    const dashoffset = circumference - progress;
+    
+    // Calcular offset
+    const offset = circumference - (porcentagem / 100) * circumference;
     
     circle.innerHTML = `
-        <div class="relative w-20 h-20">
-            <!-- SVG ROTACIONADO - AMBOS OS CÍRCULOS DENTRO -->
-            <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="transform rotate-180">
+        <div class="relative" style="width: 80px; height: 80px;">
+            <svg width="80" height="80" style="transform: rotate(-90deg);">
                 
-                <!-- Círculo de fundo (cinza) - MESMO CENTRO -->
+                <!-- Círculo de fundo (cinza completo) -->
                 <circle
-                    cx="${size / 2}"
-                    cy="${size / 2}"
+                    cx="${center}"
+                    cy="${center}"
                     r="${radius}"
                     fill="none"
-                    stroke="rgba(148, 163, 184, 0.2)"
+                    stroke="#334155"
+                    stroke-opacity="0.2"
                     stroke-width="${strokeWidth}"
                 />
                 
-                <!-- Círculo de progresso (colorido) - MESMO CENTRO -->
+                <!-- Círculo de progresso (colorido) -->
                 <circle
-                    cx="${size / 2}"
-                    cy="${size / 2}"
+                    cx="${center}"
+                    cy="${center}"
                     r="${radius}"
                     fill="none"
                     stroke="currentColor"
                     stroke-width="${strokeWidth}"
-                    stroke-dasharray="${circumference}"
-                    stroke-dashoffset="${dashoffset}"
+                    stroke-dasharray="${circumference} ${circumference}"
+                    stroke-dashoffset="${offset}"
                     stroke-linecap="round"
-                    class="text-primary-500 transition-all duration-700 ease-out"
+                    style="transition: stroke-dashoffset 0.5s ease;"
                 />
             </svg>
             
-            <!-- Texto centralizado - SEM ROTAÇÃO -->
-            <div class="absolute inset-0 flex items-center justify-center transform -rotate-180">
-                <span class="text-sm font-bold text-slate-900 dark:text-white">${porcentagem}%</span>
+            <!-- Porcentagem -->
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 14px; font-weight: bold;">${porcentagem}%</span>
             </div>
         </div>
     `;
+    
+    console.log(`✅ Círculo ${id} atualizado: ${porcentagem}%`);
 }
 
 // Atualizar ao carregar dados
@@ -111,4 +118,4 @@ function initDashboard() {
 window.renderDashboardStats = renderDashboardStats;
 window.initDashboard = initDashboard;
 
-console.log('✅ dashboard-stats.js carregado - Círculos começam à ESQUERDA (9h)');
+console.log('✅ dashboard-stats.js carregado (versão simplificada)');
