@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Ordens Pro | Sistema Enterprise + Etiquetas ZLP</title>
-    <!-- Supabase Config -->
-    <script src="js/supabase-config.js"></script>
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -106,8 +105,9 @@
             }
         }
     </script>
+    
     <!-- Supabase Client -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased overflow-x-hidden selection:bg-primary-500 selection:text-white">
 
@@ -146,8 +146,10 @@
     <!-- Modals Component -->
     <div id="modals-container"></div>
 
-    <!-- JavaScript Modules -->
+    <!-- JavaScript Modules - ORDEM CORRETA! -->
+    <script src="js/supabase-config.js"></script>
     <script src="js/data.js"></script>
+    <script src="js/create-order-handler.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/charts.js"></script>
     <script src="js/orders.js"></script>
