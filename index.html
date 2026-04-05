@@ -190,17 +190,21 @@
             ]);
 
             // Inicializar aplicação após carregar componentes
-            setTimeout(() => {
-                if (typeof initTheme === 'function') initTheme();
-                if (typeof renderRecentOrders === 'function') renderRecentOrders();
-                if (typeof initCharts === 'function') initCharts();
-                if (typeof animateCounters === 'function') animateCounters();
-                if (typeof updateTime === 'function') {
-                    setInterval(updateTime, 1000);
-                    updateTime();
-                }
-            }, 100);
-        });
-    </script>
+          setTimeout(() => {
+    if (typeof initTheme === 'function') initTheme();
+    if (typeof renderRecentOrders === 'function') renderRecentOrders();
+    if (typeof initCharts === 'function') initCharts();
+    if (typeof animateCounters === 'function') animateCounters();
+    if (typeof updateTime === 'function') {
+        setInterval(updateTime, 1000);
+        updateTime();
+    }
+    
+    // ✅ ADICIONAR ESTAS LINHAS:
+    if (typeof updateDashboard === 'function') {
+        updateDashboard();
+        setInterval(updateDashboard, 30000);
+    }
+}, 100);
 </body>
 </html>
