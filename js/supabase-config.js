@@ -4,15 +4,23 @@
 const SUPABASE_URL = 'https://yngpkgymponqtllviyth.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InluZ3BrZ3ltcG9ucXRsbHZpeXRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3ODc0NjQsImV4cCI6MjA1OTM2MzQ2NH0.8EBWFVW_7MZGQdpzkqK1xO7yPPtLIOGXMvOLmKGW_m0';
 
-// Inicializar cliente Supabase
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Inicializar cliente Supabase (SEM const para evitar conflito!)
+let supabaseClient;
+
+// Aguardar o CDN do Supabase carregar
+if (window.supabase) {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('✅ Supabase Client inicializado!');
+} else {
+    console.error('❌ CDN do Supabase não carregado!');
+}
 
 // ============================================
 // FUNÇÕES DE ORDENS
 // ============================================
 
 async function fetchOrders() {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from('orders')
         .select('*')
         .order('created_at', { ascending: false });
@@ -25,7 +33,7 @@ async function fetchOrders() {
 }
 
 async function createOrder(orderData) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from('orders')
         .insert([orderData])
         .select();
@@ -40,7 +48,7 @@ async function createOrder(orderData) {
 }
 
 async function updateOrder(orderId, updates) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from('orders')
         .update(updates)
         .eq('id', orderId)
@@ -56,7 +64,7 @@ async function updateOrder(orderId, updates) {
 }
 
 async function deleteOrder(orderId) {
-    const { error } = await supabase
+    const { error } = await supabaseClient
         .from('orders')
         .delete()
         .eq('id', orderId);
@@ -75,7 +83,7 @@ async function deleteOrder(orderId) {
 // ============================================
 
 async function fetchProducts() {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from('products')
         .select('*')
         .eq('active', true)
@@ -89,7 +97,7 @@ async function fetchProducts() {
 }
 
 async function createProduct(productData) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from('products')
         .insert([productData])
         .select();
@@ -105,7 +113,7 @@ async function createProduct(productData) {
 
 async function updateProductStock(productId, quantity, movementType = 'ADJUSTMENT') {
     // Atualizar estoque
-    const { data: product, error: fetchError } = await supabase
+    const { data: product, error: fetchError } = await supabaseClient
         .from('products')
         .select('current_stock')
         .eq('id', productId)
@@ -117,7 +125,7 @@ async function updateProductStock(productId, quantity, movementType = 'ADJUSTMEN
         ? product.current_stock - quantity 
         : product.current_stock + quantity;
     
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseClient
         .from('products')
         .update({ current_stock: newStock })
         .eq('id', productId);
@@ -125,7 +133,7 @@ async function updateProductStock(productId, quantity, movementType = 'ADJUSTMEN
     if (updateError) return { success: false, error: updateError };
     
     // Registrar movimentação
-    await supabase.from('stock_movements').insert([{
+    await supabaseClient.from('stock_movements').insert([{
         product_id: productId,
         movement_type: movementType,
         quantity: quantity
@@ -140,7 +148,7 @@ async function updateProductStock(productId, quantity, movementType = 'ADJUSTMEN
 // ============================================
 
 async function fetchOperators() {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from('operators')
         .select('*')
         .order('name', { ascending: true });
@@ -153,7 +161,7 @@ async function fetchOperators() {
 }
 
 async function createOperator(operatorData) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from('operators')
         .insert([operatorData])
         .select();
@@ -172,7 +180,7 @@ async function createOperator(operatorData) {
 // ============================================
 
 async function createDelivery(deliveryData) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from('deliveries')
         .insert([deliveryData])
         .select();
@@ -190,7 +198,7 @@ async function createDelivery(deliveryData) {
 }
 
 async function fetchDeliveries() {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from('deliveries')
         .select(`
             *,
@@ -210,7 +218,7 @@ async function fetchDeliveries() {
 // ============================================
 
 async function addOrderItem(orderItemData) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from('order_items')
         .insert([orderItemData])
         .select();
@@ -224,7 +232,7 @@ async function addOrderItem(orderItemData) {
 }
 
 async function fetchOrderItems(orderId) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from('order_items')
         .select(`
             *,
@@ -244,7 +252,7 @@ async function fetchOrderItems(orderId) {
 // ============================================
 
 function subscribeToOrders(callback) {
-    return supabase
+    return supabaseClient
         .channel('orders-changes')
         .on('postgres_changes', 
             { event: '*', schema: 'public', table: 'orders' }, 
@@ -265,28 +273,28 @@ function subscribeToOrders(callback) {
 function showToast(message, type = 'info') {
     // Implementar notificação visual
     console.log(`[${type.toUpperCase()}] ${message}`);
+    
+    // Você pode adicionar uma notificação visual aqui
+    // Por exemplo, usando a biblioteca de toast do seu sistema
 }
 
 // ============================================
-// EXPORTAR FUNÇÕES (se usar módulos)
+// EXPORTAR PARA USO GLOBAL
 // ============================================
 
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        supabase,
-        fetchOrders,
-        createOrder,
-        updateOrder,
-        deleteOrder,
-        fetchProducts,
-        createProduct,
-        updateProductStock,
-        fetchOperators,
-        createOperator,
-        createDelivery,
-        fetchDeliveries,
-        addOrderItem,
-        fetchOrderItems,
-        subscribeToOrders
-    };
-}
+window.supabaseClient = supabaseClient;
+window.fetchOrders = fetchOrders;
+window.createOrder = createOrder;
+window.updateOrder = updateOrder;
+window.deleteOrder = deleteOrder;
+window.fetchProducts = fetchProducts;
+window.createProduct = createProduct;
+window.updateProductStock = updateProductStock;
+window.fetchOperators = fetchOperators;
+window.createOperator = createOperator;
+window.createDelivery = createDelivery;
+window.fetchDeliveries = fetchDeliveries;
+window.addOrderItem = addOrderItem;
+window.fetchOrderItems = fetchOrderItems;
+window.subscribeToOrders = subscribeToOrders;
+window.showToast = showToast;
