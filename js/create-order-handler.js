@@ -1,5 +1,5 @@
 // ============================================
-// FUNÇÃO PARA CRIAR ORDEM - Adicionar no js/modals.js ou js/orders.js
+// FUNÇÃO PARA CRIAR ORDEM - Supabase Integration
 // ============================================
 
 async function handleCreateOrder(event) {
@@ -134,6 +134,7 @@ function closeModal() {
 
 // Adicionar evento ao formulário quando a página carregar
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔧 Inicializando handler de criar ordem...');
     
     // Encontrar o formulário
     const form = document.getElementById('ordem-form') || 
@@ -148,15 +149,27 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log('✅ Evento de submit adicionado ao formulário');
     } else {
-        console.warn('⚠️ Formulário de ordem não encontrado');
+        console.warn('⚠️ Formulário de ordem não encontrado - aguardando componentes...');
+        
+        // Tentar novamente após os componentes carregarem
+        setTimeout(() => {
+            const formRetry = document.getElementById('ordem-form') || 
+                             document.querySelector('form[id*="ordem"]') ||
+                             document.querySelector('.modal form');
+            
+            if (formRetry) {
+                console.log('📝 Formulário encontrado na segunda tentativa!');
+                formRetry.addEventListener('submit', handleCreateOrder);
+                console.log('✅ Evento adicionado!');
+            }
+        }, 2000);
     }
     
     // Também vincular ao botão diretamente (backup)
-    const btnCriar = document.querySelector('button[onclick*="criarOrdem"]') ||
-                     document.querySelector('button:contains("Criar Ordem")') ||
-                     document.getElementById('btn-criar-ordem');
+    const btnCriar = document.getElementById('btn-criar-ordem');
     
     if (btnCriar) {
+        console.log('🔘 Botão criar ordem encontrado!');
         btnCriar.onclick = function(e) {
             e.preventDefault();
             handleCreateOrder(e);
@@ -171,3 +184,6 @@ document.addEventListener('DOMContentLoaded', function() {
 window.handleCreateOrder = handleCreateOrder;
 window.closeModal = closeModal;
 window.generateOrderId = generateOrderId;
+window.getPackagingType = getPackagingType;
+
+console.log('✅ create-order-handler.js carregado!');
