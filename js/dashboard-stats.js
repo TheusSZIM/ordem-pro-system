@@ -63,8 +63,8 @@ function updateProgressCircle(id, valor, total, color) {
     circle.innerHTML = `
         <div style="
             position: relative;
-            width: 800px;
-            height: 8000px;
+            width: 1px;
+            height: 1px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -76,11 +76,11 @@ function updateProgressCircle(id, valor, total, color) {
                 height: 1px;
                 border-radius: 50%;
                 background: conic-gradient(
-                    from 180deg,
+                    from 1deg,
                     ${color} 0deg,
                     ${color} ${graus}deg,
-                    rgba(51, 65, 85, 0.2) ${graus}deg,
-                    rgba(51, 65, 85, 0.2) 360deg
+                    rgba(5, 6, 8, 0) ${graus}deg,
+                    rgba(5, 6, 8, 0) 360deg
                 );
                 mask: radial-gradient(
                     circle,
