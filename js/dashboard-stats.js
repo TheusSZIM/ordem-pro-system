@@ -1,6 +1,6 @@
 // ============================================
-// RENDERIZAR ESTATÍSTICAS - VERSÃO SIMPLIFICADA
-// CÍRCULOS PERFEITAMENTE ALINHADOS
+// RENDERIZAR ESTATÍSTICAS - VERSÃO CONIC GRADIENT
+// CÍRCULOS COM CSS (não SVG)
 // ============================================
 
 function renderDashboardStats() {
@@ -35,9 +35,9 @@ function renderDashboardStats() {
     updateStatCard('stat-total', stats.total);
     
     // Atualizar círculos de progresso
-    updateProgressCircle('progress-a-separar', stats.aSeparar, stats.total);
-    updateProgressCircle('progress-em-separacao', stats.emSeparacao, stats.total);
-    updateProgressCircle('progress-concluidas', stats.concluidasHoje, stats.total);
+    updateProgressCircle('progress-a-separar', stats.aSeparar, stats.total, '#f59e0b'); // Laranja
+    updateProgressCircle('progress-em-separacao', stats.emSeparacao, stats.total, '#3b82f6'); // Azul
+    updateProgressCircle('progress-concluidas', stats.concluidasHoje, stats.total, '#10b981'); // Verde
 }
 
 // Atualizar Card de Estatística
@@ -48,8 +48,8 @@ function updateStatCard(id, value) {
     }
 }
 
-// Atualizar Círculo de Progresso - MÉTODO SIMPLIFICADO
-function updateProgressCircle(id, valor, total) {
+// Atualizar Círculo de Progresso - USANDO CSS CONIC-GRADIENT
+function updateProgressCircle(id, valor, total, color) {
     const circle = document.getElementById(id);
     if (!circle) {
         console.warn('⚠️ Círculo não encontrado:', id);
@@ -58,54 +58,56 @@ function updateProgressCircle(id, valor, total) {
     
     const porcentagem = total > 0 ? Math.round((valor / total) * 100) : 0;
     
-    // Parâmetros do círculo
-    const size = 80;
-    const center = size / 2;
-    const strokeWidth = 8;
-    const radius = center - strokeWidth / 2;
-    const circumference = 2 * Math.PI * radius;
-    
-    // Calcular offset
-    const offset = circumference - (porcentagem / 100) * circumference;
-    
     circle.innerHTML = `
-        <div class="relative" style="width: 80px; height: 80px;">
-            <svg width="80" height="80" style="transform: rotate(-90deg);">
-                
-                <!-- Círculo de fundo (cinza completo) -->
-                <circle
-                    cx="${center}"
-                    cy="${center}"
-                    r="${radius}"
-                    fill="none"
-                    stroke="#334155"
-                    stroke-opacity="0.2"
-                    stroke-width="${strokeWidth}"
-                />
-                
-                <!-- Círculo de progresso (colorido) -->
-                <circle
-                    cx="${center}"
-                    cy="${center}"
-                    r="${radius}"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="${strokeWidth}"
-                    stroke-dasharray="${circumference} ${circumference}"
-                    stroke-dashoffset="${offset}"
-                    stroke-linecap="round"
-                    style="transition: stroke-dashoffset 0.5s ease;"
-                />
-            </svg>
+        <div style="
+            position: relative;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        ">
+            <!-- Círculo de progresso com conic-gradient -->
+            <div style="
+                position: absolute;
+                width: 80px;
+                height: 80px;
+                border-radius: 50%;
+                background: conic-gradient(
+                    from -90deg,
+                    ${color} 0deg,
+                    ${color} ${porcentagem * 3.6}deg,
+                    rgba(51, 65, 85, 0.2) ${porcentagem * 3.6}deg,
+                    rgba(51, 65, 85, 0.2) 360deg
+                );
+                mask: radial-gradient(
+                    circle,
+                    transparent 0%,
+                    transparent 55%,
+                    black 55%,
+                    black 100%
+                );
+                -webkit-mask: radial-gradient(
+                    circle,
+                    transparent 0%,
+                    transparent 55%,
+                    black 55%,
+                    black 100%
+                );
+            "></div>
             
             <!-- Porcentagem -->
-            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
-                <span style="font-size: 14px; font-weight: bold;">${porcentagem}%</span>
-            </div>
+            <span style="
+                position: relative;
+                z-index: 10;
+                font-size: 14px;
+                font-weight: bold;
+                color: white;
+            ">${porcentagem}%</span>
         </div>
     `;
     
-    console.log(`✅ Círculo ${id} atualizado: ${porcentagem}%`);
+    console.log(`✅ Círculo ${id} atualizado: ${porcentagem}% (${color})`);
 }
 
 // Atualizar ao carregar dados
@@ -118,4 +120,4 @@ function initDashboard() {
 window.renderDashboardStats = renderDashboardStats;
 window.initDashboard = initDashboard;
 
-console.log('✅ dashboard-stats.js carregado (versão simplificada)');
+console.log('✅ dashboard-stats.js carregado (versão CSS conic-gradient)');
