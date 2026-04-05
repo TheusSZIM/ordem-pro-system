@@ -1,4 +1,4 @@
-// Aplicação Principal
+// Aplicação Principal (SEM LOGIN OBRIGATÓRIO)
 class App {
     constructor() {
         this.currentPage = 'dashboard';
@@ -6,15 +6,16 @@ class App {
     }
 
     async init() {
-        // Verificar autenticação
-        const isAuthenticated = await auth.checkAuth();
+        console.log('🚀 Iniciando app...');
         
-        if (!isAuthenticated) {
-            this.renderPage('login');
-            return;
-        }
+        // PULAR AUTENTICAÇÃO POR ENQUANTO
+        // const isAuthenticated = await auth.checkAuth();
+        // if (!isAuthenticated) {
+        //     this.renderPage('login');
+        //     return;
+        // }
 
-        // Renderizar app principal
+        // Renderizar app principal DIRETO
         await this.renderApp();
         
         // Auto-refresh a cada 30 segundos
@@ -41,49 +42,61 @@ class App {
         const content = document.getElementById('page-content');
         
         if (!content) {
-            // Se não existir container, renderizar página de login
-            const app = document.getElementById('app');
-            app.innerHTML = await renderLoginPage();
+            console.error('❌ Container page-content não encontrado');
             return;
         }
 
         // Renderizar página selecionada
         let pageHtml = '';
         
-        switch (pageName) {
-            case 'dashboard':
-                pageHtml = await renderDashboardPage();
-                break;
-            case 'orders':
-                pageHtml = await renderOrdersPage();
-                break;
-            case 'kanban':
-                pageHtml = await renderKanbanPage();
-                break;
-            case 'team':
-                pageHtml = await renderTeamPage();
-                break;
-            case 'stock':
-                pageHtml = await renderStockPage();
-                break;
-            case 'delivery':
-                pageHtml = await renderDeliveryPage();
-                break;
-            case 'reports':
-                pageHtml = await renderReportsPage();
-                break;
-            case 'settings':
-                pageHtml = await renderSettingsPage();
-                break;
-            default:
-                pageHtml = await renderDashboardPage();
-        }
-        
-        content.innerHTML = pageHtml;
-        
-        // Inicializar página específica
-        if (pageName === 'dashboard' && typeof initDashboard === 'function') {
-            setTimeout(initDashboard, 100);
+        try {
+            switch (pageName) {
+                case 'dashboard':
+                    pageHtml = await renderDashboardPage();
+                    break;
+                case 'orders':
+                    pageHtml = renderOrdersPage();
+                    break;
+                case 'kanban':
+                    pageHtml = renderKanbanPage();
+                    break;
+                case 'team':
+                    pageHtml = renderTeamPage();
+                    break;
+                case 'stock':
+                    pageHtml = renderStockPage();
+                    break;
+                case 'delivery':
+                    pageHtml = renderDeliveryPage();
+                    break;
+                case 'reports':
+                    pageHtml = renderReportsPage();
+                    break;
+                case 'settings':
+                    pageHtml = renderSettingsPage();
+                    break;
+                default:
+                    pageHtml = await renderDashboardPage();
+            }
+            
+            content.innerHTML = pageHtml;
+            
+            // Inicializar página específica
+            if (pageName === 'dashboard' && typeof initDashboard === 'function') {
+                setTimeout(initDashboard, 100);
+            }
+            
+            console.log('✅ Página renderizada:', pageName);
+        } catch (error) {
+            console.error('❌ Erro ao renderizar página:', error);
+            content.innerHTML = `
+                <div class="p-6">
+                    <div class="bg-red-500/20 border border-red-500 rounded-lg p-6">
+                        <h3 class="text-xl font-bold mb-2">Erro ao carregar página</h3>
+                        <p class="text-red-200">${error.message}</p>
+                    </div>
+                </div>
+            `;
         }
     }
 
@@ -103,22 +116,23 @@ class App {
 
     async refreshData() {
         if (this.currentPage === 'dashboard') {
-            const orders = await ordersModule.fetchAll();
-            const stats = ordersModule.getStats();
-            statsModule.updateStatsCards(stats);
+            try {
+                const orders = await ordersModule.fetchAll();
+                const stats = ordersModule.getStats();
+                statsModule.updateStatsCards(stats);
+                console.log('🔄 Dados atualizados');
+            } catch (error) {
+                console.warn('⚠️ Erro ao atualizar dados:', error);
+            }
         }
     }
 }
 
 // Função global de navegação
 async function navigateTo(page) {
-    event.preventDefault();
+    if (event) event.preventDefault();
+    console.log('📍 Navegando para:', page);
     await app.renderPage(page);
-    
-    // Atualizar sidebar
-    const appContainer = document.getElementById('app');
-    appContainer.innerHTML = '';
-    await app.renderApp();
 }
 
 // Função para criar ordem
@@ -129,5 +143,6 @@ function createOrder() {
 // Inicializar app quando DOM estiver pronto
 let app;
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('📱 DOM carregado, inicializando app...');
     app = new App();
 });
