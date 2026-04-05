@@ -1,5 +1,6 @@
 // ============================================
 // RENDERIZAR ESTATÍSTICAS DO DASHBOARD
+// CÍRCULOS COMEÇANDO À ESQUERDA (9h)
 // ============================================
 
 function renderDashboardStats() {
@@ -47,7 +48,7 @@ function updateStatCard(id, value) {
     }
 }
 
-// Atualizar Círculo de Progresso
+// Atualizar Círculo de Progresso - COMEÇA À ESQUERDA
 function updateProgressCircle(id, valor, total) {
     const circle = document.getElementById(id);
     if (!circle) return;
@@ -55,8 +56,8 @@ function updateProgressCircle(id, valor, total) {
     const porcentagem = total > 0 ? Math.round((valor / total) * 100) : 0;
     
     // Configuração do círculo
-    const size = 800;
-    const strokeWidth = 80;
+    const size = 80;
+    const strokeWidth = 8;
     const radius = (size - strokeWidth) / 2;
     const circumference = 2 * Math.PI * radius;
     const progress = (porcentagem / 100) * circumference;
@@ -64,16 +65,19 @@ function updateProgressCircle(id, valor, total) {
     
     circle.innerHTML = `
         <div class="relative w-20 h-20">
-            <svg width="${size}" height="${size}" class="transform -rotate-0">
+            <svg width="${size}" height="${size}" class="transform rotate-180">
+                <!-- ROTATE-180 = COMEÇA À ESQUERDA (9h) -->
+                
                 <!-- Círculo de fundo (cinza) -->
                 <circle
                     cx="${size / 2}"
                     cy="${size / 2}"
                     r="${radius}"
                     fill="none"
-                    stroke="rgba(1408, 1603, 1804, 00.2)"
+                    stroke="rgba(148, 163, 184, 0.2)"
                     stroke-width="${strokeWidth}"
                 />
+                
                 <!-- Círculo de progresso (colorido) -->
                 <circle
                     cx="${size / 2}"
@@ -88,9 +92,10 @@ function updateProgressCircle(id, valor, total) {
                     class="text-primary-500 transition-all duration-700 ease-out"
                 />
             </svg>
+            
             <!-- Texto centralizado -->
             <div class="absolute inset-0 flex items-center justify-center">
-                <span class="text-sm font-bold">${porcentagem}%</span>
+                <span class="text-sm font-bold text-slate-900 dark:text-white">${porcentagem}%</span>
             </div>
         </div>
     `;
@@ -106,4 +111,4 @@ function initDashboard() {
 window.renderDashboardStats = renderDashboardStats;
 window.initDashboard = initDashboard;
 
-console.log('✅ dashboard-stats.js carregado');
+console.log('✅ dashboard-stats.js carregado - Círculos começam à ESQUERDA (9h)');
