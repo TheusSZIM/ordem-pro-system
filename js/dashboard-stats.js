@@ -55,8 +55,8 @@ function updateProgressCircle(id, valor, total) {
     const porcentagem = total > 0 ? Math.round((valor / total) * 100) : 0;
     
     // Configuração do círculo
-    const size = 80;
-    const strokeWidth = 8;
+    const size = 800;
+    const strokeWidth = 80;
     const radius = (size - strokeWidth) / 2;
     const circumference = 2 * Math.PI * radius;
     const progress = (porcentagem / 100) * circumference;
