@@ -1,208 +1,124 @@
-<!-- ============================================
-     CONTROLE DE ORDENS PRO - DASHBOARD PAGE
-     ============================================ -->
+// ============================================
+// RENDERIZAR ESTATÍSTICAS - VERSÃO CSS FINAL
+// CÍRCULOS COM CONIC-GRADIENT
+// ============================================
 
-<!-- DASHBOARD PAGE -->
-<div id="dashboard" class="page active p-6 max-w-[1600px] mx-auto space-y-6">
-    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-8 animate-slide-up">
-        <div>
-            <div class="flex items-center gap-2 mb-1">
-                <span class="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider rounded-full animate-pulse">
-                    Sistema Online
-                </span>
-                <span class="text-slate-400 text-sm" id="current-time">14:45</span>
-            </div>
-            <h2 class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
-                Dashboard <span class="text-gradient">Controle de Ordens</span>
-            </h2>
-            <p class="text-slate-500 dark:text-slate-400 mt-1">Visão geral em tempo real do sistema</p>
-        </div>
-        
-        <div class="flex gap-3">
-            <button onclick="showModal('new-order')" class="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50 hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 group">
-                <span class="material-symbols-rounded group-hover:rotate-90 transition-transform duration-300">add</span>
-                Nova Ordem
-            </button>
-            <button onclick="refreshDashboard()" class="px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-300 hover:rotate-180" id="refresh-btn">
-                <span class="material-symbols-rounded">refresh</span>
-            </button>
-        </div>
-    </div>
+function renderDashboardStats() {
+    console.log('📊 Renderizando estatísticas do dashboard...');
+    
+    if (!state || !state.orders || !Array.isArray(state.orders)) {
+        console.warn('⚠️ state.orders não disponível');
+        return;
+    }
+    
+    // Calcular estatísticas
+    const hoje = new Date().toISOString().split('T')[0];
+    
+    const stats = {
+        aSeparar: state.orders.filter(o => o.status === 'pending').length,
+        emSeparacao: state.orders.filter(o => o.status === 'progress' || o.status === 'in_progress').length,
+        concluidasHoje: state.orders.filter(o => {
+            if (o.status !== 'completed') return false;
+            if (!o.fim_separacao) return false;
+            const dataFim = new Date(o.fim_separacao).toISOString().split('T')[0];
+            return dataFim === hoje;
+        }).length,
+        total: state.orders.length
+    };
+    
+    console.log('📈 Estatísticas calculadas:', stats);
+    
+    // Atualizar números nos cards
+    updateStatCard('stat-a-separar', stats.aSeparar);
+    updateStatCard('stat-em-separacao', stats.emSeparacao);
+    updateStatCard('stat-concluidas-hoje', stats.concluidasHoje);
+    updateStatCard('stat-total', stats.total);
+    
+    // Atualizar círculos de progresso
+    updateProgressCircle('progress-a-separar', stats.aSeparar, stats.total, '#f59e0b'); // Laranja
+    updateProgressCircle('progress-em-separacao', stats.emSeparacao, stats.total, '#3b82f6'); // Azul
+    updateProgressCircle('progress-concluidas', stats.concluidasHoje, stats.total, '#10b981'); // Verde
+}
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 stagger-children">
-        <!-- CARD 1: A SEPARAR -->
-        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-soft hover-lift cursor-pointer group" onclick="showPage('ordens'); setOrdensTab('pending');">
-            <div class="flex items-start justify-between mb-4">
-                <div>
-                    <p class="text-sm font-medium text-slate-500 dark:text-slate-400">A Separar</p>
-                    <h3 class="text-3xl font-bold text-slate-900 dark:text-white mt-1 counter" data-target="12" id="stat-a-separar">0</h3>
-                </div>
-                <!-- ✅ ADICIONADO ID AQUI -->
-                <div class="relative w-14 h-14" id="progress-a-separar">
-                    <svg class="w-full h-full transform -rotate-90">
-                        <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" stroke-width="4" class="text-slate-100 dark:text-slate-800"></circle>
-                        <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-dasharray="150.72" stroke-dashoffset="60.29" class="text-amber-500 progress-ring-circle"></circle>
-                    </svg>
-                    <span class="absolute inset-0 flex items-center justify-center text-xs font-bold text-amber-600">60%</span>
-                </div>
-            </div>
-            <div class="flex items-center gap-2 text-sm">
-                <span class="flex items-center gap-1 text-emerald-600 font-medium">
-                    <span class="material-symbols-rounded text-lg">trending_up</span>
-                    +2
-                </span>
-                <span class="text-slate-400">vs ontem</span>
-            </div>
-        </div>
+// Atualizar Card de Estatística
+function updateStatCard(id, value) {
+    const element = document.getElementById(id);
+    if (element) {
+        element.textContent = value;
+        console.log(`✅ Card ${id} atualizado: ${value}`);
+    } else {
+        console.warn(`⚠️ Card ${id} não encontrado`);
+    }
+}
 
-        <!-- CARD 2: EM SEPARAÇÃO -->
-        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-soft hover-lift cursor-pointer group" onclick="showPage('ordens'); setOrdensTab('progress');">
-            <div class="flex items-start justify-between mb-4">
-                <div>
-                    <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Em Separação</p>
-                    <h3 class="text-3xl font-bold text-slate-900 dark:text-white mt-1 counter" data-target="5" id="stat-em-separacao">0</h3>
-                </div>
-                <!-- ✅ ADICIONADO ID AQUI -->
-                <div class="relative w-14 h-14" id="progress-em-separacao">
-                    <svg class="w-full h-full transform -rotate-90">
-                        <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" stroke-width="4" class="text-slate-100 dark:text-slate-800"></circle>
-                        <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-dasharray="150.72" stroke-dashoffset="113.04" class="text-blue-500 progress-ring-circle"></circle>
-                    </svg>
-                    <span class="absolute inset-0 flex items-center justify-center text-xs font-bold text-blue-600">25%</span>
-                </div>
-            </div>
-            <div class="flex items-center gap-2 text-sm">
-                <div class="flex -space-x-2">
-                    <img class="w-6 h-6 rounded-full border-2 border-white dark:border-slate-900" src="https://ui-avatars.com/api/?name=M&background=4f46e5&color=fff" alt="">
-                    <img class="w-6 h-6 rounded-full border-2 border-white dark:border-slate-900" src="https://ui-avatars.com/api/?name=A&background=10b981&color=fff" alt="">
-                </div>
-                <span class="text-slate-400 text-xs">2 operadores ativos</span>
-            </div>
+// Atualizar Círculo de Progresso - CSS CONIC-GRADIENT
+// COMEÇA À ESQUERDA (9h / 180deg)
+function updateProgressCircle(id, valor, total, color) {
+    const circle = document.getElementById(id);
+    if (!circle) {
+        console.warn(`⚠️ Círculo não encontrado: ${id}`);
+        return;
+    }
+    
+    const porcentagem = total > 0 ? Math.round((valor / total) * 100) : 0;
+    const graus = porcentagem * 3.6; // Converter % para graus
+    
+    // Criar círculo usando CSS conic-gradient
+    circle.innerHTML = `
+        <div style="
+            position: relative;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        ">
+            <!-- Círculo de progresso com conic-gradient -->
+            <div style="
+                position: absolute;
+                width: 56px;
+                height: 56px;
+                border-radius: 50%;
+                background: conic-gradient(
+                    from 180deg,
+                    ${color} 0deg,
+                    ${color} ${graus}deg,
+                    rgba(51, 65, 85, 0.2) ${graus}deg,
+                    rgba(51, 65, 85, 0.2) 360deg
+                );
+                mask: radial-gradient(
+                    circle,
+                    transparent 0%,
+                    transparent 60%,
+                    black 60%,
+                    black 100%
+                );
+                -webkit-mask: radial-gradient(
+                    circle,
+                    transparent 0%,
+                    transparent 60%,
+                    black 60%,
+                    black 100%
+                );
+            "></div>
+            
+            <!-- Porcentagem -->
+            <span style="
+                position: relative;
+                z-index: 10;
+                font-size: 12px;
+                font-weight: bold;
+                color: ${color};
+            ">${porcentagem}%</span>
         </div>
+    `;
+    
+    console.log(`✅ Círculo ${id}: ${porcentagem}% (${graus}°) - ${valor}/${total}`);
+}
 
-        <!-- CARD 3: CONCLUÍDAS HOJE -->
-        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-soft hover-lift cursor-pointer group" onclick="showPage('ordens'); setOrdensTab('completed');">
-            <div class="flex items-start justify-between mb-4">
-                <div>
-                    <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Concluídas Hoje</p>
-                    <h3 class="text-3xl font-bold text-slate-900 dark:text-white mt-1 counter" data-target="8" id="stat-concluidas-hoje">0</h3>
-                </div>
-                <!-- ✅ ADICIONADO ID AQUI -->
-                <div class="relative w-14 h-14" id="progress-concluidas">
-                    <svg class="w-full h-full transform -rotate-90">
-                        <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" stroke-width="4" class="text-slate-100 dark:text-slate-800"></circle>
-                        <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-dasharray="150.72" stroke-dashoffset="90.43" class="text-emerald-500 progress-ring-circle"></circle>
-                    </svg>
-                    <span class="absolute inset-0 flex items-center justify-center text-xs font-bold text-emerald-600">40%</span>
-                </div>
-            </div>
-            <div class="flex items-center gap-2 text-sm">
-                <span class="flex items-center gap-1 text-emerald-600 font-medium">
-                    <span class="material-symbols-rounded text-lg">check_circle</span>
-                    85% eficiência
-                </span>
-            </div>
-        </div>
+// Exportar funções
+window.renderDashboardStats = renderDashboardStats;
+window.updateStatCard = updateStatCard;
+window.updateProgressCircle = updateProgressCircle;
 
-        <!-- CARD 4: TOTAL -->
-        <div class="bg-gradient-to-br from-primary-600 to-primary-800 rounded-2xl p-6 text-white shadow-glow hover-lift cursor-pointer group" onclick="showPage('ordens'); setOrdensTab('all');">
-            <div class="flex items-start justify-between mb-4">
-                <div>
-                    <p class="text-sm font-medium text-white/70">Total de Ordens</p>
-                    <h3 class="text-3xl font-bold mt-1 counter text-white" data-target="61" id="stat-total">0</h3>
-                </div>
-                <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <span class="material-symbols-rounded text-3xl">inventory</span>
-                </div>
-            </div>
-            <div class="flex items-center gap-2 text-sm text-white/80">
-                <span class="flex items-center gap-1 font-medium text-white">
-                    <span class="material-symbols-rounded text-lg">analytics</span>
-                    +12%
-                </span>
-                <span>este mês</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-soft animate-slide-up" style="animation-delay: 0.2s">
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Desempenho da Semana</h3>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">Comparativo de ordens processadas</p>
-                </div>
-                <div class="flex gap-2">
-                    <button class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-colors">Semana</button>
-                    <button class="px-3 py-1.5 text-xs font-medium rounded-lg text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Mês</button>
-                </div>
-            </div>
-            <div class="h-80">
-                <canvas id="performanceChart"></canvas>
-            </div>
-        </div>
-
-        <div class="space-y-6">
-            <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-soft animate-slide-up" style="animation-delay: 0.3s">
-                <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">Distribuição</h3>
-                <div class="h-48 relative">
-                    <canvas id="distributionChart"></canvas>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span class="text-2xl font-bold text-slate-900 dark:text-white">61</span>
-                        <span class="text-xs text-slate-500">Total</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-soft animate-slide-up" style="animation-delay: 0.4s">
-                <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">Ações Rápidas</h3>
-                <div class="space-y-2">
-                    <button onclick="showModal('new-order')" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group">
-                        <div class="w-10 h-10 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <span class="material-symbols-rounded">add</span>
-                        </div>
-                        <div class="text-left">
-                            <p class="text-sm font-semibold text-slate-900 dark:text-white">Nova Ordem</p>
-                            <p class="text-xs text-slate-500">Criar ordem de separação</p>
-                        </div>
-                        <span class="material-symbols-rounded ml-auto text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
-                    </button>
-                    
-                    <button onclick="showPage('kanban')" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group">
-                        <div class="w-10 h-10 rounded-lg bg-violet-50 dark:bg-violet-900/20 text-violet-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <span class="material-symbols-rounded">view_column</span>
-                        </div>
-                        <div class="text-left">
-                            <p class="text-sm font-semibold text-slate-900 dark:text-white">Ver Kanban</p>
-                            <p class="text-xs text-slate-500">Visualização em colunas</p>
-                        </div>
-                        <span class="material-symbols-rounded ml-auto text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-soft overflow-hidden animate-slide-up" style="animation-delay: 0.5s">
-        <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Ordens Recentes</h3>
-            <button onclick="showPage('ordens')" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Ver todas</button>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-slate-50 dark:bg-slate-800/50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">ID</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Produto</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Progresso</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Prazo</th>
-                        <th class="px-6 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Ações</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-slate-800" id="recent-orders-table">
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+console.log('✅ dashboard-stats.js carregado (versão CSS conic-gradient final)');
