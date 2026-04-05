@@ -4,6 +4,8 @@
 
 // Inicialização da Aplicação
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 Iniciando aplicação...');
+    
     // Inicializar tema
     initTheme();
     
@@ -41,8 +43,17 @@ document.addEventListener('keypress', (e) => {
     if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'search') {
         // allow normal behavior
     }
-   // Atualizar estatísticas do dashboard
+});
+
+// ============================================
+// ATUALIZAR DASHBOARD
+// ============================================
+
+// Função para atualizar tudo
 async function updateDashboard() {
+    console.log('🔄 Atualizando dashboard...');
+    
+    // Carregar dados
     await loadOrders();
     
     // Renderizar estatísticas
@@ -57,9 +68,7 @@ async function updateDashboard() {
     if (typeof updateCharts === 'function') updateCharts();
 }
 
-// Chamar ao iniciar
-updateDashboard();
+// Exportar para ser chamado depois do carregamento dos componentes
+window.updateDashboard = updateDashboard;
 
-// Atualizar a cada 30 segundos
-setInterval(updateDashboard, 30000);
-});
+console.log('✅ app.js carregado');
