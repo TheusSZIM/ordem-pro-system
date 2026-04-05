@@ -1,81 +1,129 @@
 // ============================================
-// POPULAR DROPDOWN DE OPERADORES AUTOMATICAMENTE
+// POPULAR DROPDOWN DE OPERADORES - VERSÃO MELHORADA
 // Arquivo: js/populate-operators.js
 // ============================================
 
+let operadoresCache = null; // Cache dos operadores
+
 async function populateOperatorsDropdown() {
     try {
-        // Verificar se a função fetchOperators existe
+        // 1. Verificar se fetchOperators existe
         if (typeof fetchOperators !== 'function') {
             console.warn('⚠️ fetchOperators ainda não carregado');
-            return;
+            return false;
         }
         
-        // Buscar operadores do Supabase
-        const operators = await fetchOperators();
-        
-        if (!operators || operators.length === 0) {
-            console.warn('⚠️ Nenhum operador encontrado no Supabase');
-            return;
-        }
-        
-        // Encontrar o dropdown
+        // 2. Encontrar dropdown
         const dropdown = document.getElementById('ordem-operador');
         
         if (!dropdown) {
-            // Modal ainda não foi carregado
-            return;
+            console.warn('⚠️ Dropdown não encontrado (modal fechado)');
+            return false;
         }
         
-        // Limpar e popular dropdown
+        // 3. Buscar operadores (usa cache se disponível)
+        if (!operadoresCache) {
+            const operators = await fetchOperators();
+            
+            if (!operators || operators.length === 0) {
+                console.warn('⚠️ Nenhum operador encontrado no Supabase');
+                return false;
+            }
+            
+            operadoresCache = operators; // Salvar no cache
+        }
+        
+        // 4. Verificar se já foi populado
+        const currentOptions = Array.from(dropdown.options).map(o => o.value);
+        const hasOperators = currentOptions.some(val => val && val !== '');
+        
+        if (hasOperators) {
+            console.log('✅ Dropdown já populado, pulando...');
+            return true;
+        }
+        
+        // 5. Limpar e popular dropdown
         dropdown.innerHTML = '<option value="">Selecione um operador...</option>';
         
-        operators.forEach(operator => {
+        operadoresCache.forEach(operator => {
             const option = document.createElement('option');
             option.value = operator.id;
             option.textContent = operator.name;
             dropdown.appendChild(option);
         });
         
-        console.log(`✅ Dropdown populado com ${operators.length} operadores`);
+        console.log(`✅ Dropdown populado com ${operadoresCache.length} operadores:`, operadoresCache.map(o => o.name));
+        return true;
         
     } catch (error) {
-        console.error('❌ Erro ao popular dropdown de operadores:', error);
+        console.error('❌ Erro ao popular dropdown:', error);
+        return false;
     }
 }
 
 // ============================================
-// EXECUTAR QUANDO A PÁGINA CARREGAR
+// POPULAR QUANDO O MODAL ABRIR
 // ============================================
 
+// Observar mudanças no DOM para detectar quando o modal abre
+const modalObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+        // Verificar se o modal foi adicionado/modificado
+        if (mutation.addedNodes.length > 0 || mutation.type === 'attributes') {
+            const modal = document.getElementById('modal-container');
+            const dropdown = document.getElementById('ordem-operador');
+            
+            // Se modal está visível E dropdown existe
+            if (modal && !modal.classList.contains('hidden') && dropdown) {
+                console.log('🔔 Modal aberto detectado! Populando dropdown...');
+                setTimeout(populateOperatorsDropdown, 100);
+            }
+        }
+    });
+});
+
+// ============================================
+// POPULAR QUANDO showModal() FOR CHAMADO
+// ============================================
+
+// Interceptar a função showModal original
 window.addEventListener('DOMContentLoaded', () => {
-    // Primeira tentativa após 2 segundos
-    setTimeout(populateOperatorsDropdown, 2000);
+    // Aguardar 2 segundos para garantir que tudo carregou
+    setTimeout(() => {
+        // Salvar a função original
+        const originalShowModal = window.showModal;
+        
+        // Sobrescrever com nossa versão
+        window.showModal = function(type, data) {
+            // Chamar a função original
+            const result = originalShowModal.call(this, type, data);
+            
+            // Se for modal de nova ordem, popular após abrir
+            if (type === 'new-order') {
+                console.log('🔔 Modal "new-order" detectado! Populando dropdown...');
+                setTimeout(populateOperatorsDropdown, 200);
+            }
+            
+            return result;
+        };
+        
+        console.log('✅ showModal() interceptado com sucesso!');
+        
+    }, 2000);
     
-    // Segunda tentativa após 5 segundos (backup)
+    // Também tentar popular após 5 segundos (backup)
     setTimeout(populateOperatorsDropdown, 5000);
 });
 
-// ============================================
-// OBSERVAR QUANDO O MODAL ABRIR
-// ============================================
-
-// Criar observer para detectar quando o modal é aberto
-const modalObserver = new MutationObserver(() => {
-    const modal = document.getElementById('modal-nova-ordem');
-    if (modal && !modal.classList.contains('hidden') && modal.style.display !== 'none') {
-        // Modal foi aberto, popular dropdown
-        setTimeout(populateOperatorsDropdown, 100);
-    }
-});
-
-// Começar a observar após 1 segundo
+// Começar a observar o DOM
 setTimeout(() => {
     modalObserver.observe(document.body, {
         attributes: true,
+        attributeFilter: ['class'],
         childList: true,
         subtree: true
     });
+    console.log('✅ MutationObserver ativado!');
 }, 1000);
 
 // ============================================
@@ -84,4 +132,4 @@ setTimeout(() => {
 
 window.populateOperatorsDropdown = populateOperatorsDropdown;
 
-console.log('✅ populate-operators.js carregado!');
+console.log('✅ populate-operators.js MELHORADO carregado!');
