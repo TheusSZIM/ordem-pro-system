@@ -49,6 +49,7 @@ function updateStatCard(id, value) {
 }
 
 // Atualizar Círculo de Progresso - USANDO CSS CONIC-GRADIENT
+// COMEÇA À ESQUERDA (9h / 180deg)
 function updateProgressCircle(id, valor, total, color) {
     const circle = document.getElementById(id);
     if (!circle) {
@@ -57,6 +58,7 @@ function updateProgressCircle(id, valor, total, color) {
     }
     
     const porcentagem = total > 0 ? Math.round((valor / total) * 100) : 0;
+    const graus = porcentagem * 3.6; // Converter % para graus
     
     circle.innerHTML = `
         <div style="
@@ -74,10 +76,10 @@ function updateProgressCircle(id, valor, total, color) {
                 height: 80px;
                 border-radius: 50%;
                 background: conic-gradient(
-                    from -90deg,
+                    from 180deg,
                     ${color} 0deg,
-                    ${color} ${porcentagem * 3.6}deg,
-                    rgba(51, 65, 85, 0.2) ${porcentagem * 3.6}deg,
+                    ${color} ${graus}deg,
+                    rgba(51, 65, 85, 0.2) ${graus}deg,
                     rgba(51, 65, 85, 0.2) 360deg
                 );
                 mask: radial-gradient(
@@ -107,7 +109,7 @@ function updateProgressCircle(id, valor, total, color) {
         </div>
     `;
     
-    console.log(`✅ Círculo ${id} atualizado: ${porcentagem}% (${color})`);
+    console.log(`✅ Círculo ${id}: ${porcentagem}% (${graus}°) começando à ESQUERDA`);
 }
 
 // Atualizar ao carregar dados
