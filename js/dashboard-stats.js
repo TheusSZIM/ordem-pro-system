@@ -54,40 +54,44 @@ function updateProgressCircle(id, valor, total) {
     
     const porcentagem = total > 0 ? Math.round((valor / total) * 100) : 0;
     
-    // SVG do círculo de progresso (CORRIGIDO)
-    const radius = 36; // raio do círculo
+    // Configuração do círculo
+    const size = 80;
+    const strokeWidth = 8;
+    const radius = (size - strokeWidth) / 2;
     const circumference = 2 * Math.PI * radius;
-    const offset = circumference - (porcentagem / 100) * circumference;
+    const progress = (porcentagem / 100) * circumference;
+    const dashoffset = circumference - progress;
     
     circle.innerHTML = `
-        <svg width="80" height="80" viewBox="0 0 80 80" class="transform -rotate-90">
-            <!-- Círculo de fundo -->
-            <circle
-                cx="40"
-                cy="40"
-                r="${radius}"
-                stroke="currentColor"
-                stroke-width="8"
-                fill="none"
-                class="text-slate-700/30"
-            />
-            <!-- Círculo de progresso -->
-            <circle
-                cx="40"
-                cy="40"
-                r="${radius}"
-                stroke="currentColor"
-                stroke-width="8"
-                fill="none"
-                stroke-dasharray="${circumference}"
-                stroke-dashoffset="${offset}"
-                class="text-primary-500 transition-all duration-500"
-                stroke-linecap="round"
-            />
-        </svg>
-        <!-- Texto de porcentagem -->
-        <div class="absolute inset-0 flex items-center justify-center">
-            <span class="text-sm font-bold text-slate-900 dark:text-white">${porcentagem}%</span>
+        <div class="relative w-20 h-20">
+            <svg width="${size}" height="${size}" class="transform -rotate-90">
+                <!-- Círculo de fundo (cinza) -->
+                <circle
+                    cx="${size / 2}"
+                    cy="${size / 2}"
+                    r="${radius}"
+                    fill="none"
+                    stroke="rgba(148, 163, 184, 0.2)"
+                    stroke-width="${strokeWidth}"
+                />
+                <!-- Círculo de progresso (colorido) -->
+                <circle
+                    cx="${size / 2}"
+                    cy="${size / 2}"
+                    r="${radius}"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="${strokeWidth}"
+                    stroke-dasharray="${circumference}"
+                    stroke-dashoffset="${dashoffset}"
+                    stroke-linecap="round"
+                    class="text-primary-500 transition-all duration-700 ease-out"
+                />
+            </svg>
+            <!-- Texto centralizado -->
+            <div class="absolute inset-0 flex items-center justify-center">
+                <span class="text-sm font-bold">${porcentagem}%</span>
+            </div>
         </div>
     `;
 }
