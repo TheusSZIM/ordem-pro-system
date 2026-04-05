@@ -283,15 +283,43 @@ function verificarFormulario() {
 
 // Concluir Ordem Final
 async function concluirOrdemFinal() {
-    console.log('🎯 Concluindo ordem...', finalizacaoData);
+    console.log('🎯 INICIANDO CONCLUSÃO...');
+    console.log('📊 Dados da finalização:', finalizacaoData);
+    console.log('📦 State orders:', state.orders);
+    
+    // Verificar se dados estão completos
+    if (finalizacaoData.ordemCompleta === null) {
+        alert('⚠️ Responda a pergunta 1: Ordem completa?');
+        return;
+    }
+    
+    if (finalizacaoData.embalagemSeparada === null) {
+        alert('⚠️ Responda a pergunta 2: Embalagem separada?');
+        return;
+    }
+    
+    if (!finalizacaoData.numeroVolumes || finalizacaoData.numeroVolumes < 1) {
+        alert('⚠️ Defina o número de volumes!');
+        return;
+    }
     
     try {
         const ordem = state.orders?.find(o => o.id === finalizacaoData.orderId);
+        console.log('🔍 Ordem encontrada:', ordem);
         
         if (!ordem) {
-            alert('Ordem não encontrada!');
+            alert('❌ Ordem não encontrada no state!');
             return;
         }
+        
+        console.log('💾 Salvando no Supabase...');
+        console.log('📝 Dados para atualizar:', {
+            status: 'completed',
+            fim_separacao: new Date().toISOString(),
+            ordem_completa: finalizacaoData.ordemCompleta,
+            embalagem_separada: finalizacaoData.embalagemSeparada,
+            numero_volumes: finalizacaoData.numeroVolumes
+        });
         
         // Atualizar no Supabase
         const { data, error } = await supabaseClient
@@ -308,32 +336,39 @@ async function concluirOrdemFinal() {
             .single();
         
         if (error) {
-            console.error('❌ Erro:', error);
-            alert('Erro ao concluir ordem!');
+            console.error('❌ ERRO SUPABASE:', error);
+            console.error('❌ Error details:', JSON.stringify(error, null, 2));
+            alert(`❌ Erro ao salvar no Supabase: ${error.message}`);
             return;
         }
         
-        console.log('✅ Ordem concluída:', data);
+        console.log('✅ SUPABASE ATUALIZADO:', data);
         
         // Gerar etiquetas
+        console.log('🖨️ Gerando etiquetas...');
         gerarEtiquetas(ordem);
         
         // Fechar modal
+        console.log('🚪 Fechando modal...');
         document.getElementById('finalizacao-modal')?.remove();
         
         // Recarregar
+        console.log('🔄 Recarregando dados...');
         await loadOrders();
         
+        console.log('🎨 Atualizando interface...');
         if (typeof renderRecentOrders === 'function') renderRecentOrders();
         if (typeof renderOrdensTable === 'function') renderOrdensTable();
         if (typeof renderKanban === 'function') renderKanban();
         if (typeof updateCharts === 'function') updateCharts();
         
         showToast('✅ Ordem concluída! Etiquetas geradas!', 'success');
+        console.log('✅ PROCESSO CONCLUÍDO COM SUCESSO!');
         
     } catch (error) {
-        console.error('❌ Erro:', error);
-        alert('Erro ao concluir ordem!');
+        console.error('❌ ERRO GERAL:', error);
+        console.error('❌ Stack trace:', error.stack);
+        alert(`❌ Erro: ${error.message}`);
     }
 }
 
