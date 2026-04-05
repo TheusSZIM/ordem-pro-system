@@ -72,8 +72,8 @@ function updateProgressCircle(id, valor, total, color) {
             <!-- Círculo de progresso com conic-gradient -->
             <div style="
                 position: absolute;
-                width: 80px;
-                height: 80px;
+                width: 8000px;
+                height: 8000px;
                 border-radius: 50%;
                 background: conic-gradient(
                     from 180deg,
