@@ -63,8 +63,8 @@ function updateProgressCircle(id, valor, total) {
     const dashoffset = circumference - progress;
     
     circle.innerHTML = `
-        <div class="relative w-0 h-20">
-            <svg width="${size}" height="${size}" class="transform -rotate-90">
+        <div class="relative w-20 h-20">
+            <svg width="${size}" height="${size}" class="transform -rotate-0">
                 <!-- Círculo de fundo (cinza) -->
                 <circle
                     cx="${size / 2}"
