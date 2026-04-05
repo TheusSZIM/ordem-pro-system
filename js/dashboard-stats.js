@@ -1,12 +1,12 @@
 // ============================================
-// RENDERIZAR ESTATÍSTICAS - VERSÃO CONIC GRADIENT
-// CÍRCULOS COM CSS (não SVG)
+// RENDERIZAR ESTATÍSTICAS - VERSÃO CSS FINAL
+// CÍRCULOS COM CONIC-GRADIENT
 // ============================================
 
 function renderDashboardStats() {
-    console.log('📊 Renderizando estatísticas...');
+    console.log('📊 Renderizando estatísticas do dashboard...');
     
-    if (!state.orders || !Array.isArray(state.orders)) {
+    if (!state || !state.orders || !Array.isArray(state.orders)) {
         console.warn('⚠️ state.orders não disponível');
         return;
     }
@@ -28,7 +28,7 @@ function renderDashboardStats() {
     
     console.log('📈 Estatísticas calculadas:', stats);
     
-    // Atualizar números na sidebar
+    // Atualizar números nos cards
     updateStatCard('stat-a-separar', stats.aSeparar);
     updateStatCard('stat-em-separacao', stats.emSeparacao);
     updateStatCard('stat-concluidas-hoje', stats.concluidasHoje);
@@ -45,26 +45,30 @@ function updateStatCard(id, value) {
     const element = document.getElementById(id);
     if (element) {
         element.textContent = value;
+        console.log(`✅ Card ${id} atualizado: ${value}`);
+    } else {
+        console.warn(`⚠️ Card ${id} não encontrado`);
     }
 }
 
-// Atualizar Círculo de Progresso - USANDO CSS CONIC-GRADIENT
+// Atualizar Círculo de Progresso - CSS CONIC-GRADIENT
 // COMEÇA À ESQUERDA (9h / 180deg)
 function updateProgressCircle(id, valor, total, color) {
     const circle = document.getElementById(id);
     if (!circle) {
-        console.warn('⚠️ Círculo não encontrado:', id);
+        console.warn(`⚠️ Círculo não encontrado: ${id}`);
         return;
     }
     
     const porcentagem = total > 0 ? Math.round((valor / total) * 100) : 0;
     const graus = porcentagem * 3.6; // Converter % para graus
     
+    // Criar círculo usando CSS conic-gradient
     circle.innerHTML = `
         <div style="
             position: relative;
-            width: 1px;
-            height: 1px;
+            width: 56px;
+            height: 56px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -72,28 +76,28 @@ function updateProgressCircle(id, valor, total, color) {
             <!-- Círculo de progresso com conic-gradient -->
             <div style="
                 position: absolute;
-                width: 1px;
-                height: 1px;
+                width: 56px;
+                height: 56px;
                 border-radius: 50%;
                 background: conic-gradient(
-                    from 1deg,
+                    from 180deg,
                     ${color} 0deg,
                     ${color} ${graus}deg,
-                    rgba(0, 0, 0, 0) ${graus}deg,
-                    rgba(0, 0, 0, 0) 360deg
+                    rgba(51, 65, 85, 0.2) ${graus}deg,
+                    rgba(51, 65, 85, 0.2) 360deg
                 );
                 mask: radial-gradient(
                     circle,
                     transparent 0%,
-                    transparent 10%,
-                    black 15%,
-                    black 000%
+                    transparent 60%,
+                    black 60%,
+                    black 100%
                 );
                 -webkit-mask: radial-gradient(
                     circle,
                     transparent 0%,
-                    transparent 55%,
-                    black 55%,
+                    transparent 60%,
+                    black 60%,
                     black 100%
                 );
             "></div>
@@ -102,24 +106,19 @@ function updateProgressCircle(id, valor, total, color) {
             <span style="
                 position: relative;
                 z-index: 10;
-                font-size: 14px;
+                font-size: 12px;
                 font-weight: bold;
-                color: white;
+                color: ${color};
             ">${porcentagem}%</span>
         </div>
     `;
     
-    console.log(`✅ Círculo ${id}: ${porcentagem}% (${graus}°) começando à ESQUERDA`);
-}
-
-// Atualizar ao carregar dados
-function initDashboard() {
-    console.log('🚀 Inicializando dashboard...');
-    renderDashboardStats();
+    console.log(`✅ Círculo ${id}: ${porcentagem}% (${graus}°) - ${valor}/${total}`);
 }
 
 // Exportar funções
 window.renderDashboardStats = renderDashboardStats;
-window.initDashboard = initDashboard;
+window.updateStatCard = updateStatCard;
+window.updateProgressCircle = updateProgressCircle;
 
-console.log('✅ dashboard-stats.js carregado (versão CSS conic-gradient)');
+console.log('✅ dashboard-stats.js carregado (versão CSS conic-gradient final)');
