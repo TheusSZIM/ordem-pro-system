@@ -2,7 +2,7 @@
 // Adicione este arquivo em: js/supabase-config.js
 
 const SUPABASE_URL = 'https://yngpkgymponqtllviyth.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InluZ3BrZ3ltcG9ucXRsbHZpeXRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3ODc0NjQsImV4cCI6MjA1OTM2MzQ2NH0.8EBWFVW_7MZGQdpzkqK1xO7yPPtLIOGXMvOLmKGW_m0';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InluZ3BrZ3ltcG9ucXRsbHZpeXRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMzA0NjQsImV4cCI6MjA5MDkwNjQ2NH0.6AYk-NG6TSSPVfEXBWEhU-KemrIka6ycztPkwxhU5R8';
 
 // Inicializar cliente Supabase (SEM const para evitar conflito!)
 let supabaseClient;
