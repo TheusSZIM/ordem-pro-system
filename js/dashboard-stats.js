@@ -1,13 +1,14 @@
-// ============================================
-// RENDERIZAR ESTATÍSTICAS DO DASHBOARD
-// CÍRCULOS COMEÇANDO À ESQUERDA (9h)
-// ============================================
+/* ============================================
+   CONTROLE DE ORDENS PRO - ESTATÍSTICAS DO DASHBOARD
+   Círculos de progresso perfeitamente centralizados
+   ============================================ */
 
+// Renderizar estatísticas do dashboard
 function renderDashboardStats() {
     console.log('📊 Renderizando estatísticas...');
     
-    if (!state.orders || !Array.isArray(state.orders)) {
-        console.warn('⚠️ state.orders não disponível');
+    if (typeof ordensDetalhadas === 'undefined' || !Array.isArray(ordensDetalhadas)) {
+        console.warn('⚠️ ordensDetalhadas não disponível');
         return;
     }
     
@@ -15,61 +16,56 @@ function renderDashboardStats() {
     const hoje = new Date().toISOString().split('T')[0];
     
     const stats = {
-        aSeparar: state.orders.filter(o => o.status === 'pending').length,
-        emSeparacao: state.orders.filter(o => o.status === 'progress' || o.status === 'in_progress').length,
-        concluidasHoje: state.orders.filter(o => {
+        aSeparar: ordensDetalhadas.filter(o => o.status === 'pending').length,
+        emSeparacao: ordensDetalhadas.filter(o => o.status === 'progress').length,
+        concluidasHoje: ordensDetalhadas.filter(o => {
             if (o.status !== 'completed') return false;
-            if (!o.fim_separacao) return false;
-            const dataFim = new Date(o.fim_separacao).toISOString().split('T')[0];
+            if (!o.fimSeparacao) return false;
+            const dataFim = new Date(o.fimSeparacao).toISOString().split('T')[0];
             return dataFim === hoje;
         }).length,
-        total: state.orders.length
+        total: ordensDetalhadas.length
     };
     
     console.log('📈 Estatísticas calculadas:', stats);
     
-    // Atualizar números na sidebar
-    updateStatCard('stat-a-separar', stats.aSeparar);
-    updateStatCard('stat-em-separacao', stats.emSeparacao);
-    updateStatCard('stat-concluidas-hoje', stats.concluidasHoje);
-    updateStatCard('stat-total', stats.total);
-    
-    // Atualizar círculos de progresso
-    updateProgressCircle('progress-a-separar', stats.aSeparar, stats.total);
-    updateProgressCircle('progress-em-separacao', stats.emSeparacao, stats.total);
-    updateProgressCircle('progress-concluidas', stats.concluidasHoje, stats.total);
+    // Atualizar círculos de progresso nos cards do dashboard
+    updateDashboardCircle('a-separar-circle', stats.aSeparar, stats.total, 'amber');
+    updateDashboardCircle('em-separacao-circle', stats.emSeparacao, stats.total, 'blue');
+    updateDashboardCircle('concluidas-circle', stats.concluidasHoje, stats.total, 'emerald');
 }
 
-// Atualizar Card de Estatística
-function updateStatCard(id, value) {
-    const element = document.getElementById(id);
-    if (element) {
-        element.textContent = value;
-    }
-}
-
-// Atualizar Círculo de Progresso - COMEÇA À ESQUERDA
-function updateProgressCircle(id, valor, total) {
-    const circle = document.getElementById(id);
-    if (!circle) return;
+// Atualizar círculo de progresso do dashboard
+function updateDashboardCircle(containerId, valor, total, color) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
     
     const porcentagem = total > 0 ? Math.round((valor / total) * 100) : 0;
     
-    // Configuração do círculo
-    const size = 80;
-    const strokeWidth = 8;
+    // Configurações do círculo
+    const size = 56;
+    const strokeWidth = 6;
     const radius = (size - strokeWidth) / 2;
     const circumference = 2 * Math.PI * radius;
     const progress = (porcentagem / 100) * circumference;
     const dashoffset = circumference - progress;
     
-    circle.innerHTML = `
-        <div class="relative w-20 h-20">
-            <svg width="${size}" height="${size}" class="transform rotate-180">
-                <!-- ROTATE-180 = COMEÇA À ESQUERDA (9h) -->
-                
-                <!-- Círculo de fundo (cinza) -->
+    // Cores por tipo
+    const colors = {
+        amber: '#f59e0b',
+        blue: '#3b82f6',
+        emerald: '#10b981',
+        primary: '#6366f1'
+    };
+    
+    const strokeColor = colors[color] || colors.primary;
+    
+    container.innerHTML = `
+        <div class="progress-circle-wrapper">
+            <svg class="progress-circle-svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+                <!-- Círculo de fundo -->
                 <circle
+                    class="progress-circle-bg"
                     cx="${size / 2}"
                     cy="${size / 2}"
                     r="${radius}"
@@ -78,30 +74,28 @@ function updateProgressCircle(id, valor, total) {
                     stroke-width="${strokeWidth}"
                 />
                 
-                <!-- Círculo de progresso (colorido) -->
+                <!-- Círculo de progresso - começa à esquerda (rotate -90) -->
                 <circle
+                    class="progress-circle-fill"
                     cx="${size / 2}"
                     cy="${size / 2}"
                     r="${radius}"
                     fill="none"
-                    stroke="currentColor"
+                    stroke="${strokeColor}"
                     stroke-width="${strokeWidth}"
                     stroke-dasharray="${circumference}"
                     stroke-dashoffset="${dashoffset}"
                     stroke-linecap="round"
-                    class="text-primary-500 transition-all duration-700 ease-out"
+                    transform="rotate(-90 ${size / 2} ${size / 2})"
+                    style="transition: stroke-dashoffset 0.8s ease-out;"
                 />
             </svg>
-            
-            <!-- Texto centralizado -->
-            <div class="absolute inset-0 flex items-center justify-center">
-                <span class="text-sm font-bold text-slate-900 dark:text-white">${porcentagem}%</span>
-            </div>
+            <div class="progress-circle-text">${porcentagem}%</div>
         </div>
     `;
 }
 
-// Atualizar ao carregar dados
+// Inicializar dashboard
 function initDashboard() {
     console.log('🚀 Inicializando dashboard...');
     renderDashboardStats();
@@ -110,5 +104,6 @@ function initDashboard() {
 // Exportar funções
 window.renderDashboardStats = renderDashboardStats;
 window.initDashboard = initDashboard;
+window.updateDashboardCircle = updateDashboardCircle;
 
-console.log('✅ dashboard-stats.js carregado - Círculos começam à ESQUERDA (9h)');
+console.log('✅ dashboard-stats.js carregado');
