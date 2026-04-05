@@ -30,13 +30,15 @@
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 stagger-children">
+        <!-- CARD 1: A SEPARAR -->
         <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-soft hover-lift cursor-pointer group" onclick="showPage('ordens'); setOrdensTab('pending');">
             <div class="flex items-start justify-between mb-4">
                 <div>
                     <p class="text-sm font-medium text-slate-500 dark:text-slate-400">A Separar</p>
-                    <h3 class="text-3xl font-bold text-slate-900 dark:text-white mt-1 counter" data-target="12">0</h3>
+                    <h3 class="text-3xl font-bold text-slate-900 dark:text-white mt-1 counter" data-target="12" id="stat-a-separar">0</h3>
                 </div>
-                <div class="relative w-14 h-14">
+                <!-- ✅ ADICIONADO ID AQUI -->
+                <div class="relative w-14 h-14" id="progress-a-separar">
                     <svg class="w-full h-full transform -rotate-90">
                         <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" stroke-width="4" class="text-slate-100 dark:text-slate-800"></circle>
                         <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-dasharray="150.72" stroke-dashoffset="60.29" class="text-amber-500 progress-ring-circle"></circle>
@@ -53,13 +55,15 @@
             </div>
         </div>
 
+        <!-- CARD 2: EM SEPARAÇÃO -->
         <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-soft hover-lift cursor-pointer group" onclick="showPage('ordens'); setOrdensTab('progress');">
             <div class="flex items-start justify-between mb-4">
                 <div>
                     <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Em Separação</p>
-                    <h3 class="text-3xl font-bold text-slate-900 dark:text-white mt-1 counter" data-target="5">0</h3>
+                    <h3 class="text-3xl font-bold text-slate-900 dark:text-white mt-1 counter" data-target="5" id="stat-em-separacao">0</h3>
                 </div>
-                <div class="relative w-14 h-14">
+                <!-- ✅ ADICIONADO ID AQUI -->
+                <div class="relative w-14 h-14" id="progress-em-separacao">
                     <svg class="w-full h-full transform -rotate-90">
                         <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" stroke-width="4" class="text-slate-100 dark:text-slate-800"></circle>
                         <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-dasharray="150.72" stroke-dashoffset="113.04" class="text-blue-500 progress-ring-circle"></circle>
@@ -76,13 +80,15 @@
             </div>
         </div>
 
+        <!-- CARD 3: CONCLUÍDAS HOJE -->
         <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-soft hover-lift cursor-pointer group" onclick="showPage('ordens'); setOrdensTab('completed');">
             <div class="flex items-start justify-between mb-4">
                 <div>
                     <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Concluídas Hoje</p>
-                    <h3 class="text-3xl font-bold text-slate-900 dark:text-white mt-1 counter" data-target="8">0</h3>
+                    <h3 class="text-3xl font-bold text-slate-900 dark:text-white mt-1 counter" data-target="8" id="stat-concluidas-hoje">0</h3>
                 </div>
-                <div class="relative w-14 h-14">
+                <!-- ✅ ADICIONADO ID AQUI -->
+                <div class="relative w-14 h-14" id="progress-concluidas">
                     <svg class="w-full h-full transform -rotate-90">
                         <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" stroke-width="4" class="text-slate-100 dark:text-slate-800"></circle>
                         <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-dasharray="150.72" stroke-dashoffset="90.43" class="text-emerald-500 progress-ring-circle"></circle>
@@ -98,11 +104,12 @@
             </div>
         </div>
 
+        <!-- CARD 4: TOTAL -->
         <div class="bg-gradient-to-br from-primary-600 to-primary-800 rounded-2xl p-6 text-white shadow-glow hover-lift cursor-pointer group" onclick="showPage('ordens'); setOrdensTab('all');">
             <div class="flex items-start justify-between mb-4">
                 <div>
                     <p class="text-sm font-medium text-white/70">Total de Ordens</p>
-                    <h3 class="text-3xl font-bold mt-1 counter text-white" data-target="61">0</h3>
+                    <h3 class="text-3xl font-bold mt-1 counter text-white" data-target="61" id="stat-total">0</h3>
                 </div>
                 <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                     <span class="material-symbols-rounded text-3xl">inventory</span>
