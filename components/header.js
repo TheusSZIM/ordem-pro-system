@@ -1,7 +1,5 @@
-// Componente: Header
+// Componente: Header (SEM AUTENTICAÇÃO)
 function renderHeader(title = 'Dashboard', showNewButton = true) {
-    const user = auth.getCurrentUser();
-    
     return `
         <header class="sticky top-0 z-30 bg-slate-900/80 backdrop-blur-lg border-b border-slate-800">
             <div class="flex items-center justify-between px-6 py-4">
@@ -21,13 +19,13 @@ function renderHeader(title = 'Dashboard', showNewButton = true) {
                             <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
                                 <span class="material-symbols-rounded text-sm">person</span>
                             </div>
-                            <span class="text-sm font-medium hidden md:block">${user?.email || 'Usuário'}</span>
+                            <span class="text-sm font-medium hidden md:block">Usuário</span>
                         </button>
                         
                         <!-- Dropdown -->
                         <div class="absolute right-0 mt-2 w-48 bg-slate-800 rounded-lg shadow-lg border border-slate-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
                             <div class="p-2">
-                                <button onclick="auth.logout()" class="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-700 transition-all text-left">
+                                <button onclick="showToast('Sistema sem login ativo', 'info')" class="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-700 transition-all text-left">
                                     <span class="material-symbols-rounded text-sm">logout</span>
                                     <span class="text-sm">Sair</span>
                                 </button>
