@@ -1,5 +1,5 @@
 // ============================================
-// MODAL DE FINALIZAÇÃO - VERSÃO SIMPLIFICADA
+// MODAL DE FINALIZAÇÃO - COM EVENT LISTENERS
 // ============================================
 
 let finalizacaoData = {
@@ -28,8 +28,8 @@ window.abrirFinalizacaoModal = function(orderId) {
     }
     
     const modalHTML = `
-        <div class="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" id="finalizacao-modal">
-            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+        <div class="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" id="finalizacao-modal" style="z-index: 9999;">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto" style="position: relative; z-index: 10000;">
                 
                 <!-- Header -->
                 <div class="sticky top-0 bg-white dark:bg-slate-900 border-b p-6">
@@ -38,7 +38,7 @@ window.abrirFinalizacaoModal = function(orderId) {
                             <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Finalizar Separação</h2>
                             <p class="text-sm text-slate-600 dark:text-slate-400">Ordem #${ordem.id} - ${ordem.product}</p>
                         </div>
-                        <button onclick="document.getElementById('finalizacao-modal').remove()" class="text-slate-400 hover:text-slate-600">
+                        <button id="btn-fechar-modal" class="text-slate-400 hover:text-slate-600">
                             <span class="material-symbols-rounded text-3xl">close</span>
                         </button>
                     </div>
@@ -55,10 +55,10 @@ window.abrirFinalizacaoModal = function(orderId) {
                         </h3>
                         
                         <div class="flex gap-4">
-                            <button onclick="window.setOrdemCompleta(true)" id="btn-completa-sim" class="flex-1 py-4 px-6 border-2 border-slate-300 rounded-xl font-semibold hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-600 transition-all">
+                            <button data-action="ordem-completa-sim" class="flex-1 py-4 px-6 border-2 border-slate-300 rounded-xl font-semibold hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-600 transition-all">
                                 ✓ Sim, 100% Completa
                             </button>
-                            <button onclick="window.setOrdemCompleta(false)" id="btn-completa-nao" class="flex-1 py-4 px-6 border-2 border-slate-300 rounded-xl font-semibold hover:border-amber-500 hover:bg-amber-50 hover:text-amber-600 transition-all">
+                            <button data-action="ordem-completa-nao" class="flex-1 py-4 px-6 border-2 border-slate-300 rounded-xl font-semibold hover:border-amber-500 hover:bg-amber-50 hover:text-amber-600 transition-all">
                                 ✗ Não, Faltam Itens
                             </button>
                         </div>
@@ -72,10 +72,10 @@ window.abrirFinalizacaoModal = function(orderId) {
                         </h3>
                         
                         <div class="flex gap-4">
-                            <button onclick="window.setEmbalagemSeparada(true)" id="btn-embalagem-sim" class="flex-1 py-4 px-6 border-2 border-slate-300 rounded-xl font-semibold hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all">
+                            <button data-action="embalagem-sim" class="flex-1 py-4 px-6 border-2 border-slate-300 rounded-xl font-semibold hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all">
                                 ✓ Sim
                             </button>
-                            <button onclick="window.setEmbalagemSeparada(false)" id="btn-embalagem-nao" class="flex-1 py-4 px-6 border-2 border-slate-300 rounded-xl font-semibold hover:border-slate-500 hover:bg-slate-100 transition-all">
+                            <button data-action="embalagem-nao" class="flex-1 py-4 px-6 border-2 border-slate-300 rounded-xl font-semibold hover:border-slate-500 hover:bg-slate-100 transition-all">
                                 ✗ Não
                             </button>
                         </div>
@@ -89,13 +89,13 @@ window.abrirFinalizacaoModal = function(orderId) {
                         </h3>
                         
                         <div class="flex items-center gap-4">
-                            <button onclick="window.changeVolumes(-1)" class="w-12 h-12 flex items-center justify-center bg-slate-200 hover:bg-slate-300 rounded-lg">
+                            <button data-action="volume-menos" class="w-12 h-12 flex items-center justify-center bg-slate-200 hover:bg-slate-300 rounded-lg">
                                 <span class="material-symbols-rounded">remove</span>
                             </button>
                             
-                            <input type="number" id="numero-volumes" min="1" max="99" value="1" onchange="window.updateVolumes(this.value)" class="flex-1 text-center text-4xl font-bold text-blue-600 bg-transparent border-b-2 border-blue-300 py-2">
+                            <input type="number" id="numero-volumes" min="1" max="99" value="1" class="flex-1 text-center text-4xl font-bold text-blue-600 bg-transparent border-b-2 border-blue-300 py-2" readonly>
                             
-                            <button onclick="window.changeVolumes(1)" class="w-12 h-12 flex items-center justify-center bg-slate-200 hover:bg-slate-300 rounded-lg">
+                            <button data-action="volume-mais" class="w-12 h-12 flex items-center justify-center bg-slate-200 hover:bg-slate-300 rounded-lg">
                                 <span class="material-symbols-rounded">add</span>
                             </button>
                         </div>
@@ -112,7 +112,7 @@ window.abrirFinalizacaoModal = function(orderId) {
                 <!-- Footer -->
                 <div class="sticky bottom-0 bg-white dark:bg-slate-900 border-t p-6 flex justify-between items-center">
                     <p class="text-sm text-slate-500">Responda todas as perguntas</p>
-                    <button onclick="window.concluirOrdemFinal()" id="btn-concluir-final" disabled class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-xl font-bold flex items-center gap-2">
+                    <button id="btn-concluir-final" disabled class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-xl font-bold flex items-center gap-2">
                         <span class="material-symbols-rounded">print</span>
                         Concluir e Gerar Etiquetas
                     </button>
@@ -123,66 +123,150 @@ window.abrirFinalizacaoModal = function(orderId) {
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Adicionar event listeners
+    attachEventListeners();
+    
     console.log('✅ Modal de finalização aberto');
 };
 
+// Anexar Event Listeners
+function attachEventListeners() {
+    console.log('🔗 Anexando event listeners...');
+    
+    // Fechar modal
+    const btnFechar = document.getElementById('btn-fechar-modal');
+    if (btnFechar) {
+        btnFechar.addEventListener('click', () => {
+            console.log('Fechando modal');
+            document.getElementById('finalizacao-modal')?.remove();
+        });
+    }
+    
+    // Ordem Completa - SIM
+    const btnCompletaSim = document.querySelector('[data-action="ordem-completa-sim"]');
+    if (btnCompletaSim) {
+        btnCompletaSim.addEventListener('click', () => {
+            console.log('Ordem completa: SIM');
+            setOrdemCompleta(true);
+        });
+    }
+    
+    // Ordem Completa - NÃO
+    const btnCompletaNao = document.querySelector('[data-action="ordem-completa-nao"]');
+    if (btnCompletaNao) {
+        btnCompletaNao.addEventListener('click', () => {
+            console.log('Ordem completa: NÃO');
+            setOrdemCompleta(false);
+        });
+    }
+    
+    // Embalagem - SIM
+    const btnEmbalagemSim = document.querySelector('[data-action="embalagem-sim"]');
+    if (btnEmbalagemSim) {
+        btnEmbalagemSim.addEventListener('click', () => {
+            console.log('Embalagem: SIM');
+            setEmbalagemSeparada(true);
+        });
+    }
+    
+    // Embalagem - NÃO
+    const btnEmbalagemNao = document.querySelector('[data-action="embalagem-nao"]');
+    if (btnEmbalagemNao) {
+        btnEmbalagemNao.addEventListener('click', () => {
+            console.log('Embalagem: NÃO');
+            setEmbalagemSeparada(false);
+        });
+    }
+    
+    // Volume - MENOS
+    const btnVolumeMenos = document.querySelector('[data-action="volume-menos"]');
+    if (btnVolumeMenos) {
+        btnVolumeMenos.addEventListener('click', () => {
+            console.log('Volume: -1');
+            changeVolumes(-1);
+        });
+    }
+    
+    // Volume - MAIS
+    const btnVolumeMais = document.querySelector('[data-action="volume-mais"]');
+    if (btnVolumeMais) {
+        btnVolumeMais.addEventListener('click', () => {
+            console.log('Volume: +1');
+            changeVolumes(1);
+        });
+    }
+    
+    // Concluir Final
+    const btnConcluir = document.getElementById('btn-concluir-final');
+    if (btnConcluir) {
+        btnConcluir.addEventListener('click', () => {
+            console.log('Concluir ordem final');
+            concluirOrdemFinal();
+        });
+    }
+    
+    console.log('✅ Event listeners anexados');
+}
+
 // Set Ordem Completa
-window.setOrdemCompleta = function(completa) {
-    console.log('Ordem completa:', completa);
+function setOrdemCompleta(completa) {
     finalizacaoData.ordemCompleta = completa;
     
-    const btnSim = document.getElementById('btn-completa-sim');
-    const btnNao = document.getElementById('btn-completa-nao');
+    const btnSim = document.querySelector('[data-action="ordem-completa-sim"]');
+    const btnNao = document.querySelector('[data-action="ordem-completa-nao"]');
     
     if (completa) {
-        btnSim.classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-600');
-        btnNao.classList.remove('border-amber-500', 'bg-amber-50', 'text-amber-600');
+        btnSim?.classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-600');
+        btnNao?.classList.remove('border-amber-500', 'bg-amber-50', 'text-amber-600');
     } else {
-        btnNao.classList.add('border-amber-500', 'bg-amber-50', 'text-amber-600');
-        btnSim.classList.remove('border-emerald-500', 'bg-emerald-50', 'text-emerald-600');
+        btnNao?.classList.add('border-amber-500', 'bg-amber-50', 'text-amber-600');
+        btnSim?.classList.remove('border-emerald-500', 'bg-emerald-50', 'text-emerald-600');
     }
     
     verificarFormulario();
-};
+}
 
 // Set Embalagem Separada
-window.setEmbalagemSeparada = function(separada) {
-    console.log('Embalagem separada:', separada);
+function setEmbalagemSeparada(separada) {
     finalizacaoData.embalagemSeparada = separada;
     
-    const btnSim = document.getElementById('btn-embalagem-sim');
-    const btnNao = document.getElementById('btn-embalagem-nao');
+    const btnSim = document.querySelector('[data-action="embalagem-sim"]');
+    const btnNao = document.querySelector('[data-action="embalagem-nao"]');
     
     if (separada) {
-        btnSim.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-600');
-        btnNao.classList.remove('border-slate-500', 'bg-slate-100');
+        btnSim?.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-600');
+        btnNao?.classList.remove('border-slate-500', 'bg-slate-100');
     } else {
-        btnNao.classList.add('border-slate-500', 'bg-slate-100');
-        btnSim.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-600');
+        btnNao?.classList.add('border-slate-500', 'bg-slate-100');
+        btnSim?.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-600');
     }
     
     verificarFormulario();
-};
+}
 
 // Change Volumes
-window.changeVolumes = function(delta) {
+function changeVolumes(delta) {
     const input = document.getElementById('numero-volumes');
-    let valor = parseInt(input.value) || 1;
+    let valor = parseInt(input?.value) || 1;
     valor = Math.max(1, Math.min(99, valor + delta));
-    input.value = valor;
+    if (input) input.value = valor;
     updateVolumes(valor);
-};
+}
 
 // Update Volumes
-window.updateVolumes = function(valor) {
+function updateVolumes(valor) {
     valor = Math.max(1, Math.min(99, parseInt(valor) || 1));
     finalizacaoData.numeroVolumes = valor;
     
-    document.getElementById('total-etiquetas').textContent = valor;
-    document.getElementById('total-folhas').textContent = valor;
+    const etiquetas = document.getElementById('total-etiquetas');
+    const folhas = document.getElementById('total-folhas');
+    
+    if (etiquetas) etiquetas.textContent = valor;
+    if (folhas) folhas.textContent = valor;
     
     verificarFormulario();
-};
+}
 
 // Verificar Formulário
 function verificarFormulario() {
@@ -193,11 +277,12 @@ function verificarFormulario() {
     const btn = document.getElementById('btn-concluir-final');
     if (btn) {
         btn.disabled = !completo;
+        console.log('Formulário completo:', completo);
     }
 }
 
 // Concluir Ordem Final
-window.concluirOrdemFinal = async function() {
+async function concluirOrdemFinal() {
     console.log('🎯 Concluindo ordem...', finalizacaoData);
     
     try {
@@ -234,7 +319,7 @@ window.concluirOrdemFinal = async function() {
         gerarEtiquetas(ordem);
         
         // Fechar modal
-        document.getElementById('finalizacao-modal').remove();
+        document.getElementById('finalizacao-modal')?.remove();
         
         // Recarregar
         await loadOrders();
@@ -250,7 +335,7 @@ window.concluirOrdemFinal = async function() {
         console.error('❌ Erro:', error);
         alert('Erro ao concluir ordem!');
     }
-};
+}
 
 // Gerar Etiquetas
 function gerarEtiquetas(ordem) {
@@ -332,12 +417,19 @@ function createPrintArea() {
     return area;
 }
 
-console.log('✅ finalizacao-modal.js carregado');
-console.log('✅ Funções:', {
-    abrirFinalizacaoModal: typeof window.abrirFinalizacaoModal,
-    setOrdemCompleta: typeof window.setOrdemCompleta,
-    setEmbalagemSeparada: typeof window.setEmbalagemSeparada,
-    changeVolumes: typeof window.changeVolumes,
-    updateVolumes: typeof window.updateVolumes,
-    concluirOrdemFinal: typeof window.concluirOrdemFinal
-});
+console.log('✅ finalizacao-modal.js carregado (EVENT LISTENERS)');
+
+// Exportar para testes
+window.finalizacaoModalTest = function() {
+    console.log('Estado atual:', finalizacaoData);
+    console.log('Botões encontrados:', {
+        fechar: !!document.getElementById('btn-fechar-modal'),
+        completaSim: !!document.querySelector('[data-action="ordem-completa-sim"]'),
+        completaNao: !!document.querySelector('[data-action="ordem-completa-nao"]'),
+        embalagemSim: !!document.querySelector('[data-action="embalagem-sim"]'),
+        embalagemNao: !!document.querySelector('[data-action="embalagem-nao"]'),
+        volumeMenos: !!document.querySelector('[data-action="volume-menos"]'),
+        volumeMais: !!document.querySelector('[data-action="volume-mais"]'),
+        concluir: !!document.getElementById('btn-concluir-final')
+    });
+};
