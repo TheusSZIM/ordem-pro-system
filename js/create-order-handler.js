@@ -1,6 +1,6 @@
 // ============================================
-// CREATE ORDER HANDLER - VERSÃO COMPLETA CORRIGIDA
-// Sistema Ordem Pro
+// CREATE ORDER HANDLER - VERSÃO FINAL
+// Inclui alias handleNewOrder
 // ============================================
 
 // Flag global para prevenir submits duplicados
@@ -171,11 +171,11 @@ window.closeCreateOrderModal = function() {
     }
 };
 
-// Criar Ordem - VERSÃO CORRIGIDA COM PROTEÇÃO ANTI-DUPLICATE
+// Criar Ordem - VERSÃO CORRIGIDA
 async function handleCreateOrder(event) {
     event.preventDefault();
     
-    // ✅ PROTEÇÃO ANTI-DUPLICATE: Verificar se já está submetendo
+    // ✅ PROTEÇÃO ANTI-DUPLICATE
     if (isSubmitting) {
         console.log('⚠️ Já está criando ordem, aguarde...');
         return;
@@ -183,7 +183,7 @@ async function handleCreateOrder(event) {
     
     console.log('📝 Iniciando criação de ordem...');
     
-    // Coletar dados do formulário
+    // Coletar dados
     const produto = document.getElementById('ordem-produto')?.value?.trim();
     const quantidade = document.getElementById('ordem-quantidade')?.value;
     const operador = document.getElementById('ordem-operador')?.value;
@@ -208,7 +208,7 @@ async function handleCreateOrder(event) {
         // ✅ MARCAR COMO SUBMETENDO
         isSubmitting = true;
         
-        // ✅ DESABILITAR BOTÃO E MOSTRAR SPINNER
+        // ✅ DESABILITAR BOTÃO
         const submitBtn = document.getElementById('btn-create-order');
         if (submitBtn) {
             submitBtn.disabled = true;
@@ -221,12 +221,12 @@ async function handleCreateOrder(event) {
             `;
         }
         
-        // Gerar ID único baseado em timestamp + random
+        // Gerar ID único
         const timestamp = Date.now();
         const randomSuffix = Math.floor(Math.random() * 1000);
         const orderId = `${timestamp}${randomSuffix}`;
         
-        // Extrair linha e estação da célula (se fornecido)
+        // Extrair linha e estação
         let linha = 'A';
         let estacao = '1';
         
@@ -238,7 +238,7 @@ async function handleCreateOrder(event) {
             if (estacaoMatch) estacao = estacaoMatch[1];
         }
         
-        // Preparar dados da ordem
+        // Preparar dados
         const ordemData = {
             id: orderId,
             product: produto,
@@ -256,12 +256,12 @@ async function handleCreateOrder(event) {
         
         console.log('📦 Ordem a ser criada:', ordemData);
         
-        // Validar se supabaseClient existe
+        // Validar Supabase
         if (!window.supabaseClient) {
             throw new Error('Supabase não está conectado');
         }
         
-        // Criar ordem no Supabase
+        // Criar ordem
         const { data: novaOrdem, error } = await window.supabaseClient
             .from('orders')
             .insert([ordemData])
@@ -271,7 +271,7 @@ async function handleCreateOrder(event) {
         if (error) {
             console.error('❌ Erro ao criar ordem:', error);
             
-            // ✅ REABILITAR BOTÃO EM CASO DE ERRO
+            // Reabilitar botão
             if (submitBtn) {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = `
@@ -287,18 +287,15 @@ async function handleCreateOrder(event) {
         
         console.log('✅ Ordem criada no Supabase:', novaOrdem);
         
-        // ✅ FECHAR MODAL IMEDIATAMENTE
+        // Fechar modal
         const modal = document.getElementById('modal-create-order');
-        if (modal) {
-            modal.remove();
-        }
+        if (modal) modal.remove();
         
-        // ✅ MOSTRAR SUCESSO
+        // Toast de sucesso
         showToast(`✅ Ordem ${orderId} criada com sucesso!`, 'success');
         
-        // ✅ RECARREGAR DADOS (com delay de 300ms para evitar race condition)
+        // Recarregar dados com delay
         setTimeout(async () => {
-            // Recarregar ordens
             if (typeof window.loadOrders === 'function') {
                 await window.loadOrders();
             }
@@ -310,16 +307,16 @@ async function handleCreateOrder(event) {
             if (typeof window.updateCharts === 'function') window.updateCharts();
             if (typeof window.renderDashboardStats === 'function') window.renderDashboardStats();
             
-            // ✅ RESETAR FLAG
+            // Resetar flag
             isSubmitting = false;
             
             console.log('✅ Interfaces atualizadas!');
         }, 300);
         
     } catch (error) {
-        console.error('❌ Erro inesperado ao criar ordem:', error);
+        console.error('❌ Erro inesperado:', error);
         
-        // ✅ REABILITAR BOTÃO
+        // Reabilitar botão
         const submitBtn = document.getElementById('btn-create-order');
         if (submitBtn) {
             submitBtn.disabled = false;
@@ -339,4 +336,7 @@ window.openCreateOrderModal = openCreateOrderModal;
 window.closeCreateOrderModal = closeCreateOrderModal;
 window.handleCreateOrder = handleCreateOrder;
 
-console.log('✅ create-order-handler.js carregado (versão corrigida)!');
+// ✅ ALIAS PARA COMPATIBILIDADE COM HTML
+window.handleNewOrder = handleCreateOrder;
+
+console.log('✅ create-order-handler.js carregado (versão final com alias)!');
