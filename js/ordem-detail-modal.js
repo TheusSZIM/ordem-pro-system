@@ -77,9 +77,10 @@ window.showOrdemDetail = function(orderId) {
                             <label class="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2 block">
                                 Selecione o Operador
                             </label>
-                            <select id="operador-iniciar-${ordem.id}" class="w-full px-4 py-2 border rounded-lg">
-                                <option value="">Carregando operadores...</option>
-                            </select>
+                            <select id="operador-iniciar-${ordem.id}" 
+        class="w-full px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+    <option value="">Carregando operadores...</option>
+</select>
                         </div>
                     ` : ''}
                     
