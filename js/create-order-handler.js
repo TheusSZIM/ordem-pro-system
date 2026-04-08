@@ -1,284 +1,171 @@
 // ============================================
-// FUNÇÃO PARA CRIAR ORDEM - Supabase Integration
+// PATCH: CORRIGIR DUPLICATE SUBMISSION
+// Aplicar em create-order-handler.js
 // ============================================
 
+// LOCALIZAR a função handleCreateOrder e SUBSTITUIR por esta versão:
+
+let isSubmitting = false; // Flag global para prevenir submits duplicados
+
 async function handleCreateOrder(event) {
-    if (event) event.preventDefault();
+    event.preventDefault();
     
-    console.log('🔄 Criando nova ordem...');
+    // ✅ PROTEÇÃO ANTI-DUPLICATE
+    if (isSubmitting) {
+        console.log('⚠️ Já está criando ordem, aguarde...');
+        return;
+    }
+    
+    console.log('📝 Iniciando criação de ordem...');
+    
+    // Validar campos
+    const product = document.getElementById('ordem-produto')?.value?.trim();
+    const quantity = document.getElementById('ordem-quantidade')?.value;
+    const priority = document.getElementById('ordem-prioridade')?.value;
+    const linha = document.getElementById('ordem-linha')?.value;
+    const estacao = document.getElementById('ordem-estacao')?.value;
+    
+    if (!product) {
+        showToast('⚠️ Informe o produto!', 'warning');
+        return;
+    }
+    
+    if (!quantity || quantity <= 0) {
+        showToast('⚠️ Informe a quantidade!', 'warning');
+        return;
+    }
     
     try {
-        // Capturar dados do formulário
-        const orderNumber = document.getElementById('ordem-numero')?.value?.trim();
-        const product = document.getElementById('ordem-produto')?.value?.trim();
-        const quantity = parseInt(document.getElementById('ordem-quantidade')?.value) || 1;
-        const dataPrevista = document.getElementById('ordem-data-prevista')?.value;
-        const operatorId = document.getElementById('ordem-operador')?.value;
-        const station = document.getElementById('ordem-celula')?.value?.trim();
-        const packagingType = getPackagingType();
-        const notes = document.getElementById('ordem-observacoes')?.value?.trim();
-        const priority = document.getElementById('ordem-prioridade')?.checked ? 'high' : 'medium';
+        // ✅ MARCAR COMO SUBMETENDO
+        isSubmitting = true;
         
-        console.log('📋 Dados capturados:', {
-            orderNumber,
+        // ✅ DESABILITAR BOTÃO
+        const submitBtn = document.querySelector('#modal-create-order button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `
+                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Criando...</span>
+            `;
+        }
+        
+        // Gerar ID único
+        const timestamp = Date.now();
+        const randomSuffix = Math.floor(Math.random() * 1000);
+        const orderId = `${timestamp}${randomSuffix}`;
+        
+        console.log('📦 Ordem a ser criada:', {
+            id: orderId,
             product,
-            quantity,
-            dataPrevista,
-            operatorId,
-            station,
-            packagingType,
-            notes,
-            priority
+            quantity: parseInt(quantity),
+            priority,
+            linha,
+            estacao
         });
         
-        // Validar campos obrigatórios
-        if (!orderNumber) {
-            showToast('❌ Número da Ordem é obrigatório!', 'error');
-            return;
-        }
-        
-        if (!product) {
-            showToast('❌ Produto é obrigatório!', 'error');
-            return;
-        }
-        
-        if (!quantity || quantity < 1) {
-            showToast('❌ Quantidade deve ser maior que 0!', 'error');
-            return;
-        }
-        
-        if (!dataPrevista) {
-            showToast('❌ Data Prevista é obrigatória!', 'error');
-            return;
-        }
-        
-        // Montar objeto da ordem
-        const orderData = {
-            id: orderNumber,
-            product: product,
-            quantity: quantity,
-            status: 'pending',
-            priority: priority,
-            notes: notes || null,
-            operator_id: operatorId || null,
-            station: station || null,
-            packaging_type: packagingType,
-            data_prevista: dataPrevista,
-            created_at: new Date().toISOString()
-        };
-        
-        console.log('📦 Ordem a ser criada:', orderData);
-        
         // Criar ordem no Supabase
-        const { data, error } = await supabaseClient
+        const { data: novaOrdem, error } = await supabaseClient
             .from('orders')
-            .insert([orderData])
+            .insert([{
+                id: orderId,
+                product: product,
+                quantity: parseInt(quantity),
+                priority: priority || 'medium',
+                status: 'pending',
+                linha: linha || 'A',
+                estacao: estacao || '1',
+                numero_volumes: 1,
+                created_at: new Date().toISOString()
+            }])
             .select()
             .single();
         
         if (error) {
-            console.error('❌ Erro do Supabase:', error);
+            console.error('❌ Erro ao criar ordem:', error);
             
-            // Mensagens de erro mais amigáveis
-            let errorMessage = 'Erro ao criar ordem';
-            
-            if (error.code === '23505') {
-                errorMessage = 'Já existe uma ordem com este número!';
-            } else if (error.message) {
-                errorMessage = error.message;
+            // ✅ REABILITAR BOTÃO EM CASO DE ERRO
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `
+                    <span class="material-symbols-rounded">add</span>
+                    Criar Ordem
+                `;
             }
             
-            showToast('❌ ' + errorMessage, 'error');
+            isSubmitting = false;
+            showToast('❌ Erro ao criar ordem: ' + error.message, 'error');
             return;
         }
         
-        console.log('✅ Ordem criada no Supabase:', data);
+        console.log('✅ Ordem criada no Supabase:', novaOrdem);
         
-        // Fechar modal
-        if (typeof closeModal === 'function') {
-            closeModal();
+        // ✅ FECHAR MODAL IMEDIATAMENTE
+        const modal = document.getElementById('modal-create-order');
+        if (modal) {
+            modal.remove();
         }
         
-        // Recarregar dados
-        console.log('🔄 Recarregando dados...');
+        // ✅ MOSTRAR SUCESSO
+        showToast(`✅ Ordem ${orderId} criada com sucesso!`, 'success');
         
-        if (typeof loadOrders === 'function') {
+        // ✅ RECARREGAR DADOS (após um pequeno delay)
+        setTimeout(async () => {
             await loadOrders();
-            console.log('✅ Ordens recarregadas');
-        }
-        
-        // Atualizar interface
-        if (typeof renderRecentOrders === 'function') {
-            renderRecentOrders();
-        }
-        
-        if (typeof renderKanban === 'function') {
-            renderKanban();
-        }
-        
-        if (typeof updateCharts === 'function') {
-            updateCharts();
-        }
-        
-        if (typeof animateCounters === 'function') {
-            animateCounters();
-        }
-        
-        // Limpar formulário
-        const form = document.getElementById('new-order-form');
-        if (form) {
-            form.reset();
-        }
-        
-        // Mostrar sucesso
-        showToast('✅ Ordem criada com sucesso!', 'success');
+            
+            // Atualizar interfaces
+            if (typeof renderRecentOrders === 'function') renderRecentOrders();
+            if (typeof renderOrdensTable === 'function') renderOrdensTable();
+            if (typeof renderKanban === 'function') renderKanban();
+            if (typeof updateCharts === 'function') updateCharts();
+            if (typeof renderDashboardStats === 'function') renderDashboardStats();
+            
+            // ✅ RESETAR FLAG
+            isSubmitting = false;
+            
+            console.log('✅ Interfaces atualizadas!');
+        }, 300);
         
     } catch (error) {
-        console.error('❌ Erro ao processar formulário:', error);
-        showToast('❌ Erro: ' + error.message, 'error');
-    }
-}
-
-// ============================================
-// FUNÇÃO AUXILIAR - TIPO DE EMBALAGEM
-// ============================================
-
-function getPackagingType() {
-    // Procurar pelos radio buttons de embalagem
-    const montadora = document.querySelector('input[value="montadora"]:checked');
-    const reposicao = document.querySelector('input[value="reposicao"]:checked');
-    
-    if (montadora) return 'montadora';
-    if (reposicao) return 'reposicao';
-    
-    // Padrão
-    return 'montadora';
-}
-
-// ============================================
-// FUNÇÃO AUXILIAR - GERAR ID DE ORDEM
-// ============================================
-
-function generateOrderId() {
-    const year = new Date().getFullYear();
-    const month = String(new Date().getMonth() + 1).padStart(2, '0');
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    return `ORD-${year}${month}-${random}`;
-}
-
-// ============================================
-// FUNÇÃO AUXILIAR - MOSTRAR TOAST
-// ============================================
-
-function showToast(message, type = 'info') {
-    console.log(`🔔 Toast: ${message} (${type})`);
-    
-    // Se a função showToast global existir, usar ela
-    if (typeof window.showToast === 'function') {
-        window.showToast(message, type);
-        return;
-    }
-    
-    // Caso contrário, criar um toast simples
-    const toast = document.createElement('div');
-    toast.className = `fixed top-4 right-4 z-[100] px-6 py-4 rounded-lg shadow-lg text-white font-medium transform transition-all duration-300 ${
-        type === 'success' ? 'bg-emerald-600' :
-        type === 'error' ? 'bg-red-600' :
-        'bg-blue-600'
-    }`;
-    toast.textContent = message;
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateY(-20px)';
-    
-    document.body.appendChild(toast);
-    
-    // Animar entrada
-    setTimeout(() => {
-        toast.style.opacity = '1';
-        toast.style.transform = 'translateY(0)';
-    }, 10);
-    
-    // Remover após 3 segundos
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateY(-20px)';
+        console.error('❌ Erro inesperado:', error);
         
-        setTimeout(() => {
-            toast.remove();
-        }, 300);
-    }, 3000);
-}
-
-// ============================================
-// VINCULAR AO FORMULÁRIO
-// ============================================
-
-// Aguardar modal ser criado e adicionar evento
-function setupOrderFormHandler() {
-    // Tentar encontrar o formulário
-    const form = document.getElementById('new-order-form');
-    
-    if (form && !form.hasAttribute('data-handler-attached')) {
-        console.log('📝 Formulário de ordem encontrado! Adicionando handler...');
-        
-        // Marcar como já configurado
-        form.setAttribute('data-handler-attached', 'true');
-        
-        // Adicionar evento de submit
-        form.addEventListener('submit', handleCreateOrder);
-        
-        console.log('✅ Handler adicionado ao formulário');
-        return true;
-    }
-    
-    return false;
-}
-
-// Tentar configurar quando a página carregar
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔧 Inicializando handler de criar ordem...');
-    
-    // Tentar imediatamente
-    if (setupOrderFormHandler()) {
-        return;
-    }
-    
-    // Tentar após 2 segundos (quando componentes carregarem)
-    setTimeout(() => {
-        if (setupOrderFormHandler()) {
-            return;
+        // ✅ REABILITAR BOTÃO
+        const submitBtn = document.querySelector('#modal-create-order button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `
+                <span class="material-symbols-rounded">add</span>
+                Criar Ordem
+            `;
         }
         
-        // Tentar após 5 segundos (backup)
-        setTimeout(() => {
-            setupOrderFormHandler();
-        }, 3000);
-    }, 2000);
-});
-
-// Observar quando o modal for adicionado ao DOM
-const observer = new MutationObserver(() => {
-    setupOrderFormHandler();
-});
-
-// Começar a observar após 1 segundo
-setTimeout(() => {
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
-}, 1000);
+        isSubmitting = false;
+        showToast('❌ Erro inesperado: ' + error.message, 'error');
+    }
+}
 
 // ============================================
-// EXPORTAR FUNÇÕES GLOBALMENTE
+// INSTRUÇÕES DE APLICAÇÃO
 // ============================================
 
-window.handleCreateOrder = handleCreateOrder;
-window.generateOrderId = generateOrderId;
-window.getPackagingType = getPackagingType;
-window.showToast = window.showToast || showToast;
+/*
+1. Abrir arquivo: js/create-order-handler.js
+2. Localizar a função: async function handleCreateOrder(event)
+3. SUBSTITUIR toda a função pela versão acima
+4. Salvar arquivo
+5. Commit e push:
+   git add js/create-order-handler.js
+   git commit -m "fix: prevenir duplicate submission ao criar ordem"
+   git push
 
-// Também vincular ao handleNewOrder (nome alternativo usado no modal)
-window.handleNewOrder = handleCreateOrder;
-
-console.log('✅ create-order-handler.js carregado!');
+MELHORIAS APLICADAS:
+✅ Flag global isSubmitting previne múltiplos submits
+✅ Botão desabilitado durante criação
+✅ Spinner visual indica processamento
+✅ Modal fecha imediatamente após sucesso
+✅ Delay de 300ms antes de recarregar dados
+✅ Botão reabilitado em caso de erro
+✅ Flag resetada após conclusão
+*/
