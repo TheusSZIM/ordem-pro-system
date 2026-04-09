@@ -1,119 +1,100 @@
 // ============================================
-// RENDERIZAR ESTATÍSTICAS - VERSÃO CSS FINAL
-// CÍRCULOS COM CONIC-GRADIENT
+// DASHBOARD-STATS.JS - VERSÃO FINAL CORRIGIDA
+// Substituir arquivo completo
 // ============================================
 
 function renderDashboardStats() {
     console.log('📊 Renderizando estatísticas do dashboard...');
     
-    if (!state || !state.orders || !Array.isArray(state.orders)) {
-        console.warn('⚠️ state.orders não disponível');
+    // Validar state
+    if (!window.state || !window.state.orders) {
+        console.log('⚠️ State não está pronto');
         return;
     }
     
-    // Calcular estatísticas
-    const hoje = new Date().toISOString().split('T')[0];
+    const orders = window.state.orders;
     
-    const stats = {
-        aSeparar: state.orders.filter(o => o.status === 'pending').length,
-        emSeparacao: state.orders.filter(o => o.status === 'progress' || o.status === 'in_progress').length,
-        concluidasHoje: state.orders.filter(o => {
-            if (o.status !== 'completed') return false;
-            if (!o.fim_separacao) return false;
-            const dataFim = new Date(o.fim_separacao).toISOString().split('T')[0];
-            return dataFim === hoje;
-        }).length,
-        total: state.orders.length
-    };
+    if (orders.length === 0) {
+        console.log('⚠️ Sem ordens');
+        updateStatCard('stat-a-separar', 0);
+        updateStatCard('stat-em-separacao', 0);
+        updateStatCard('stat-concluidas-hoje', 0);
+        updateStatCard('stat-total', 0);
+        return;
+    }
     
-    console.log('📈 Estatísticas calculadas:', stats);
+    // CALCULAR ESTATÍSTICAS
+    const aSeparar = orders.filter(o => o.status === 'pending').length;
+    const emSeparacao = orders.filter(o => o.status === 'in_progress').length;
+    const total = orders.length;
     
-    // Atualizar números nos cards
-    updateStatCard('stat-a-separar', stats.aSeparar);
-    updateStatCard('stat-em-separacao', stats.emSeparacao);
-    updateStatCard('stat-concluidas-hoje', stats.concluidasHoje);
-    updateStatCard('stat-total', stats.total);
+    // Concluídas HOJE
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const amanha = new Date(hoje);
+    amanha.setDate(amanha.getDate() + 1);
     
-    // Atualizar círculos de progresso
-    updateProgressCircle('progress-a-separar', stats.aSeparar, stats.total, '#f59e0b'); // Laranja
-    updateProgressCircle('progress-em-separacao', stats.emSeparacao, stats.total, '#3b82f6'); // Azul
-    updateProgressCircle('progress-concluidas', stats.concluidasHoje, stats.total, '#10b981'); // Verde
+    const concluidasHoje = orders.filter(o => {
+        if (o.status !== 'completed') return false;
+        if (!o.fim_separacao) return false;
+        const dataFim = new Date(o.fim_separacao);
+        return dataFim >= hoje && dataFim < amanha;
+    }).length;
+    
+    console.log('📈 Estatísticas:', { aSeparar, emSeparacao, concluidasHoje, total });
+    
+    // ATUALIZAR CARDS
+    updateStatCard('stat-a-separar', aSeparar);
+    updateStatCard('stat-em-separacao', emSeparacao);
+    updateStatCard('stat-concluidas-hoje', concluidasHoje);
+    updateStatCard('stat-total', total);
+    
+    // ATUALIZAR CÍRCULOS
+    updateProgressCircle('progress-a-separar', aSeparar, total);
+    updateProgressCircle('progress-em-separacao', emSeparacao, total);
+    updateProgressCircle('progress-concluidas', concluidasHoje, total);
+    
+    console.log('✅ Dashboard atualizado!');
 }
 
-// Atualizar Card de Estatística
-function updateStatCard(id, value) {
-    const element = document.getElementById(id);
-    if (element) {
-        element.textContent = value;
-        console.log(`✅ Card ${id} atualizado: ${value}`);
+function updateStatCard(elementId, value) {
+    const element = document.getElementById(elementId);
+    
+    if (!element) {
+        console.error(`❌ Elemento não encontrado: ${elementId}`);
+        return;
+    }
+    
+    console.log(`🔄 ${elementId}: ${element.textContent} → ${value}`);
+    element.textContent = value;
+    
+    // Verificar
+    if (element.textContent === String(value)) {
+        console.log(`✅ ${elementId} = ${value}`);
     } else {
-        console.warn(`⚠️ Card ${id} não encontrado`);
+        console.error(`❌ ${elementId} falhou!`);
     }
 }
 
-// Atualizar Círculo de Progresso - CSS CONIC-GRADIENT
-// COMEÇA À ESQUERDA (9h / 180deg)
-function updateProgressCircle(id, valor, total, color) {
-    const circle = document.getElementById(id);
+function updateProgressCircle(elementId, current, total) {
+    const circle = document.getElementById(elementId);
+    
     if (!circle) {
-        console.warn(`⚠️ Círculo não encontrado: ${id}`);
+        console.error(`❌ Círculo não encontrado: ${elementId}`);
         return;
     }
     
-    const porcentagem = total > 0 ? Math.round((valor / total) * 100) : 0;
-    const graus = porcentagem * 3.6; // Converter % para graus
+    const percentage = total > 0 ? (current / total) * 100 : 0;
+    const degrees = (percentage / 100) * 360;
     
-    // Criar círculo usando CSS conic-gradient
-    circle.innerHTML = `
-        <div style="
-            position: relative;
-            width: 56px;
-            height: 56px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        ">
-            <!-- Círculo de progresso com conic-gradient -->
-            <div style="
-                position: absolute;
-                width: 56px;
-                height: 56px;
-                border-radius: 50%;
-                background: conic-gradient(
-                    from 180deg,
-                    ${color} 0deg,
-                    ${color} ${graus}deg,
-                    rgba(51, 65, 85, 0.2) ${graus}deg,
-                    rgba(51, 65, 85, 0.2) 360deg
-                );
-                mask: radial-gradient(
-                    circle,
-                    transparent 0%,
-                    transparent 60%,
-                    black 60%,
-                    black 100%
-                );
-                -webkit-mask: radial-gradient(
-                    circle,
-                    transparent 0%,
-                    transparent 60%,
-                    black 60%,
-                    black 100%
-                );
-            "></div>
-            
-            <!-- Porcentagem -->
-            <span style="
-                position: relative;
-                z-index: 10;
-                font-size: 12px;
-                font-weight: bold;
-                color: ${color};
-            ">${porcentagem}%</span>
-        </div>
-    `;
+    // Atualizar círculo com CSS conic-gradient
+    circle.style.background = `conic-gradient(
+        from 180deg,
+        var(--circle-color, #8b5cf6) ${degrees}deg,
+        var(--circle-bg, #e2e8f0) ${degrees}deg
+    )`;
     
-    console.log(`✅ Círculo ${id}: ${porcentagem}% (${graus}°) - ${valor}/${total}`);
+    console.log(`🔵 ${elementId}: ${Math.round(percentage)}% (${degrees}°) - ${current}/${total}`);
 }
 
 // Exportar funções
@@ -121,4 +102,4 @@ window.renderDashboardStats = renderDashboardStats;
 window.updateStatCard = updateStatCard;
 window.updateProgressCircle = updateProgressCircle;
 
-console.log('✅ dashboard-stats.js carregado (versão CSS conic-gradient final)');
+console.log('✅ dashboard-stats.js carregado (versão corrigida)!');
