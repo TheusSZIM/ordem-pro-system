@@ -1,6 +1,6 @@
 // ============================================
 // SISTEMA DE AUTENTICAÇÃO - ORDEM PRO
-// auth.js - VERSÃO COM VERIFICAÇÃO MELHORADA
+// auth.js - VERSÃO SEM CONFLITO
 // ============================================
 
 // ============================================
@@ -32,7 +32,7 @@ const AUTH_CONFIG = {
 // ============================================
 
 let currentUser = null;
-let supabaseClient = null;
+let authSupabaseClient = null;  // ✅ RENOMEADO para evitar conflito
 
 // ============================================
 // VERIFICAR E OBTER SUPABASE
@@ -40,29 +40,29 @@ let supabaseClient = null;
 
 function getSupabase() {
     // Verificar em vários lugares onde Supabase pode estar
-    if (supabaseClient) {
-        return supabaseClient;
+    if (authSupabaseClient) {
+        return authSupabaseClient;
     }
     
     // Opção 1: window.supabase
     if (window.supabase && typeof window.supabase.from === 'function') {
         console.log('✅ Supabase encontrado em window.supabase');
-        supabaseClient = window.supabase;
-        return supabaseClient;
+        authSupabaseClient = window.supabase;
+        return authSupabaseClient;
     }
     
     // Opção 2: window.supabaseClient
     if (window.supabaseClient && typeof window.supabaseClient.from === 'function') {
         console.log('✅ Supabase encontrado em window.supabaseClient');
-        supabaseClient = window.supabaseClient;
-        return supabaseClient;
+        authSupabaseClient = window.supabaseClient;
+        return authSupabaseClient;
     }
     
     // Opção 3: Variável global supabase
     if (typeof supabase !== 'undefined' && typeof supabase.from === 'function') {
         console.log('✅ Supabase encontrado em variável global');
-        supabaseClient = supabase;
-        return supabaseClient;
+        authSupabaseClient = supabase;
+        return authSupabaseClient;
     }
     
     return null;
@@ -104,7 +104,7 @@ async function initAuth() {
     
     try {
         // Aguardar Supabase estar disponível
-        supabaseClient = await waitForSupabase();
+        authSupabaseClient = await waitForSupabase();
         
         // Verificar sessão existente
         const session = getSession();
@@ -447,4 +447,4 @@ window.auth = {
     isAuthenticated: () => currentUser !== null
 };
 
-console.log('✅ auth.js carregado (versão com verificação melhorada)!');
+console.log('✅ auth.js carregado (versão sem conflito)!');
