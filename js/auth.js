@@ -1,6 +1,6 @@
 // ============================================
 // SISTEMA DE AUTENTICAÇÃO - ORDEM PRO
-// auth.js - VERSÃO CORRIGIDA
+// auth.js - VERSÃO COM VERIFICAÇÃO MELHORADA
 // ============================================
 
 // ============================================
@@ -32,26 +32,64 @@ const AUTH_CONFIG = {
 // ============================================
 
 let currentUser = null;
+let supabaseClient = null;
 
 // ============================================
-// VERIFICAR SUPABASE
+// VERIFICAR E OBTER SUPABASE
 // ============================================
+
+function getSupabase() {
+    // Verificar em vários lugares onde Supabase pode estar
+    if (supabaseClient) {
+        return supabaseClient;
+    }
+    
+    // Opção 1: window.supabase
+    if (window.supabase && typeof window.supabase.from === 'function') {
+        console.log('✅ Supabase encontrado em window.supabase');
+        supabaseClient = window.supabase;
+        return supabaseClient;
+    }
+    
+    // Opção 2: window.supabaseClient
+    if (window.supabaseClient && typeof window.supabaseClient.from === 'function') {
+        console.log('✅ Supabase encontrado em window.supabaseClient');
+        supabaseClient = window.supabaseClient;
+        return supabaseClient;
+    }
+    
+    // Opção 3: Variável global supabase
+    if (typeof supabase !== 'undefined' && typeof supabase.from === 'function') {
+        console.log('✅ Supabase encontrado em variável global');
+        supabaseClient = supabase;
+        return supabaseClient;
+    }
+    
+    return null;
+}
 
 function waitForSupabase() {
     return new Promise((resolve, reject) => {
         let attempts = 0;
-        const maxAttempts = 50; // 5 segundos
+        const maxAttempts = 100; // 10 segundos
         
         const checkSupabase = setInterval(() => {
             attempts++;
             
-            if (window.supabase && typeof window.supabase.from === 'function') {
+            const sb = getSupabase();
+            
+            if (sb) {
                 clearInterval(checkSupabase);
-                console.log('✅ Supabase disponível');
-                resolve(window.supabase);
+                console.log('✅ Supabase disponível após', attempts * 100, 'ms');
+                resolve(sb);
             } else if (attempts >= maxAttempts) {
                 clearInterval(checkSupabase);
-                reject(new Error('Supabase não carregado após 5 segundos'));
+                console.error('❌ Supabase não encontrado em:', {
+                    'window.supabase': !!window.supabase,
+                    'window.supabaseClient': !!window.supabaseClient,
+                    'global supabase': typeof supabase !== 'undefined'
+                });
+                reject(new Error('Supabase não carregado após 10 segundos'));
             }
         }, 100);
     });
@@ -66,7 +104,7 @@ async function initAuth() {
     
     try {
         // Aguardar Supabase estar disponível
-        await waitForSupabase();
+        supabaseClient = await waitForSupabase();
         
         // Verificar sessão existente
         const session = getSession();
@@ -141,14 +179,18 @@ async function login(email, password) {
     try {
         console.log('🔐 Tentando fazer login:', email);
         
-        // ✅ VERIFICAR SUPABASE ANTES DE USAR
-        if (!window.supabase || typeof window.supabase.from !== 'function') {
+        // ✅ OBTER SUPABASE
+        const sb = getSupabase();
+        
+        if (!sb) {
             console.error('❌ Supabase não está disponível');
             throw new Error('Sistema não inicializado. Recarregue a página.');
         }
         
+        console.log('✅ Usando Supabase para autenticação');
+        
         // Buscar usuário no Supabase
-        const { data: usuarios, error } = await window.supabase
+        const { data: usuarios, error } = await sb
             .from('usuarios')
             .select('*')
             .eq('email', email)
@@ -164,6 +206,8 @@ async function login(email, password) {
             throw new Error('Usuário não encontrado ou inativo');
         }
         
+        console.log('✅ Usuário encontrado:', usuarios.nome);
+        
         // Verificar senha
         const senhaValida = await verificarSenha(password, usuarios.senha_hash);
         
@@ -171,18 +215,21 @@ async function login(email, password) {
             throw new Error('Senha incorreta');
         }
         
+        console.log('✅ Senha válida');
+        
         // Gerar token
         const token = gerarToken();
         
         // Criar sessão no banco (opcional, pode ignorar erro)
         try {
-            await window.supabase
+            await sb
                 .from('sessoes')
                 .insert({
                     usuario_id: usuarios.id,
                     token: token,
                     expira_em: new Date(Date.now() + AUTH_CONFIG.TOKEN_EXPIRY).toISOString()
                 });
+            console.log('✅ Sessão criada no banco');
         } catch (sessionError) {
             console.warn('⚠️ Não foi possível criar sessão no banco:', sessionError);
             // Continuar mesmo assim
@@ -191,6 +238,7 @@ async function login(email, password) {
         // Registrar login (opcional, pode ignorar erro)
         try {
             await registrarAcesso(usuarios.id, 'login', 'dashboard', true);
+            console.log('✅ Login registrado');
         } catch (logError) {
             console.warn('⚠️ Não foi possível registrar acesso:', logError);
             // Continuar mesmo assim
@@ -216,11 +264,12 @@ async function login(email, password) {
 async function logout() {
     try {
         const session = getSession();
+        const sb = getSupabase();
         
-        if (session && window.supabase) {
+        if (session && sb) {
             try {
                 // Invalidar sessão no banco (opcional)
-                await window.supabase
+                await sb
                     .from('sessoes')
                     .update({ ativo: false })
                     .eq('token', session.token);
@@ -365,10 +414,11 @@ async function verificarSenha(senha, hash) {
 }
 
 async function registrarAcesso(usuarioId, acao, pagina = null, sucesso = true, detalhes = null) {
-    if (!window.supabase) return;
+    const sb = getSupabase();
+    if (!sb) return;
     
     try {
-        await window.supabase
+        await sb
             .from('log_acessos')
             .insert({
                 usuario_id: usuarioId,
@@ -397,4 +447,4 @@ window.auth = {
     isAuthenticated: () => currentUser !== null
 };
 
-console.log('✅ auth.js carregado (versão corrigida)!');
+console.log('✅ auth.js carregado (versão com verificação melhorada)!');
