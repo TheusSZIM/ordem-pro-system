@@ -280,9 +280,12 @@ function showToast(message, type = 'info') {
 
 // ============================================
 // EXPORTAR PARA USO GLOBAL
+// ✅ EXPORTAÇÃO DUPLA PARA COMPATIBILIDADE
 // ============================================
 
 window.supabaseClient = supabaseClient;
+window.supabase = supabaseClient;  // ✅ ADICIONADO: Exportar também como window.supabase
+
 window.fetchOrders = fetchOrders;
 window.createOrder = createOrder;
 window.updateOrder = updateOrder;
