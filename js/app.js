@@ -1,237 +1,147 @@
 // ============================================
-// ADICIONAR NO INÍCIO DO app.js
-// Logo após 'use strict';
+// MODIFICAÇÕES PARA app.js - VERSÃO CORRIGIDA
+// ADICIONAR ESTAS FUNÇÕES NO ARQUIVO app.js
 // ============================================
 
+// ✅ ADICIONAR NO TOPO DO app.js (após outras variáveis globais)
+
+// Verificar se sistema de autenticação está disponível
+function isAuthSystemAvailable() {
+    return typeof window.auth !== 'undefined' && window.auth !== null;
+}
+
 // ============================================
-// INICIALIZAÇÃO COM AUTENTICAÇÃO
+// MODIFICAR A FUNÇÃO initApp() OU DOMContentLoaded
+// SUBSTITUIR O CÓDIGO EXISTENTE POR ESTE:
 // ============================================
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     console.log('🚀 Inicializando aplicação...');
     
-    // PASSO 1: Verificar autenticação
-    if (typeof auth !== 'undefined') {
-        auth.init();
+    // ✅ VERIFICAR SE AUTH ESTÁ DISPONÍVEL
+    if (isAuthSystemAvailable()) {
+        console.log('🔐 Sistema de autenticação disponível');
         
-        // PASSO 2: Se autenticado, carregar app
-        if (auth.isAuthenticated()) {
-            console.log('✅ Usuário autenticado, carregando dados...');
-            initializeApp();
-        } else {
-            console.log('⚠️ Usuário não autenticado, aguardando login...');
+        // Inicializar autenticação
+        if (typeof auth.init === 'function') {
+            await auth.init();
+        }
+        
+        // Verificar se está autenticado
+        if (typeof auth.isAuthenticated === 'function' && !auth.isAuthenticated()) {
+            console.log('⚠️ Usuário não autenticado');
+            // Modal de login será exibido pelo auth.js
+            return; // Parar execução
+        }
+        
+        console.log('✅ Usuário autenticado');
+        
+        // Configurar UI autenticada
+        if (typeof setupAuthenticatedUI === 'function') {
+            setupAuthenticatedUI();
         }
     } else {
-        console.warn('⚠️ Sistema de autenticação não carregado');
-        // Carregar app mesmo assim (para desenvolvimento)
-        initializeApp();
+        console.warn('⚠️ Sistema de autenticação não carregado - continuando sem auth');
+        // Continuar sem autenticação (modo desenvolvimento)
+    }
+    
+    // Inicializar tema e funções
+    if (typeof initTheme === 'function') initTheme();
+    if (typeof renderRecentOrders === 'function') renderRecentOrders();
+    if (typeof initCharts === 'function') initCharts();
+    if (typeof animateCounters === 'function') animateCounters();
+    
+    // Atualizar relógio
+    if (typeof updateTime === 'function') {
+        setInterval(updateTime, 1000);
+        updateTime();
+    }
+    
+    // Atualizar dashboard
+    if (typeof updateDashboard === 'function') {
+        updateDashboard();
+        setInterval(updateDashboard, 30000);
     }
 });
 
-// Função principal de inicialização
-function initializeApp() {
-    // Código de inicialização existente
-    if (typeof loadOrders === 'function') {
-        loadOrders();
-    }
-    if (typeof renderDashboardStats === 'function') {
-        renderDashboardStats();
-    }
-    if (typeof updateClock === 'function') {
-        updateClock();
-        setInterval(updateClock, 1000);
-    }
-    if (typeof initCharts === 'function') {
-        initCharts();
-    }
-}
-
-
 // ============================================
-// SUBSTITUIR FUNÇÃO showPage EXISTENTE
-// Adicionar verificação de permissões
-// ============================================
-
-// VERSÃO ORIGINAL (comentar ou deletar):
-/*
-function showPage(pageId) {
-    // ... código existente ...
-}
-*/
-
-// VERSÃO COM PROTEÇÃO:
-function showPage(pageId) {
-    console.log('📄 Navegando para:', pageId);
-    
-    // ✅ VERIFICAÇÃO DE PERMISSÕES
-    const paginasProtegidas = {
-        'gestao': 'gestao',
-        'equipe': 'equipe',
-        'estoque': 'estoque',
-        'entrega': 'entrega'
-    };
-    
-    const permissaoNecessaria = paginasProtegidas[pageId];
-    
-    if (permissaoNecessaria) {
-        // Verificar se está autenticado
-        if (typeof auth === 'undefined' || !auth.isAuthenticated()) {
-            console.warn('⚠️ Usuário não autenticado');
-            if (typeof auth !== 'undefined') {
-                auth.init(); // Mostrar login
-            }
-            return;
-        }
-        
-        // Verificar permissão específica
-        if (!auth.hasPermission(permissaoNecessaria)) {
-            console.warn(`⚠️ Sem permissão para acessar: ${pageId}`);
-            
-            // Mostrar mensagem de acesso negado
-            showAccessDeniedMessage(pageId);
-            return;
-        }
-        
-        console.log(`✅ Permissão concedida para: ${pageId}`);
-    }
-    
-    // ✅ CÓDIGO ORIGINAL DA FUNÇÃO (manter como está)
-    // Esconder todas as páginas
-    document.querySelectorAll('.page').forEach(page => {
-        page.classList.remove('active');
-    });
-    
-    // Mostrar página solicitada
-    const targetPage = document.getElementById(pageId);
-    if (targetPage) {
-        targetPage.classList.add('active');
-        
-        // Atualizar menu ativo
-        document.querySelectorAll('.menu-item').forEach(item => {
-            item.classList.remove('active');
-        });
-        
-        const menuItem = document.querySelector(`[onclick*="${pageId}"]`);
-        if (menuItem) {
-            menuItem.classList.add('active');
-        }
-    } else {
-        console.error(`❌ Página não encontrada: ${pageId}`);
-    }
-}
-
-// Função auxiliar para mostrar acesso negado
-function showAccessDeniedMessage(pageId) {
-    const nomesPages = {
-        'gestao': 'Gestão',
-        'equipe': 'Equipe',
-        'estoque': 'Estoque',
-        'entrega': 'Entrega de Ordem'
-    };
-    
-    const nomePagina = nomesPages[pageId] || pageId;
-    
-    // Criar notificação
-    const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 z-50 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 shadow-lg animate-slide-down';
-    notification.innerHTML = `
-        <div class="flex items-start gap-3">
-            <div class="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-                <span class="material-symbols-rounded text-red-600">lock</span>
-            </div>
-            <div class="flex-1">
-                <h4 class="font-bold text-red-900 dark:text-red-400 mb-1">Acesso Negado</h4>
-                <p class="text-sm text-red-700 dark:text-red-500">
-                    Você não tem permissão para acessar: <strong>${nomePagina}</strong>
-                </p>
-                <p class="text-xs text-red-600 dark:text-red-600 mt-2">
-                    Contate o administrador do sistema para solicitar acesso.
-                </p>
-            </div>
-            <button onclick="this.parentElement.parentElement.remove()" class="text-red-400 hover:text-red-600">
-                <span class="material-symbols-rounded">close</span>
-            </button>
-        </div>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    // Remover após 5 segundos
-    setTimeout(() => {
-        notification.remove();
-    }, 5000);
-}
-
-
-// ============================================
-// FUNÇÃO AUXILIAR: Atualizar UI do Usuário
-// Adicionar no final do arquivo
+// ADICIONAR FUNÇÃO setupAuthenticatedUI
 // ============================================
 
 function setupAuthenticatedUI() {
     console.log('🎨 Configurando UI autenticada...');
     
-    if (!auth || !auth.isAuthenticated()) {
-        console.warn('⚠️ Usuário não autenticado');
+    // ✅ VERIFICAR SE AUTH ESTÁ DISPONÍVEL
+    if (!isAuthSystemAvailable()) {
+        console.warn('⚠️ auth não disponível para configurar UI');
         return;
     }
     
-    const user = auth.getCurrentUser();
-    if (!user) return;
+    // Obter usuário atual
+    const currentUser = auth.getCurrentUser();
     
-    // Atualizar nome do usuário
+    if (!currentUser) {
+        console.warn('⚠️ Nenhum usuário autenticado');
+        return;
+    }
+    
+    console.log('👤 Usuário atual:', currentUser.nome);
+    
+    // Atualizar informações do usuário no header (se existir)
     const userNameElement = document.getElementById('user-name');
-    if (userNameElement) {
-        userNameElement.textContent = user.nome;
-    }
-    
-    // Atualizar foto do usuário
-    const userPhotoElement = document.getElementById('user-photo');
-    if (userPhotoElement) {
-        const photoUrl = user.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nome)}&background=8b5cf6&color=fff`;
-        userPhotoElement.src = photoUrl;
-    }
-    
-    // Atualizar cargo
     const userRoleElement = document.getElementById('user-role');
-    if (userRoleElement) {
-        const cargos = {
-            1: 'Operador',
-            2: 'Coordenador',
-            3: 'Gestor',
-            4: 'Administrador'
-        };
-        userRoleElement.textContent = user.cargo || cargos[user.nivel_acesso] || 'Usuário';
+    const userAvatarElement = document.getElementById('user-avatar');
+    
+    if (userNameElement) {
+        userNameElement.textContent = currentUser.nome;
     }
     
-    // Esconder/mostrar itens de menu baseado em permissões
-    const menuItems = document.querySelectorAll('[data-permission]');
-    menuItems.forEach(item => {
-        const permission = item.getAttribute('data-permission');
-        if (permission) {
-            if (auth.hasPermission(permission)) {
-                item.style.display = '';
-            } else {
-                item.style.display = 'none';
-            }
-        }
-    });
+    if (userRoleElement) {
+        userRoleElement.textContent = currentUser.cargo || getNivelNome(currentUser.nivel_acesso);
+    }
     
-    console.log('✅ UI configurada para:', user.nome);
+    if (userAvatarElement && currentUser.foto_url) {
+        userAvatarElement.src = currentUser.foto_url;
+    }
+    
+    // Configurar botão de logout (se existir)
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (confirm('Deseja realmente sair do sistema?')) {
+                auth.logout();
+            }
+        });
+    }
+    
+    console.log('✅ UI autenticada configurada');
 }
 
+// ============================================
+// ADICIONAR FUNÇÃO AUXILIAR
+// ============================================
+
+function getNivelNome(nivel) {
+    switch (nivel) {
+        case 1: return 'Operador';
+        case 2: return 'Coordenador';
+        case 3: return 'Gestor';
+        case 4: return 'Administrador';
+        default: return 'Usuário';
+    }
+}
 
 // ============================================
-// FUNÇÃO DE NOTIFICAÇÃO
-// Se não existir, adicionar
+// ADICIONAR FUNÇÃO showNotification (se não existir)
 // ============================================
 
 function showNotification(message, type = 'info') {
     const colors = {
-        success: 'emerald',
-        error: 'red',
-        warning: 'amber',
-        info: 'blue'
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        warning: 'bg-amber-500',
+        info: 'bg-blue-500'
     };
     
     const icons = {
@@ -241,24 +151,18 @@ function showNotification(message, type = 'info') {
         info: 'info'
     };
     
-    const color = colors[type] || 'blue';
-    const icon = icons[type] || 'info';
-    
     const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 z-50 bg-${color}-50 dark:bg-${color}-900/20 border border-${color}-200 dark:border-${color}-800 rounded-xl p-4 shadow-lg animate-slide-down`;
+    notification.className = `fixed top-20 right-4 ${colors[type]} text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-3 animate-slide-in-right z-50`;
     notification.innerHTML = `
-        <div class="flex items-center gap-3">
-            <span class="material-symbols-rounded text-${color}-600">${icon}</span>
-            <span class="text-sm text-${color}-900 dark:text-${color}-400">${message}</span>
-            <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-${color}-400 hover:text-${color}-600">
-                <span class="material-symbols-rounded text-sm">close</span>
-            </button>
-        </div>
+        <span class="material-symbols-rounded">${icons[type]}</span>
+        <span>${message}</span>
     `;
     
     document.body.appendChild(notification);
     
     setTimeout(() => {
-        notification.remove();
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => notification.remove(), 300);
     }, 3000);
 }
