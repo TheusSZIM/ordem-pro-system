@@ -342,6 +342,20 @@ input[type=range]::-webkit-slider-runnable-track {
 .animate-spin-slow {
     animation: spin 12s linear infinite;
 }
+/* ── Evita flash dos círculos hardcoded ── */
+#progress-a-separar,
+#progress-em-separacao,
+#progress-concluidas {
+    min-width: 72px;
+    min-height: 72px;
+}
+
+/* Enquanto o container estiver vazio, fica invisível */
+#progress-a-separar:empty,
+#progress-em-separacao:empty,
+#progress-concluidas:empty {
+    visibility: hidden;
+}
 
 .animate-float {
     animation: float 6s ease-in-out infinite;
