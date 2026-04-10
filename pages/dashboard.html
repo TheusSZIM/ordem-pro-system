@@ -37,14 +37,8 @@
                     <p class="text-sm font-medium text-slate-500 dark:text-slate-400">A Separar</p>
                     <h3 class="text-3xl font-bold text-slate-900 dark:text-white mt-1" id="stat-a-separar">0</h3>
                 </div>
-                <!-- ✅ ADICIONADO ID AQUI -->
-                <div class="relative w-14 h-14" id="progress-a-separar">
-                    <svg class="w-full h-full transform -rotate-90">
-                        <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" stroke-width="4" class="text-slate-100 dark:text-slate-800"></circle>
-                        <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-dasharray="150.72" stroke-dashoffset="60.29" class="text-amber-500 progress-ring-circle"></circle>
-                    </svg>
-                    <span class="absolute inset-0 flex items-center justify-center text-xs font-bold text-amber-600">60%</span>
-                </div>
+                <!-- Container vazio — preenchido pelo dashboard-stats.js -->
+                <div id="progress-a-separar" style="min-width:72px;min-height:72px;visibility:hidden;"></div>
             </div>
             <div class="flex items-center gap-2 text-sm">
                 <span class="flex items-center gap-1 text-emerald-600 font-medium">
@@ -62,14 +56,8 @@
                     <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Em Separação</p>
                     <h3 class="text-3xl font-bold text-slate-900 dark:text-white mt-1" id="stat-em-separacao">0</h3>
                 </div>
-                <!-- ✅ ADICIONADO ID AQUI -->
-                <div class="relative w-14 h-14" id="progress-em-separacao">
-                    <svg class="w-full h-full transform -rotate-90">
-                        <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" stroke-width="4" class="text-slate-100 dark:text-slate-800"></circle>
-                        <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-dasharray="150.72" stroke-dashoffset="113.04" class="text-blue-500 progress-ring-circle"></circle>
-                    </svg>
-                    <span class="absolute inset-0 flex items-center justify-center text-xs font-bold text-blue-600">25%</span>
-                </div>
+                <!-- Container vazio — preenchido pelo dashboard-stats.js -->
+                <div id="progress-em-separacao" style="min-width:72px;min-height:72px;visibility:hidden;"></div>
             </div>
             <div class="flex items-center gap-2 text-sm">
                 <div class="flex -space-x-2">
@@ -87,14 +75,8 @@
                     <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Concluídas Hoje</p>
                     <h3 class="text-3xl font-bold text-slate-900 dark:text-white mt-1" id="stat-concluidas-hoje">0</h3>
                 </div>
-                <!-- ✅ ADICIONADO ID AQUI -->
-                <div class="relative w-14 h-14" id="progress-concluidas">
-                    <svg class="w-full h-full transform -rotate-90">
-                        <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" stroke-width="4" class="text-slate-100 dark:text-slate-800"></circle>
-                        <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-dasharray="150.72" stroke-dashoffset="90.43" class="text-emerald-500 progress-ring-circle"></circle>
-                    </svg>
-                    <span class="absolute inset-0 flex items-center justify-center text-xs font-bold text-emerald-600">40%</span>
-                </div>
+                <!-- Container vazio — preenchido pelo dashboard-stats.js -->
+                <div id="progress-concluidas" style="min-width:72px;min-height:72px;visibility:hidden;"></div>
             </div>
             <div class="flex items-center gap-2 text-sm">
                 <span class="flex items-center gap-1 text-emerald-600 font-medium">
@@ -147,8 +129,9 @@
                 <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">Distribuição</h3>
                 <div class="h-48 relative">
                     <canvas id="distributionChart"></canvas>
+                    <!-- Total atualizado pelo JS via stat-total -->
                     <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span class="text-2xl font-bold text-slate-900 dark:text-white">61</span>
+                        <span class="text-2xl font-bold text-slate-900 dark:text-white" id="distribution-total">0</span>
                         <span class="text-xs text-slate-500">Total</span>
                     </div>
                 </div>
