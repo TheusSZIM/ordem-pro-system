@@ -382,57 +382,58 @@
         }
 
         // Carregar todos os componentes
-        document.addEventListener('DOMContentLoaded', async () => {
-            // ✅ PASSO 1: Iniciar autenticação PRIMEIRO
-            console.log('🚀 Inicializando aplicação...');
-            
-            if (typeof auth !== 'undefined') {
-                auth.init();
-                
-                // Se não autenticado, parar aqui e mostrar login
-                if (!auth.isAuthenticated()) {
-                    console.log('⚠️ Usuário não autenticado, aguardando login...');
-                    return; // Não carregar componentes até fazer login
-                }
-            }
-            
-            // ✅ PASSO 2: Carregar componentes (apenas se autenticado)
-            console.log('✅ Usuário autenticado, carregando componentes...');
-            
-            await Promise.all([
-                loadComponent('components/header.html', 'header-container'),
-                loadComponent('components/sidebar.html', 'sidebar-container'),
-                loadComponent('components/modals.html', 'modals-container'),
-                loadComponent('pages/dashboard.html', 'dashboard-container'),
-                loadComponent('pages/kanban.html', 'kanban-container'),
-                loadComponent('pages/ordens.html', 'ordens-container'),
-                loadComponent('pages/entrega.html', 'entrega-container'),
-                loadComponent('pages/equipe.html', 'equipe-container'),
-                loadComponent('pages/estoque.html', 'estoque-container')
-            ]);
+document.addEventListener('DOMContentLoaded', async () => {
+    // ✅ PASSO 1: Iniciar autenticação PRIMEIRO
+    console.log('🚀 Inicializando aplicação...');
+    
+    if (typeof auth !== 'undefined') {
+        await auth.init();  // ✅ AGUARDAR completar
+        
+        // Se não autenticado, parar aqui e mostrar login
+        if (!auth.isAuthenticated()) {
+            console.log('⚠️ Usuário não autenticado, aguardando login...');
+            return; // Não carregar componentes até fazer login
+        }
+    }
+    
+    // ✅ PASSO 2: Carregar componentes (apenas se autenticado)
+    console.log('✅ Usuário autenticado, carregando componentes...');
+    
+    await Promise.all([
+        loadComponent('components/header.html', 'header-container'),
+        loadComponent('components/sidebar.html', 'sidebar-container'),
+        loadComponent('components/modals.html', 'modals-container'),
+        loadComponent('pages/dashboard.html', 'dashboard-container'),
+        loadComponent('pages/kanban.html', 'kanban-container'),
+        loadComponent('pages/ordens.html', 'ordens-container'),
+        loadComponent('pages/entrega.html', 'entrega-container'),
+        loadComponent('pages/equipe.html', 'equipe-container'),
+        loadComponent('pages/estoque.html', 'estoque-container')
+    ]);
 
-            // ✅ PASSO 3: Inicializar aplicação após carregar componentes
-            setTimeout(() => {
-                if (typeof initTheme === 'function') initTheme();
-                if (typeof renderRecentOrders === 'function') renderRecentOrders();
-                if (typeof initCharts === 'function') initCharts();
-                if (typeof animateCounters === 'function') animateCounters();
-                if (typeof updateTime === 'function') {
-                    setInterval(updateTime, 1000);
-                    updateTime();
-                }
-                
-                // Atualizar dashboard
-                if (typeof updateDashboard === 'function') {
-                    updateDashboard();
-                    setInterval(updateDashboard, 30000);
-                }
-                
-                // ✅ PASSO 4: Configurar UI autenticada
-                if (typeof setupAuthenticatedUI === 'function') {
-                    setupAuthenticatedUI();
-                }
-            }, 100);
+    // ✅ PASSO 3: Inicializar aplicação após carregar componentes
+    setTimeout(() => {
+        if (typeof initTheme === 'function') initTheme();
+        if (typeof renderRecentOrders === 'function') renderRecentOrders();
+        if (typeof initCharts === 'function') initCharts();
+        if (typeof animateCounters === 'function') animateCounters();
+        if (typeof updateTime === 'function') {
+            setInterval(updateTime, 1000);
+            updateTime();
+        }
+        
+        // Atualizar dashboard
+        if (typeof updateDashboard === 'function') {
+            updateDashboard();
+            setInterval(updateDashboard, 30000);
+        }
+        
+        // ✅ PASSO 4: Configurar UI autenticada
+        if (typeof setupAuthenticatedUI === 'function') {
+            setupAuthenticatedUI();
+        }
+    }, 100);
+    
         });
     </script>
 </body>
