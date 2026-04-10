@@ -1,6 +1,6 @@
 // ============================================
-// DASHBOARD STATS - CÍRCULOS CORRIGIDOS
-// Usa SVG com transform-origin correto
+// DASHBOARD STATS - VERSÃO FINAL
+// Círculos SVG alinhados + sem flash inicial
 // ============================================
 
 function renderDashboardStats() {
@@ -97,15 +97,19 @@ function drawCircle(id, value, total, color) {
 
 // ─── inicialização ─────────────────────────────────────────────────────────
 
-// Expõe globalmente
-window.renderDashboardStats = renderDashboardStats;
+// Limpa círculos hardcoded ANTES dos dados chegarem (evita o flash)
+function clearCircles() {
+    ['progress-a-separar','progress-em-separacao','progress-concluidas'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = '';
+    });
+}
 
-// Chama quando os dados chegarem
 document.addEventListener('DOMContentLoaded', () => {
-    // Tenta após 1 s (aguarda loadOrders)
-    setTimeout(renderDashboardStats, 1000);
-    // e repete a cada 30 s
+    setTimeout(clearCircles, 0);          // remove HTML antigo imediatamente
+    setTimeout(renderDashboardStats, 1200); // renderiza com dados reais
     setInterval(renderDashboardStats, 30000);
 });
 
-console.log('✅ dashboard-stats.js carregado (círculos SVG corrigidos)!');
+window.renderDashboardStats = renderDashboardStats;
+console.log('✅ dashboard-stats.js — círculos SVG + sem flash!');
