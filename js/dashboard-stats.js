@@ -1,6 +1,5 @@
 // ============================================
-// DASHBOARD STATS - VERSÃO FINAL
-// Círculos SVG alinhados + sem flash inicial
+// DASHBOARD STATS — skeleton → reveal com animação
 // ============================================
 
 function renderDashboardStats() {
@@ -21,7 +20,13 @@ function renderDashboardStats() {
         return d >= hoje;
     }).length;
 
-    // Números nos cards e no centro do gráfico rosca
+    // Substitui skeletons pelos números reais (com pop animation)
+    revealNumber('stat-a-separar-wrap',       aSeparar,       'text-slate-900 dark:text-white');
+    revealNumber('stat-em-separacao-wrap',    emSeparacao,    'text-slate-900 dark:text-white');
+    revealNumber('stat-concluidas-hoje-wrap', concluidasHoje, 'text-slate-900 dark:text-white');
+    revealNumber('stat-total-wrap',           total,          'text-white');
+
+    // IDs legacy ainda usados por outros scripts
     setText('stat-a-separar',       aSeparar);
     setText('stat-em-separacao',    emSeparacao);
     setText('stat-concluidas-hoje', concluidasHoje);
@@ -41,10 +46,21 @@ function setText(id, value) {
     if (el) el.textContent = value;
 }
 
+/** Substitui o skeleton de número por um <h3> real com animação pop */
+function revealNumber(wrapId, value, colorClass) {
+    const wrap = document.getElementById(wrapId);
+    if (!wrap) return;
+    if (wrap.querySelector('h3')) {
+        // já revelado — só atualiza o texto
+        wrap.querySelector('h3').textContent = value;
+        return;
+    }
+    wrap.innerHTML = `<h3 class="text-3xl font-bold mt-1 num-pop ${colorClass}">${value}</h3>`;
+}
+
 /**
- * Desenha (ou atualiza) um círculo de progresso SVG.
- * rotate(-90 cx cy) garante que o arco começa no TOPO (12h), sentido horário.
- * O container começa com visibility:hidden no HTML; tornamos visível aqui.
+ * Substitui skeleton circular pelo arco SVG.
+ * rotate(-90 cx cy) = arco começa no TOPO (12h), sentido horário.
  */
 function drawCircle(id, value, total, color) {
     const container = document.getElementById(id);
@@ -55,44 +71,51 @@ function drawCircle(id, value, total, color) {
     const CX     = 36;
     const CY     = 36;
     const SW     = 5;
-    const CIRC   = 2 * Math.PI * R;          // ≈ 175.9
-    const offset = CIRC * (1 - pct / 100);   // dashoffset
+    const CIRC   = 2 * Math.PI * R;
+    const offset = CIRC * (1 - pct / 100);
 
     let arc = container.querySelector('.prog-arc');
     let txt = container.querySelector('.prog-txt');
 
     if (!arc) {
-        // Cria estrutura uma única vez
+        // Remove classe skeleton e constrói SVG
+        container.className = '';
+        container.style.cssText = '';
         container.innerHTML = `
           <div style="position:relative;width:72px;height:72px;
-                      display:flex;align-items:center;justify-content:center;">
+                      display:flex;align-items:center;justify-content:center;
+                      animation:card-in .5s cubic-bezier(.16,1,.3,1) both;">
             <svg width="72" height="72" viewBox="0 0 72 72"
                  style="position:absolute;inset:0;overflow:visible;">
-              <!-- trilha cinza -->
               <circle cx="${CX}" cy="${CY}" r="${R}"
                 fill="none" stroke="rgba(148,163,184,0.2)"
                 stroke-width="${SW}" stroke-linecap="round"/>
-              <!-- arco — rotate(-90 cx cy) = começa no topo -->
               <circle class="prog-arc"
                 cx="${CX}" cy="${CY}" r="${R}"
                 fill="none" stroke="${color}"
                 stroke-width="${SW}" stroke-linecap="round"
                 stroke-dasharray="${CIRC}"
-                stroke-dashoffset="${offset}"
+                stroke-dashoffset="${CIRC}"
                 transform="rotate(-90 ${CX} ${CY})"
-                style="transition:stroke-dashoffset .6s ease;"/>
+                style="transition:stroke-dashoffset .8s cubic-bezier(.4,0,.2,1);"/>
             </svg>
             <span class="prog-txt"
               style="position:relative;z-index:1;
                      font-size:11px;font-weight:700;
-                     color:${color};letter-spacing:-.3px;">
+                     color:${color};letter-spacing:-.3px;
+                     opacity:0;transition:opacity .4s .6s;">
               ${pct}%
             </span>
           </div>`;
-        // Revela o container (estava hidden para evitar flash)
-        container.style.visibility = 'visible';
+
+        // Dispara animação do arco após 1 frame
+        requestAnimationFrame(() => {
+            const a = container.querySelector('.prog-arc');
+            const t = container.querySelector('.prog-txt');
+            if (a) a.setAttribute('stroke-dashoffset', offset);
+            if (t) t.style.opacity = '1';
+        });
     } else {
-        // Só atualiza valores, sem recriar o DOM
         arc.setAttribute('stroke-dasharray',  CIRC);
         arc.setAttribute('stroke-dashoffset', offset);
         arc.style.stroke = color;
@@ -106,10 +129,8 @@ function drawCircle(id, value, total, color) {
 window.renderDashboardStats = renderDashboardStats;
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Renderiza após os dados do Supabase chegarem (~1.2 s)
     setTimeout(renderDashboardStats, 1200);
-    // Atualiza a cada 30 s
     setInterval(renderDashboardStats, 30000);
 });
 
-console.log('✅ dashboard-stats.js — SVG alinhado + sem flash!');
+console.log('✅ dashboard-stats.js — skeleton + reveal animado!');
