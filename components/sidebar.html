@@ -17,16 +17,13 @@
 }
 #sidebar.sb-mini { width: 76px !important; }
 
-/* ─── Botão recolher — fixo, acompanha a borda da sidebar ─── */
+/* Botão recolher — fixo na borda da sidebar */
 #sb-tab {
     position: fixed;
-    top: 50%;
-    left: 280px; /* atualizado pelo JS */
+    top: 50%; left: 280px;
     transform: translateY(-50%);
-    z-index: 42;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
+    z-index: 42; cursor: pointer;
+    display: flex; align-items: center;
     transition: left 380ms cubic-bezier(.65,0,.35,1);
 }
 #sb-pill {
@@ -39,11 +36,7 @@
     box-shadow: 4px 0 14px rgba(0,0,0,.5);
     transition: background 200ms, border-color 200ms, width 200ms;
 }
-#sb-tab:hover #sb-pill {
-    background: rgba(99,102,241,.2);
-    border-color: rgba(99,102,241,.65);
-    width: 26px;
-}
+#sb-tab:hover #sb-pill { background: rgba(99,102,241,.2); border-color: rgba(99,102,241,.65); width: 26px; }
 #sb-pill .material-symbols-rounded {
     font-size: 16px; color: #818cf8;
     font-variation-settings: 'wght' 700;
@@ -53,151 +46,108 @@
 #sb-tab:hover #sb-pill .material-symbols-rounded { color: #c7d2fe; }
 #sb-tab.mini-tab #sb-pill .material-symbols-rounded { transform: rotate(180deg); }
 
-/* ─── Nav ─── */
+/* Nav */
 #sidebar nav {
     flex: 1; overflow-y: auto; overflow-x: hidden;
-    padding: 16px 12px 24px;
-    scrollbar-width: none;
+    padding: 16px 12px 24px; scrollbar-width: none;
 }
 #sidebar nav::-webkit-scrollbar { display: none; }
 
-/* ─── Labels ─── */
 .sb-label {
-    font-size: 10px; font-weight: 800;
-    letter-spacing: .12em; text-transform: uppercase;
+    font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
     color: #3d5270; padding: 20px 10px 6px;
-    white-space: nowrap; overflow: hidden;
-    opacity: 1; max-height: 52px;
+    white-space: nowrap; overflow: hidden; opacity: 1; max-height: 52px;
     transition: opacity 280ms, max-height 380ms cubic-bezier(.65,0,.35,1),
                 padding-top 380ms, padding-bottom 380ms;
 }
 #sidebar.sb-mini .sb-label { opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; }
 
-/* ─── Itens ─── */
 .nav-item {
-    display: flex; align-items: center; gap: 14px;
-    padding: 12px 14px; border-radius: 14px; cursor: pointer;
-    color: #64748b; white-space: nowrap;
+    display: flex; align-items: center; gap: 14px; padding: 12px 14px;
+    border-radius: 14px; cursor: pointer; color: #64748b; white-space: nowrap;
     transition: background 180ms, color 180ms,
-                padding 380ms cubic-bezier(.65,0,.35,1),
-                gap 380ms cubic-bezier(.65,0,.35,1);
+                padding 380ms cubic-bezier(.65,0,.35,1), gap 380ms cubic-bezier(.65,0,.35,1);
     position: relative; margin-bottom: 4px;
-    border: none; background: transparent;
-    width: 100%; text-align: left; font-family: inherit;
+    border: none; background: transparent; width: 100%; text-align: left; font-family: inherit;
 }
 .nav-item:hover { background: rgba(99,102,241,.1); color: #a5b4fc; }
 .nav-item.active-nav {
-    background: linear-gradient(135deg,rgba(99,102,241,.22),rgba(99,102,241,.06));
-    color: #818cf8;
+    background: linear-gradient(135deg,rgba(99,102,241,.22),rgba(99,102,241,.06)); color: #818cf8;
 }
 .nav-item.active-nav::before {
-    content: ''; position: absolute; left: 0; top: 50%;
-    transform: translateY(-50%);
+    content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
     width: 3px; height: 26px;
-    background: linear-gradient(180deg,#a5b4fc,#6366f1);
-    border-radius: 0 4px 4px 0;
+    background: linear-gradient(180deg,#a5b4fc,#6366f1); border-radius: 0 4px 4px 0;
 }
 .nav-item .material-symbols-rounded {
     font-size: 23px; flex-shrink: 0;
     font-variation-settings: 'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24;
     transition: transform 180ms, font-variation-settings 200ms;
 }
-.nav-item.active-nav .material-symbols-rounded {
-    font-variation-settings: 'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24;
-}
+.nav-item.active-nav .material-symbols-rounded { font-variation-settings: 'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24; }
 .nav-item:hover .material-symbols-rounded { transform: scale(1.1); }
 
-/* Texto — GPU: translateX + opacity */
 .nav-txt {
-    display: flex; align-items: center; gap: 10px;
-    overflow: hidden; flex: 1;
+    display: flex; align-items: center; gap: 10px; overflow: hidden; flex: 1;
     opacity: 1; transform: translateX(0);
     transition: opacity 260ms, transform 380ms cubic-bezier(.65,0,.35,1);
 }
-#sidebar.sb-mini .nav-txt {
-    opacity: 0; transform: translateX(-14px); pointer-events: none;
-}
+#sidebar.sb-mini .nav-txt { opacity: 0; transform: translateX(-14px); pointer-events: none; }
 .nav-name { font-size: 14.5px; font-weight: 500; overflow: hidden; white-space: nowrap; }
 .nav-item.active-nav .nav-name { font-weight: 600; }
 .nav-badge {
     font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 20px;
-    background: rgba(99,102,241,.25); color: #818cf8; flex-shrink: 0;
-    transition: opacity 260ms;
+    background: rgba(99,102,241,.25); color: #818cf8; flex-shrink: 0; transition: opacity 260ms;
 }
 #sidebar.sb-mini .nav-badge { opacity: 0; }
 
-/* ─── Mini: centra ícones ─── */
 #sidebar.sb-mini .nav-item { justify-content: center; padding: 12px 0; gap: 0; }
 #sidebar.sb-mini .nav-item.active-nav::before { height: 20px; }
-
-/* Tooltip mini */
 #sidebar.sb-mini .nav-item::after {
-    content: attr(data-label);
-    position: absolute; left: 82px; top: 50%;
+    content: attr(data-label); position: absolute; left: 82px; top: 50%;
     transform: translateY(-50%) translateX(-6px);
-    background: #1e293b; color: #e2e8f0;
-    font-size: 13px; font-weight: 600;
-    padding: 8px 14px; border-radius: 10px;
-    border: 1px solid rgba(148,163,184,.12);
-    box-shadow: 0 6px 22px rgba(0,0,0,.55);
-    opacity: 0; pointer-events: none;
-    transition: opacity 160ms, transform 160ms;
-    z-index: 100; white-space: nowrap;
+    background: #1e293b; color: #e2e8f0; font-size: 13px; font-weight: 600;
+    padding: 8px 14px; border-radius: 10px; border: 1px solid rgba(148,163,184,.12);
+    box-shadow: 0 6px 22px rgba(0,0,0,.55); opacity: 0; pointer-events: none;
+    transition: opacity 160ms, transform 160ms; z-index: 100; white-space: nowrap;
 }
-#sidebar.sb-mini .nav-item:hover::after {
-    opacity: 1; transform: translateY(-50%) translateX(0);
-}
+#sidebar.sb-mini .nav-item:hover::after { opacity: 1; transform: translateY(-50%) translateX(0); }
 
-/* Mobile */
 @media (max-width: 1023px) {
-    #sidebar {
-        width: 280px !important;
-        transform: translateX(-100%) !important;
-        transition: transform 380ms cubic-bezier(.65,0,.35,1) !important;
-    }
+    #sidebar { width: 280px !important; transform: translateX(-100%) !important; transition: transform 380ms cubic-bezier(.65,0,.35,1) !important; }
     #sidebar.mobile-open { transform: translateX(0) !important; }
     #sb-tab { display: none !important; }
 }
 </style>
 
-<!-- Botão fora da sidebar -->
 <div id="sb-tab" onclick="toggleSidebar()" title="Recolher / Expandir">
-    <div id="sb-pill">
-        <span class="material-symbols-rounded">chevron_left</span>
-    </div>
+    <div id="sb-pill"><span class="material-symbols-rounded">chevron_left</span></div>
 </div>
 
 <aside id="sidebar">
     <nav>
         <div class="sb-label">Principal</div>
-
         <button class="nav-item active-nav" data-page="dashboard" data-label="Dashboard" onclick="showPage('dashboard')">
             <span class="material-symbols-rounded">dashboard</span>
             <span class="nav-txt"><span class="nav-name">Dashboard</span><span class="nav-badge">Novo</span></span>
         </button>
-
         <button class="nav-item" data-page="kanban" data-label="Quadro Kanban" onclick="showPage('kanban')">
             <span class="material-symbols-rounded">view_kanban</span>
             <span class="nav-txt"><span class="nav-name">Quadro Kanban</span></span>
         </button>
-
         <button class="nav-item" data-page="ordens" data-label="Lista de Ordens" onclick="showPage('ordens')">
             <span class="material-symbols-rounded">receipt_long</span>
             <span class="nav-txt"><span class="nav-name">Lista de Ordens</span></span>
         </button>
-
         <div class="sb-label">Gestão</div>
-
         <button class="nav-item" data-page="equipe" data-label="Equipe" onclick="showPage('equipe')">
             <span class="material-symbols-rounded">group</span>
             <span class="nav-txt"><span class="nav-name">Equipe</span></span>
         </button>
-
         <button class="nav-item" data-page="estoque" data-label="Estoque" onclick="showPage('estoque')">
             <span class="material-symbols-rounded">inventory_2</span>
             <span class="nav-txt"><span class="nav-name">Estoque</span></span>
         </button>
-
         <button class="nav-item" data-page="entrega" data-label="Entrega de Ordem" onclick="showPage('entrega')">
             <span class="material-symbols-rounded">local_shipping</span>
             <span class="nav-txt"><span class="nav-name">Entrega de Ordem</span></span>
@@ -207,37 +157,39 @@
 
 <script>
 (function () {
-    const LS     = 'sb_mini';
-    const W_OPEN = 280;
-    const W_MINI = 76;
+    const LS = 'sb_mini';
+    const W_OPEN = 280, W_MINI = 76;
     let mini = localStorage.getItem(LS) === 'true';
 
-    /* ── Injeta <style> no <head> para controlar margem de TODO o conteúdo ── */
-    const styleEl = document.createElement('style');
-    styleEl.id = 'sb-dynamic-style';
-    document.head.appendChild(styleEl);
+    /* Encontra o wrapper de conteúdo principal */
+    function getContentEl() {
+        // Tenta por ID primeiro
+        const byId = document.getElementById('main-content');
+        if (byId) return byId;
 
-    function getW() { return mini ? W_MINI : W_OPEN; }
+        // Procura o primeiro filho de body que não seja fixo
+        const bodies = Array.from(document.body.children);
+        return bodies.find(el => {
+            const s = window.getComputedStyle(el);
+            return s.position !== 'fixed' && s.position !== 'absolute'
+                && el.id !== 'sb-tab' && el.id !== 'sidebar';
+        }) || null;
+    }
 
-    function updateStyles() {
-        const w = getW();
-        /* Aplica margem a qualquer wrapper de conteúdo existente */
-        styleEl.textContent = `
-            #main-content,
-            .main-content,
-            main,
-            .lg\\:ml-64,
-            [class*="ml-64"] {
-                margin-left: ${w}px !important;
-                transition: margin-left 380ms cubic-bezier(.65,0,.35,1) !important;
-            }
-        `;
+    function applyMargin(instant) {
+        const el = getContentEl();
+        if (!el) return;
+        const w = mini ? W_MINI : W_OPEN;
+        if (instant) el.style.transition = 'none';
+        el.style.marginLeft = w + 'px';
+        if (instant) requestAnimationFrame(() => { el.style.transition = ''; });
+        else el.style.transition = 'margin-left 380ms cubic-bezier(.65,0,.35,1)';
     }
 
     function updateTab() {
         const tab = document.getElementById('sb-tab');
         if (!tab) return;
-        tab.style.left = getW() + 'px';
+        tab.style.left = (mini ? W_MINI : W_OPEN) + 'px';
         tab.classList.toggle('mini-tab', mini);
     }
 
@@ -245,24 +197,11 @@
         const sb  = document.getElementById('sidebar');
         const tab = document.getElementById('sb-tab');
         if (!sb) return;
-
-        if (instant) {
-            /* Sem transição na carga inicial */
-            if (styleEl) styleEl.textContent = ''; // limpa antes
-            sb.style.transition  = 'none';
-            if (tab) tab.style.transition = 'none';
-        }
-
+        if (instant) { sb.style.transition = 'none'; if (tab) tab.style.transition = 'none'; }
         sb.classList.toggle('sb-mini', mini);
-        updateStyles();
         updateTab();
-
-        if (instant) {
-            requestAnimationFrame(() => {
-                sb.style.transition  = '';
-                if (tab) tab.style.transition = '';
-            });
-        }
+        applyMargin(instant);
+        if (instant) requestAnimationFrame(() => { sb.style.transition = ''; if (tab) tab.style.transition = ''; });
     }
 
     window.toggleSidebar = function () {
@@ -278,14 +217,18 @@
     const _orig = window.showPage;
     window.showPage = function (page) {
         if (_orig) _orig(page);
-        document.querySelectorAll('.nav-item[data-page]').forEach(el => {
-            el.classList.toggle('active-nav', el.dataset.page === page);
-        });
-        if (window.innerWidth < 1024) {
+        document.querySelectorAll('.nav-item[data-page]').forEach(el =>
+            el.classList.toggle('active-nav', el.dataset.page === page));
+        if (window.innerWidth < 1024)
             document.getElementById('sidebar')?.classList.remove('mobile-open');
-        }
     };
 
+    /* Aplica imediatamente e também após o DOM estar pronto */
     apply(true);
+    document.addEventListener('DOMContentLoaded', () => apply(true));
+
+    /* Reaplica quando componentes são carregados (loadComponent injeta HTML) */
+    const obs = new MutationObserver(() => applyMargin(true));
+    obs.observe(document.body, { childList: true, subtree: false });
 })();
 </script>
