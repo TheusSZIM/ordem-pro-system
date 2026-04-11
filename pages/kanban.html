@@ -1,23 +1,282 @@
 <!-- ============================================
-     CONTROLE DE ORDENS PRO - KANBAN PAGE
+     KANBAN — PRATELEIRA F · ALM
+     Mapa visual fiel ao layout físico
      ============================================ -->
+<style>
+/* ── Layout da grade ── */
+.shelf-wrap   { overflow-x: auto; }
+.shelf-table  { border-collapse: separate; border-spacing: 3px; min-width: max-content; }
 
-<!-- KANBAN PAGE -->
-<div id="kanban" class="page hidden p-6 h-[calc(100vh-4rem)] overflow-hidden">
-    <div class="flex items-center justify-between mb-6 animate-fade-in">
+/* ── Células de nível (label esq.) ── */
+.nivel-cell {
+    width: 42px; min-width: 42px;
+    font-size: 11px; font-weight: 700; color: #64748b;
+    text-align: center; vertical-align: middle;
+    border-right: 2px solid rgba(100,116,139,.2);
+    padding-right: 4px; user-select: none;
+}
+
+/* ── Vaga base ── */
+.vaga {
+    width: 62px; min-width: 62px; height: 62px;
+    border-radius: 7px;
+    border: 1.5px solid transparent;
+    padding: 4px 5px;
+    font-size: 9.5px;
+    position: relative;
+    overflow: visible;
+    vertical-align: top;
+    transition: transform .15s, box-shadow .15s, opacity .2s;
+    cursor: default;
+}
+.vaga.ocupada { cursor: pointer; }
+.vaga.ocupada:hover { transform: scale(1.08); z-index: 20; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+
+/* ── Vagas por modelo — fundo sutil ── */
+.m-firefly      { background: rgba(147,197,253,.12); border-color: rgba(147,197,253,.25); }
+.m-gmasp        { background: rgba(134,239,172,.12); border-color: rgba(134,239,172,.25); }
+.m-gmturbo      { background: rgba(94,234,212,.12);  border-color: rgba(94,234,212,.25);  }
+.m-frontcover   { background: rgba(103,232,249,.12); border-color: rgba(103,232,249,.25); }
+.m-renault      { background: rgba(129,140,248,.12); border-color: rgba(129,140,248,.25); }
+.m-hyundai      { background: rgba(251,191,36,.12);  border-color: rgba(251,191,36,.3);   }
+.m-prime        { background: rgba(239,68,68,.12);   border-color: rgba(239,68,68,.3);    }
+.m-man          { background: rgba(59,130,246,.15);  border-color: rgba(59,130,246,.3);   }
+.m-outros       { background: rgba(148,163,184,.05); border-color: rgba(148,163,184,.12); }
+.m-blocked      { background: rgba(51,65,85,.15);    border-color: rgba(51,65,85,.2);     cursor:not-allowed; }
+
+/* ── Estados de estoque (sobrepostos) ── */
+.s-ok    { border-color: rgba(16,185,129,.6)  !important; }
+.s-low   { border-color: rgba(245,158,11,.7)  !important; }
+.s-empty { border-color: rgba(239,68,68,.8)   !important; }
+
+/* ── Indicador de modelo (faixa superior colorida) ── */
+.modelo-bar {
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    border-radius: 7px 7px 0 0;
+}
+
+/* ── Badge quantidade ── */
+.qty-badge {
+    position: absolute; top: 4px; right: 4px;
+    font-size: 9px; font-weight: 800;
+    padding: 1px 4px; border-radius: 4px; line-height: 1.4;
+}
+
+/* ── Tooltip ── */
+.vaga-tip {
+    display: none;
+    position: absolute; bottom: calc(100% + 8px); left: 50%;
+    transform: translateX(-50%);
+    background: #0f172a; border: 1px solid #334155;
+    color: #e2e8f0; font-size: 11px; line-height: 1.5;
+    padding: 8px 10px; border-radius: 8px;
+    white-space: nowrap; z-index: 100;
+    pointer-events: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,.6);
+}
+.vaga.ocupada:hover .vaga-tip { display: block; }
+
+/* ── Cabeçalho de modelo ── */
+.modelo-header {
+    font-size: 9px; font-weight: 800; text-align: center;
+    text-transform: uppercase; letter-spacing: .5px;
+    padding: 4px 2px; border-radius: 6px;
+    white-space: nowrap; user-select: none;
+}
+
+/* ── Botões filtro ── */
+.kf-btn {
+    padding: 5px 12px; border-radius: 8px; font-size: 11px; font-weight: 600;
+    border: 1.5px solid rgba(148,163,184,.3);
+    color: #94a3b8; cursor: pointer; transition: all .15s; background: transparent;
+}
+.kf-btn:hover  { border-color: #6366f1; color: #818cf8; }
+.kf-btn.active { background: #4f46e5; border-color: #4f46e5; color: #fff; }
+
+/* shimmer */
+@keyframes pulse { 0%,100%{opacity:.5} 50%{opacity:.9} }
+.skel { animation: pulse 1.3s ease-in-out infinite; }
+</style>
+
+<div id="kanban" class="page hidden p-6 space-y-5">
+
+    <!-- HEADER ──────────────────────────────────────────── -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-            <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Quadro Kanban</h2>
-            <p class="text-slate-500 dark:text-slate-400">Arraste os cards para mover entre colunas</p>
+            <h2 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span class="material-symbols-rounded text-primary-500">grid_view</span>
+                Kanban — Prateleira F
+            </h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                Mapa visual · 13 níveis · 23 posições · Depósito ALM
+            </p>
         </div>
-        <div class="flex gap-3">
-            <button onclick="showModal('new-order')" class="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-semibold hover:bg-primary-700 transition-colors flex items-center gap-2">
-                <span class="material-symbols-rounded">add</span>
-                Nova Ordem
+        <div class="flex flex-wrap gap-2">
+            <div class="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2">
+                <span class="material-symbols-rounded text-emerald-500 text-lg">table_chart</span>
+                <input id="sheets-url" type="text"
+                    placeholder="URL do Google Sheets (CSV)…"
+                    class="text-xs bg-transparent outline-none text-slate-600 dark:text-slate-300 w-52 placeholder:text-slate-400"
+                    onkeydown="if(event.key==='Enter') syncSheets()">
+                <button onclick="syncSheets()"
+                    class="text-xs font-semibold text-primary-600 hover:text-primary-700 whitespace-nowrap">Sync</button>
+            </div>
+            <button onclick="syncSheets()"
+                class="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold transition-colors">
+                <span class="material-symbols-rounded text-lg" id="sync-icon">sync</span>
+                Atualizar
+            </button>
+            <button onclick="openSheetsConfig()"
+                class="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                <span class="material-symbols-rounded text-lg">settings</span>
             </button>
         </div>
     </div>
 
-    <div class="flex gap-6 h-full overflow-x-auto pb-4 snap-x">
-        <div id="kanban-board" class="flex gap-6 h-full"></div>
+    <!-- STATUS + LEGENDA ─────────────────────────────────── -->
+    <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-500 dark:text-slate-400">
+        <!-- Legenda modelos -->
+        <div class="flex flex-wrap items-center gap-3">
+            <span class="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Modelos:</span>
+            <span id="leg-firefly"    class="leg-pill" style="background:rgba(147,197,253,.25);color:#93c5fd;border:1px solid rgba(147,197,253,.4)">FIREFLY</span>
+            <span id="leg-gmasp"     class="leg-pill" style="background:rgba(134,239,172,.25);color:#4ade80;border:1px solid rgba(134,239,172,.4)">GM ASP</span>
+            <span id="leg-gmturbo"   class="leg-pill" style="background:rgba(94,234,212,.25);color:#2dd4bf;border:1px solid rgba(94,234,212,.4)">GM TURBO</span>
+            <span id="leg-frontcover"class="leg-pill" style="background:rgba(103,232,249,.25);color:#22d3ee;border:1px solid rgba(103,232,249,.4)">FRONT COVER</span>
+            <span id="leg-renault"   class="leg-pill" style="background:rgba(129,140,248,.25);color:#818cf8;border:1px solid rgba(129,140,248,.4)">RENAULT</span>
+            <span id="leg-hyundai"   class="leg-pill" style="background:rgba(251,191,36,.25);color:#f59e0b;border:1px solid rgba(251,191,36,.4)">HYUNDAI VOLUTA</span>
+            <span id="leg-prime"     class="leg-pill" style="background:rgba(239,68,68,.25);color:#f87171;border:1px solid rgba(239,68,68,.4)">HYUNDAI PRIME</span>
+            <span id="leg-man"       class="leg-pill" style="background:rgba(59,130,246,.25);color:#60a5fa;border:1px solid rgba(59,130,246,.4)">MAN D08</span>
+        </div>
+        <style>.leg-pill{padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;cursor:pointer;transition:all .15s;}</style>
+        <!-- Status sync -->
+        <span class="ml-auto font-medium" id="sync-status">—</span>
+        <span class="text-slate-400" id="last-sync"></span>
+    </div>
+
+    <!-- FILTROS ──────────────────────────────────────────── -->
+    <div class="flex flex-wrap items-center gap-2">
+        <button class="kf-btn active" data-filter="all"   onclick="filterKanban('all')">Todos</button>
+        <button class="kf-btn"        data-filter="empty" onclick="filterKanban('empty')">🔴 Repor</button>
+        <button class="kf-btn"        data-filter="low"   onclick="filterKanban('low')">🟡 Baixo</button>
+        <button class="kf-btn"        data-filter="ok"    onclick="filterKanban('ok')">🟢 Ok</button>
+        <button class="kf-btn"        data-filter="livre" onclick="filterKanban('livre')">⬜ Livre</button>
+        <input id="kanban-search" type="text" placeholder="Buscar PN…"
+            oninput="filterKanban('search')"
+            class="ml-2 px-3 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 outline-none focus:border-primary-500 w-36">
+        <!-- Legenda estoque -->
+        <div class="ml-auto flex items-center gap-3 text-[10px] text-slate-400">
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-sm inline-block bg-emerald-500/40 border border-emerald-500/60"></span>Ok</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-sm inline-block bg-amber-500/40 border border-amber-500/60"></span>Baixo</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-sm inline-block bg-rose-500/40 border border-rose-500/60"></span>Repor</span>
+        </div>
+    </div>
+
+    <!-- GRADE PRATELEIRA ─────────────────────────────────── -->
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-soft">
+        <div class="shelf-wrap">
+            <table class="shelf-table" id="shelf-table">
+                <!-- gerado pelo JS -->
+            </table>
+        </div>
+    </div>
+
+    <!-- STATS ───────────────────────────────────────────── -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+            <p class="text-xs text-slate-400">Kanbans mapeados</p>
+            <p class="text-2xl font-bold text-slate-900 dark:text-white mt-1" id="ks-total">—</p>
+        </div>
+        <div class="bg-white dark:bg-slate-900 rounded-xl p-4 border border-emerald-200 dark:border-emerald-900/40">
+            <p class="text-xs text-emerald-500">Ok</p>
+            <p class="text-2xl font-bold text-emerald-500 mt-1" id="ks-ok">—</p>
+        </div>
+        <div class="bg-white dark:bg-slate-900 rounded-xl p-4 border border-amber-200 dark:border-amber-900/40">
+            <p class="text-xs text-amber-500">Nível baixo</p>
+            <p class="text-2xl font-bold text-amber-500 mt-1" id="ks-low">—</p>
+        </div>
+        <div class="bg-white dark:bg-slate-900 rounded-xl p-4 border border-rose-200 dark:border-rose-900/40">
+            <p class="text-xs text-rose-500">Repor agora</p>
+            <p class="text-2xl font-bold text-rose-500 mt-1" id="ks-empty">—</p>
+        </div>
+    </div>
+</div>
+
+<!-- ── Modal Configuração ── -->
+<div id="sheets-config-modal" class="fixed inset-0 z-[90] hidden">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeSheetsConfig()"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+        <div id="sheets-config-content"
+             class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg pointer-events-auto p-6 space-y-4"
+             style="transform:scale(.95);opacity:0;transition:all .25s;">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Integração Google Sheets</h3>
+                <button onclick="closeSheetsConfig()" class="text-slate-400 hover:text-slate-600">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+            <div class="space-y-4 text-sm">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">URL — Aba BASE (CSV publicado)</label>
+                    <input id="cfg-sheets-url" type="text"
+                        placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv&gid=…"
+                        class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:border-primary-500 text-slate-700 dark:text-slate-300">
+                    <p class="text-xs text-slate-400 mt-1">
+                        Planilha → Arquivo → Publicar na web → Aba <b>BASE</b> → CSV
+                    </p>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">URL — Aba ESTRUTURA_KANBAN (opcional, CSV)</label>
+                    <input id="cfg-struct-url" type="text"
+                        placeholder="URL da aba com QTD_MIN e QTD_MAX por PN…"
+                        class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:border-primary-500 text-slate-700 dark:text-slate-300">
+                    <p class="text-xs text-slate-400 mt-1">
+                        Define quantidades mínimas para acionar alertas 🟡🔴
+                    </p>
+                </div>
+                <details class="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 cursor-pointer">
+                    <summary class="font-semibold text-slate-700 dark:text-slate-300 text-sm">
+                        📋 Estrutura das colunas
+                    </summary>
+                    <div class="mt-3 text-xs space-y-2 text-slate-500 dark:text-slate-400">
+                        <p><b>Aba BASE</b> (seu XLS):<br>
+                        <code class="bg-slate-100 dark:bg-slate-900 rounded px-1">Item | Descrição Item | Est | Dep | Localizacao | Lote | Un | Qtd Liquida</code></p>
+                        <p><b>Aba ESTRUTURA_KANBAN</b>:<br>
+                        <code class="bg-slate-100 dark:bg-slate-900 rounded px-1">PN | QTD_MIN | QTD_MAX</code></p>
+                        <p class="text-slate-400">Formato de posição: <b>F5-08</b> (nível 5, vaga 8)</p>
+                    </div>
+                </details>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button onclick="closeSheetsConfig()"
+                    class="flex-1 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                    Cancelar
+                </button>
+                <button onclick="saveSheetsConfig()"
+                    class="flex-1 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold transition-colors">
+                    Salvar e Sincronizar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Modal Detalhe ── -->
+<div id="kanban-detail-modal" class="fixed inset-0 z-[90] hidden">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeKanbanDetail()"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+        <div id="kanban-detail-content"
+             class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm pointer-events-auto p-6 space-y-3"
+             style="transform:scale(.95);opacity:0;transition:all .25s;">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-slate-900 dark:text-white" id="kd-pn">—</h3>
+                    <p class="text-xs text-slate-400" id="kd-modelo"></p>
+                </div>
+                <button onclick="closeKanbanDetail()" class="text-slate-400 hover:text-slate-600 ml-4 flex-shrink-0">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+            <div id="kd-body" class="space-y-2"></div>
+        </div>
     </div>
 </div>
