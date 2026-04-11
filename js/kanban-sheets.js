@@ -1,37 +1,33 @@
 // ============================================
 // KANBAN SHEETS — Prateleira F · ALM
-// Layout fiel ao mapa físico por modelo
+// Apenas colunas com kanban (pos 1–11)
 // ============================================
 
-// ── MAPA FÍSICO DA PRATELEIRA F ──────────────────────────────────────────────
-// Cada grupo define: posições, cor da faixa, classe CSS, nome do modelo
+// ── MAPA FÍSICO — apenas posições com kanban ──────────────────────────────────
 const MODELOS = [
-    { nome:'FIREFLY',        pos:[1,2],         cor:'#93c5fd', cls:'m-firefly',    barColor:'#3b82f6' },
-    { nome:'GM ASP',         pos:[3,4],         cor:'#86efac', cls:'m-gmasp',      barColor:'#22c55e' },
-    { nome:'GM TURBO',       pos:[5,6],         cor:'#5eead4', cls:'m-gmturbo',    barColor:'#14b8a6' },
-    { nome:'FRONT COVER',    pos:[7],           cor:'#67e8f9', cls:'m-frontcover', barColor:'#06b6d4' },
-    { nome:'RENAULT',        pos:[8],           cor:'#a5b4fc', cls:'m-renault',    barColor:'#6366f1' },
-    { nome:'HYUNDAI VOLUTA', pos:[9],           cor:'#fde047', cls:'m-hyundai',    barColor:'#eab308' },
-    { nome:'HYUNDAI PRIME',  pos:[10],          cor:'#fca5a5', cls:'m-prime',      barColor:'#ef4444' },
-    { nome:'MAN D08',        pos:[11],          cor:'#93c5fd', cls:'m-man',        barColor:'#2563eb' },
-    { nome:'OUTROS',         pos:[12,13,14,15,16,17,18,19,20,21,22,23], cor:'#cbd5e1', cls:'m-outros', barColor:'#64748b' },
+    { nome:'FIREFLY',        pos:[1,2],  cor:'#93c5fd', cls:'m-firefly',    barColor:'#3b82f6' },
+    { nome:'GM ASP',         pos:[3,4],  cor:'#86efac', cls:'m-gmasp',      barColor:'#22c55e' },
+    { nome:'GM TURBO',       pos:[5,6],  cor:'#5eead4', cls:'m-gmturbo',    barColor:'#14b8a6' },
+    { nome:'FRONT COVER',    pos:[7],    cor:'#67e8f9', cls:'m-frontcover', barColor:'#06b6d4' },
+    { nome:'RENAULT',        pos:[8],    cor:'#a5b4fc', cls:'m-renault',    barColor:'#6366f1' },
+    { nome:'HYUNDAI VOLUTA', pos:[9],    cor:'#fde047', cls:'m-hyundai',    barColor:'#eab308' },
+    { nome:'HYUNDAI PRIME',  pos:[10],   cor:'#fca5a5', cls:'m-prime',      barColor:'#ef4444' },
+    { nome:'MAN D08',        pos:[11],   cor:'#93c5fd', cls:'m-man',        barColor:'#2563eb' },
 ];
 
-// Vagas bloqueadas (não são posições de kanban)
-// Formato: 'F[nivel]-[pos]' — nível 10 não existe fisicamente / PORTAL em F1-18
+// Vagas bloqueadas
 const BLOQUEADAS = new Set(['F1-18']);
-const NIVEL_SKIP = new Set([10]);  // nível 10 ausente no layout físico
+const NIVEL_SKIP = new Set([10]);
 
 // Mapa rápido pos → modelo
 const POS_MODELO = {};
 MODELOS.forEach(m => m.pos.forEach(p => POS_MODELO[p] = m));
 
 const KS = {
-    NIVEIS:   13,   // 0–12 (exceto 10)
-    POSICOES: 23,
+    POSICOES: 11,   // apenas posições com kanban (1–11)
     LS_ESTOQUE:   'ks_url_estoque',
     LS_ESTRUTURA: 'ks_url_estrutura',
-    grade: {},      // grade[nivel][pos] = item
+    grade: {},
     currentFilter: 'all',
 };
 
@@ -123,6 +119,9 @@ function parseEstoqueALM(csv, minMax={}) {
         if (!p) return;
 
         const { nivel, pos } = p;
+        // Ignora posições fora do kanban (12+)
+        if (pos > KS.POSICOES) return;
+
         const qtd = parseQtd(r[iQty]);
         const pn  = (r[iPN]||'').trim();
 
@@ -173,11 +172,8 @@ function renderShelfSkeleton() {
     const tbl = document.getElementById('shelf-table');
     if (!tbl) return;
     tbl.innerHTML = '';
-
-    // Cabeçalho de modelos
     tbl.appendChild(buildModeloHeader());
 
-    // Linhas skeleton
     for (let n=12; n>=0; n--) {
         if (NIVEL_SKIP.has(n)) continue;
         const tr = document.createElement('tr');
@@ -186,8 +182,8 @@ function renderShelfSkeleton() {
         tr.appendChild(th);
         for (let v=1; v<=KS.POSICOES; v++) {
             const td = document.createElement('td');
-            td.className = `vaga skel ${POS_MODELO[v]?.cls||'m-outros'}`;
-            td.style.opacity = '.35';
+            td.className = `vaga skel ${POS_MODELO[v]?.cls||''}`;
+            td.style.opacity = '.3';
             tr.appendChild(td);
         }
         tbl.appendChild(tr);
@@ -217,12 +213,10 @@ function renderShelf() {
             const item = KS.grade[n]?.[v];
 
             if (isBlocked) {
-                td.className = `vaga m-blocked`;
-                td.innerHTML = `<p style="font-size:9px;color:#64748b;text-align:center;margin-top:16px;font-weight:700;">PORTAL</p>`;
-                td.title = 'Posição bloqueada';
+                td.className = 'vaga m-blocked';
+                td.innerHTML = `<p style="font-size:10px;color:#64748b;text-align:center;margin-top:20px;font-weight:700;">PORTAL</p>`;
             } else if (!item) {
-                // Vaga livre — mostra cor do modelo mas vazia
-                td.className = `vaga ${modelo?.cls||'m-outros'}`;
+                td.className = `vaga ${modelo?.cls||''}`;
                 td.dataset.filter = 'livre';
                 td.innerHTML = `<div class="modelo-bar" style="background:${modelo?.barColor||'#64748b'}33"></div>`;
             } else {
@@ -230,25 +224,30 @@ function renderShelf() {
                 const {pn, desc, qtd, qtdMin, un, lote} = item;
                 const pct  = qtdMin>0 ? qtd/qtdMin : 1;
                 let estado, qtyBg, qtyColor;
-                if      (qtd<=0)    { estado='empty'; qtyBg='rgba(239,68,68,.2)';   qtyColor='#f87171'; empty++; }
-                else if (pct<=.3)   { estado='low';   qtyBg='rgba(245,158,11,.2)';  qtyColor='#fbbf24'; low++;   }
-                else                { estado='ok';     qtyBg='rgba(16,185,129,.2)';  qtyColor='#34d399'; ok++;    }
+                if      (qtd<=0)  { estado='empty'; qtyBg='rgba(239,68,68,.2)';  qtyColor='#f87171'; empty++; }
+                else if (pct<=.3) { estado='low';   qtyBg='rgba(245,158,11,.2)'; qtyColor='#fbbf24'; low++;   }
+                else              { estado='ok';     qtyBg='rgba(16,185,129,.2)'; qtyColor='#34d399'; ok++;    }
 
-                td.className   = `vaga ocupada ${modelo?.cls||'m-outros'} s-${estado}`;
-                td.dataset.filter  = estado;
-                td.dataset.pn      = pn.toLowerCase();
-                td.onclick = () => openKanbanDetail({pn,desc,un,qtdMin,qtdMax:item.qtdMax,
-                    posicao:`F${n}-${String(v).padStart(2,'0')}`, modelo:modelo?.nome||'—'},
-                    {quantidade:qtd,lote});
+                td.className = `vaga ocupada ${modelo?.cls||''} s-${estado}`;
+                td.dataset.filter = estado;
+                td.dataset.pn     = pn.toLowerCase();
+                td.onclick = () => openKanbanDetail(
+                    {pn, desc, un, qtdMin, qtdMax:item.qtdMax,
+                     posicao:`F${n}-${String(v).padStart(2,'0')}`,
+                     modelo: modelo?.nome||'—'},
+                    {quantidade:qtd, lote}
+                );
 
                 td.innerHTML = `
                   <div class="modelo-bar" style="background:${modelo?.barColor||'#64748b'}"></div>
-                  <p style="font-size:9px;font-weight:700;color:#cbd5e1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;margin-top:5px;">${pn}</p>
-                  <p style="font-size:7.5px;color:#94a3b8;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${desc.slice(0,22)}</p>
-                  <span class="qty-badge" style="background:${qtyBg};color:${qtyColor};">${qtd%1===0?qtd:qtd.toFixed(1)}</span>
+                  <p class="vaga-pn">${pn}</p>
+                  <p class="vaga-desc">${desc.slice(0,28)}</p>
+                  <span class="qty-badge" style="background:${qtyBg};color:${qtyColor};">
+                    ${qtd%1===0?qtd:qtd.toFixed(1)}
+                  </span>
                   <div class="vaga-tip">
                     <b>${pn}</b> · ${modelo?.nome||'—'}<br>
-                    ${desc.slice(0,40)}<br>
+                    ${desc.slice(0,44)}<br>
                     Qty: <b>${qtd} ${un}</b>${qtdMin?` / mín ${qtdMin}`:''}<br>
                     Pos: F${n}-${String(v).padStart(2,'0')} · ${lote||'sem lote'}<br>
                     ${estado==='empty'?'🔴 Repor agora':estado==='low'?'🟡 Nível baixo':'🟢 Ok'}
@@ -269,22 +268,22 @@ function renderShelf() {
     applyFilter(KS.currentFilter);
 }
 
-/** Linha de cabeçalho com nomes de modelos e colspan */
 function buildModeloHeader() {
     const tr = document.createElement('tr');
-    // célula vazia (coluna de nível)
     const th0 = document.createElement('th');
-    th0.style.cssText = 'width:42px;min-width:42px;';
+    th0.className = 'nivel-cell';
     tr.appendChild(th0);
 
     MODELOS.forEach(m => {
         const th = document.createElement('th');
         th.colSpan = m.pos.length;
-        th.style.paddingBottom = '6px';
+        th.style.paddingBottom = '8px';
         th.innerHTML = `
           <div class="modelo-header"
-               style="background:${m.cor}22;color:${m.barColor};border:1px solid ${m.barColor}44;
-                      ${m.nome==='OUTROS'?'opacity:.5;':''}">
+               style="background:${m.cor}22;color:${m.barColor};
+                      border:1.5px solid ${m.barColor}55;padding:6px 4px;
+                      border-radius:8px;font-size:10px;font-weight:800;
+                      text-transform:uppercase;letter-spacing:.5px;text-align:center;">
             ${m.nome}
           </div>`;
         tr.appendChild(th);
@@ -297,7 +296,7 @@ function buildModeloHeader() {
 function filterKanban(type) {
     KS.currentFilter = type;
     document.querySelectorAll('.kf-btn').forEach(b =>
-        b.classList.toggle('active', b.dataset.filter===type));
+        b.classList.toggle('active', b.dataset.filter === type));
     applyFilter(type);
 }
 
@@ -309,10 +308,12 @@ function applyFilter(type) {
         let show = true;
         if      (type==='search') show = !!pn && pn.includes(q);
         else if (type!=='all')    show = f===type;
-        td.style.opacity       = show ? '1' : '0.1';
+        td.style.opacity       = show ? '1' : '0.08';
         td.style.pointerEvents = show ? 'auto' : 'none';
     });
 }
+
+function updateStats() {}
 
 // ── DETAIL MODAL ──────────────────────────────────────────────────────────────
 
@@ -321,41 +322,44 @@ function openKanbanDetail(k, stock) {
     const pct = k.qtdMin>0 ? Math.round((qty/k.qtdMin)*100) : 100;
     const cor = qty<=0 ? 'bg-rose-500' : pct<=30 ? 'bg-amber-500' : 'bg-emerald-500';
     const est = qty<=0 ? '🔴 Repor agora' : pct<=30 ? '🟡 Nível baixo' : '🟢 Ok';
-    const barMod = (POS_MODELO[parseInt((k.posicao||'F0-0').split('-')[1])]||{}).barColor||'#6366f1';
+    const mod = MODELOS.find(m=>m.nome===k.modelo)||{};
 
     setText('kd-pn', k.pn);
     document.getElementById('kd-modelo').innerHTML =
-        `<span style="color:${barMod};font-weight:700;">${k.modelo}</span> · ${k.posicao}`;
+        `<span style="color:${mod.barColor||'#6366f1'};font-weight:700;">${k.modelo}</span> · ${k.posicao}`;
 
     document.getElementById('kd-body').innerHTML = `
-      <p class="text-xs text-slate-400">${k.desc}</p>
+      <p class="text-xs text-slate-400 -mt-2 mb-3">${k.desc}</p>
       <div class="grid grid-cols-2 gap-2">
         <div class="bg-slate-50 dark:bg-slate-800 rounded-xl p-3">
           <p class="text-xs text-slate-400">Status</p>
-          <p class="font-semibold text-sm">${est}</p>
+          <p class="font-semibold text-sm mt-0.5">${est}</p>
         </div>
         <div class="bg-slate-50 dark:bg-slate-800 rounded-xl p-3">
           <p class="text-xs text-slate-400">Unidade</p>
-          <p class="font-bold text-slate-900 dark:text-white">${k.un}</p>
+          <p class="font-bold text-slate-900 dark:text-white mt-0.5">${k.un}</p>
         </div>
         <div class="bg-slate-50 dark:bg-slate-800 rounded-xl p-3">
           <p class="text-xs text-slate-400">Qtd atual</p>
-          <p class="font-bold text-slate-900 dark:text-white text-xl">${qty}</p>
+          <p class="font-bold text-slate-900 dark:text-white text-2xl mt-0.5">${qty}</p>
         </div>
         ${k.qtdMin ? `
         <div class="bg-slate-50 dark:bg-slate-800 rounded-xl p-3">
           <p class="text-xs text-slate-400">Mínimo</p>
-          <p class="font-bold text-slate-900 dark:text-white text-xl">${k.qtdMin}</p>
+          <p class="font-bold text-slate-900 dark:text-white text-2xl mt-0.5">${k.qtdMin}</p>
         </div>` : '<div></div>'}
       </div>
       ${k.qtdMin ? `
       <div>
-        <div class="flex justify-between text-xs text-slate-400 mb-1"><span>Estoque</span><span>${pct}%</span></div>
+        <div class="flex justify-between text-xs text-slate-400 mb-1">
+          <span>Nível de estoque</span><span>${pct}%</span>
+        </div>
         <div class="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-          <div class="h-full rounded-full ${cor} transition-all duration-700" style="width:${Math.min(pct,100)}%"></div>
+          <div class="h-full rounded-full ${cor} transition-all duration-700"
+               style="width:${Math.min(pct,100)}%"></div>
         </div>
       </div>` : ''}
-      ${stock.lote ? `<p class="text-xs text-slate-400">Lote: <b class="text-slate-600 dark:text-slate-300">${stock.lote}</b></p>` : ''}`;
+      ${stock.lote ? `<p class="text-xs text-slate-400 mt-1">Lote: <b class="text-slate-600 dark:text-slate-300">${stock.lote}</b></p>` : ''}`;
 
     const modal=document.getElementById('kanban-detail-modal');
     const cont =document.getElementById('kanban-detail-content');
@@ -379,27 +383,24 @@ function openSheetsConfig() {
     m.classList.remove('hidden');
     requestAnimationFrame(()=>{ c.style.transform='scale(1)'; c.style.opacity='1'; });
 }
-
 function closeSheetsConfig() {
     const m=document.getElementById('sheets-config-modal'),c=document.getElementById('sheets-config-content');
     c.style.transform='scale(.95)'; c.style.opacity='0';
     setTimeout(()=>{ m.classList.add('hidden'); c.style.transform='scale(.95)'; },250);
 }
-
 function saveSheetsConfig() { closeSheetsConfig(); syncSheets(); }
-function updateStats() {}  // integrado no renderShelf
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 
-function setSyncStatus(msg, type) {
-    const e=document.getElementById('sync-status'); if(!e)return;
+function setSyncStatus(msg,type){
+    const e=document.getElementById('sync-status');if(!e)return;
     const c={ok:'text-emerald-500',error:'text-rose-500',loading:'text-slate-400',neutral:'text-slate-400'};
-    e.className=`font-medium ${c[type]||'text-slate-400'}`; e.textContent=msg;
+    e.className=`font-medium ${c[type]||'text-slate-400'}`;e.textContent=msg;
 }
-function setText(id,v){ const e=document.getElementById(id); if(e) e.textContent=v??'—'; }
-function getVal(id){ return document.getElementById(id)?.value||''; }
-function setVal(id,v){ const e=document.getElementById(id); if(e) e.value=v; }
-function animateSyncIcon(on){ const i=document.getElementById('sync-icon'); if(i) i.style.animation=on?'spin 1s linear infinite':''; }
+function setText(id,v){const e=document.getElementById(id);if(e)e.textContent=v??'—';}
+function getVal(id){return document.getElementById(id)?.value||'';}
+function setVal(id,v){const e=document.getElementById(id);if(e)e.value=v;}
+function animateSyncIcon(on){const i=document.getElementById('sync-icon');if(i)i.style.animation=on?'spin 1s linear infinite':'';}
 
 // ── EXPOSE ────────────────────────────────────────────────────────────────────
 
@@ -409,4 +410,4 @@ window.closeSheetsConfig=closeSheetsConfig; window.saveSheetsConfig=saveSheetsCo
 window.openKanbanDetail=openKanbanDetail; window.closeKanbanDetail=closeKanbanDetail;
 
 document.addEventListener('pageChanged', e=>{ if(e.detail==='kanban') initKanban(); });
-console.log('✅ kanban-sheets.js — Mapa físico com modelos!');
+console.log('✅ kanban-sheets.js — 11 colunas kanban (sem OUTROS)');
