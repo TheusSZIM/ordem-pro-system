@@ -15,7 +15,7 @@
 }
 #sidebar.sb-mini { width: 76px !important; }
 
-/* Botão recolher — fora da sidebar */
+/* Botão recolher — fora da sidebar para não ser cortado */
 #sb-tab {
     position: fixed; top: 50%; left: 280px;
     transform: translateY(-50%);
@@ -50,29 +50,36 @@
     font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
     color: #3d5270; padding: 20px 10px 6px;
     white-space: nowrap; overflow: hidden; opacity: 1; max-height: 52px;
-    transition: opacity 280ms, max-height 380ms cubic-bezier(.65,0,.35,1), padding-top 380ms, padding-bottom 380ms;
+    transition: opacity 280ms, max-height 380ms cubic-bezier(.65,0,.35,1),
+                padding-top 380ms, padding-bottom 380ms;
 }
 #sidebar.sb-mini .sb-label { opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; }
 
 .nav-item {
     display: flex; align-items: center; gap: 14px; padding: 12px 14px;
     border-radius: 14px; cursor: pointer; color: #64748b; white-space: nowrap;
-    transition: background 180ms, color 180ms, padding 380ms cubic-bezier(.65,0,.35,1), gap 380ms cubic-bezier(.65,0,.35,1);
+    transition: background 180ms, color 180ms,
+                padding 380ms cubic-bezier(.65,0,.35,1), gap 380ms cubic-bezier(.65,0,.35,1);
     position: relative; margin-bottom: 4px;
     border: none; background: transparent; width: 100%; text-align: left; font-family: inherit;
 }
 .nav-item:hover { background: rgba(99,102,241,.1); color: #a5b4fc; }
-.nav-item.active-nav { background: linear-gradient(135deg,rgba(99,102,241,.22),rgba(99,102,241,.06)); color: #818cf8; }
+.nav-item.active-nav {
+    background: linear-gradient(135deg,rgba(99,102,241,.22),rgba(99,102,241,.06)); color: #818cf8;
+}
 .nav-item.active-nav::before {
     content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
-    width: 3px; height: 26px; background: linear-gradient(180deg,#a5b4fc,#6366f1); border-radius: 0 4px 4px 0;
+    width: 3px; height: 26px; background: linear-gradient(180deg,#a5b4fc,#6366f1);
+    border-radius: 0 4px 4px 0;
 }
 .nav-item .material-symbols-rounded {
     font-size: 23px; flex-shrink: 0;
     font-variation-settings: 'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24;
     transition: transform 180ms, font-variation-settings 200ms;
 }
-.nav-item.active-nav .material-symbols-rounded { font-variation-settings: 'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24; }
+.nav-item.active-nav .material-symbols-rounded {
+    font-variation-settings: 'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24;
+}
 .nav-item:hover .material-symbols-rounded { transform: scale(1.1); }
 
 .nav-txt {
@@ -83,7 +90,10 @@
 #sidebar.sb-mini .nav-txt { opacity: 0; transform: translateX(-14px); pointer-events: none; }
 .nav-name { font-size: 14.5px; font-weight: 500; overflow: hidden; white-space: nowrap; }
 .nav-item.active-nav .nav-name { font-weight: 600; }
-.nav-badge { font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 20px; background: rgba(99,102,241,.25); color: #818cf8; flex-shrink: 0; transition: opacity 260ms; }
+.nav-badge {
+    font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 20px;
+    background: rgba(99,102,241,.25); color: #818cf8; flex-shrink: 0; transition: opacity 260ms;
+}
 #sidebar.sb-mini .nav-badge { opacity: 0; }
 
 #sidebar.sb-mini .nav-item { justify-content: center; padding: 12px 0; gap: 0; }
@@ -99,9 +109,11 @@
 #sidebar.sb-mini .nav-item:hover::after { opacity: 1; transform: translateY(-50%) translateX(0); }
 
 @media (max-width: 1023px) {
-    #sidebar { width: 280px !important; transform: translateX(-100%) !important; transition: transform 380ms cubic-bezier(.65,0,.35,1) !important; }
+    #sidebar { width: 280px !important; transform: translateX(-100%) !important;
+               transition: transform 380ms cubic-bezier(.65,0,.35,1) !important; }
     #sidebar.mobile-open { transform: translateX(0) !important; }
     #sb-tab { display: none !important; }
+    #main-content { margin-left: 0 !important; }
 }
 </style>
 
@@ -145,53 +157,46 @@
     const LS = 'sb_mini';
     const W_OPEN = 280, W_MINI = 76;
     let mini = localStorage.getItem(LS) === 'true';
-    let _contentEl = null;
 
-    /* Injeta regra CSS no <head> — abordagem mais confiável */
-    const styleTag = document.createElement('style');
-    styleTag.id = 'sb-layout-style';
-    (document.head || document.documentElement).appendChild(styleTag);
-
-    function setLayoutCSS() {
-        const w = mini ? W_MINI : W_OPEN;
-        /* 
-           Aplica SOMENTE ao container de páginas do Ordem Pro.
-           Usa o pai do primeiro .page encontrado — que é o wrapper real.
-           Fallback: #main-content ou elemento com ml-64 no Tailwind.
-        */
-        styleTag.textContent = `
-            /* Ordem Pro — ajuste de layout da sidebar */
-            #main-content { margin-left: ${w}px !important; transition: margin-left 380ms cubic-bezier(.65,0,.35,1) !important; }
-            .pages-wrapper { margin-left: ${w}px !important; transition: margin-left 380ms cubic-bezier(.65,0,.35,1) !important; }
-        `;
-
-        /* Também aplica direto no elemento pai das .page (mais confiável) */
-        if (!_contentEl) {
-            const firstPage = document.querySelector('.page');
-            _contentEl = firstPage?.parentElement;
-        }
-        if (_contentEl && _contentEl !== document.body) {
-            _contentEl.style.transition = 'margin-left 380ms cubic-bezier(.65,0,.35,1)';
-            _contentEl.style.marginLeft = w + 'px';
-        }
+    function getMain() {
+        return document.getElementById('main-content');
     }
 
-    function updateTab() {
-        const tab = document.getElementById('sb-tab');
-        if (!tab) return;
-        tab.style.left = (mini ? W_MINI : W_OPEN) + 'px';
-        tab.classList.toggle('mini-tab', mini);
-    }
-
-    function apply(instant) {
+    function applyAll(instant) {
         const sb  = document.getElementById('sidebar');
         const tab = document.getElementById('sb-tab');
+        const mc  = getMain();
         if (!sb) return;
-        if (instant) { sb.style.transition = 'none'; if (tab) tab.style.transition = 'none'; }
+
+        const w = mini ? W_MINI : W_OPEN;
+
+        if (instant) {
+            if (sb)  sb.style.transition  = 'none';
+            if (tab) tab.style.transition = 'none';
+            if (mc)  mc.style.transition  = 'none';
+        }
+
+        // Sidebar
         sb.classList.toggle('sb-mini', mini);
-        updateTab();
-        setLayoutCSS();
-        if (instant) requestAnimationFrame(() => { sb.style.transition = ''; if (tab) tab.style.transition = ''; });
+
+        // Botão tab
+        if (tab) {
+            tab.style.left = w + 'px';
+            tab.classList.toggle('mini-tab', mini);
+        }
+
+        // Conteúdo principal — agora sabemos que é #main-content
+        if (mc) {
+            mc.style.marginLeft = w + 'px';
+        }
+
+        if (instant) {
+            requestAnimationFrame(() => {
+                if (sb)  sb.style.transition  = '';
+                if (tab) tab.style.transition = '';
+                if (mc)  mc.style.transition  = 'margin-left 380ms cubic-bezier(.65,0,.35,1)';
+            });
+        }
     }
 
     window.toggleSidebar = function () {
@@ -201,8 +206,7 @@
         }
         mini = !mini;
         localStorage.setItem(LS, mini);
-        _contentEl = null; // reset para re-detectar
-        apply(false);
+        applyAll(false);
     };
 
     const _orig = window.showPage;
@@ -214,9 +218,7 @@
             document.getElementById('sidebar')?.classList.remove('mobile-open');
     };
 
-    apply(true);
-    /* Reaplica após componentes carregarem (loadComponent é async) */
-    document.addEventListener('DOMContentLoaded', () => { _contentEl = null; apply(true); });
-    setTimeout(() => { _contentEl = null; apply(true); }, 600);
+    // Aplica sem animação na carga
+    applyAll(true);
 })();
 </script>
