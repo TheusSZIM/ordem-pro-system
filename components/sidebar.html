@@ -1,289 +1,248 @@
 <!-- SIDEBAR RETRÁTIL -->
 <style>
-/* Reset defensivo para garantir que nada conflite */
-#sidebar,
-#sidebar * {
-    box-sizing: border-box;
-}
+#sidebar, #sidebar * { box-sizing: border-box; }
 
 #sidebar {
     position: fixed !important;
     left: 0 !important;
     top: 64px !important;
     bottom: 0 !important;
-    width: 260px !important;
-    background: #0f172a !important;
-    border-right: 1px solid rgba(148,163,184,.09) !important;
+    width: 280px !important;
+    background: #0c1628 !important;
+    border-right: 1px solid rgba(148,163,184,.08) !important;
     display: flex !important;
     flex-direction: column !important;
-    overflow: hidden !important;
+    overflow: visible !important;
     z-index: 40 !important;
-    transition: width 320ms cubic-bezier(.4,0,.2,1) !important;
-    will-change: width;
-    transform: none !important;
+    transition: width 350ms cubic-bezier(.4,0,.2,1) !important;
 }
+#sidebar.sb-mini { width: 76px !important; }
 
-/* Estado fechado — só ícones */
-#sidebar.sb-mini {
-    width: 72px !important;
-}
-
-/* ── Cabeçalho da sidebar com botão toggle ── */
-.sb-head {
+/* ─── Botão de recolher — aba na borda direita ─── */
+#sb-toggle {
+    position: absolute;
+    top: 50%;
+    right: -16px;
+    transform: translateY(-50%);
+    z-index: 50;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    padding: 12px 12px 8px;
-    flex-shrink: 0;
-}
-
-#sb-mini-btn {
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    border: 1.5px solid rgba(148,163,184,.15);
-    background: rgba(30,41,59,.8);
-    color: #94a3b8;
+    justify-content: center;
     cursor: pointer;
+}
+
+/* Linha vertical decorativa */
+#sb-toggle::before {
+    content: '';
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2px;
+    height: 48px;
+    background: rgba(99,102,241,.3);
+    border-radius: 2px;
+    transition: background 200ms, height 200ms;
+}
+#sb-toggle:hover::before { background: rgba(99,102,241,.7); height: 64px; }
+
+/* Bolinha com seta */
+#sb-toggle-pill {
+    width: 24px;
+    height: 52px;
+    background: #1e293b;
+    border: 1.5px solid rgba(99,102,241,.35);
+    border-radius: 0 12px 12px 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 150ms, color 150ms, transform 320ms cubic-bezier(.4,0,.2,1);
-    flex-shrink: 0;
+    box-shadow: 3px 0 12px rgba(0,0,0,.4);
+    transition: background 200ms, border-color 200ms, width 200ms;
+    overflow: hidden;
 }
-#sb-mini-btn:hover {
-    background: rgba(99,102,241,.2);
-    color: #a5b4fc;
-}
-/* Gira o ícone ao colapsar */
-#sidebar.sb-mini #sb-mini-btn {
-    transform: rotate(180deg);
-}
-/* Quando mini, centraliza o botão */
-#sidebar.sb-mini .sb-head {
-    justify-content: center;
-    padding-left: 0;
-    padding-right: 0;
+#sb-toggle:hover #sb-toggle-pill {
+    background: rgba(99,102,241,.18);
+    border-color: rgba(99,102,241,.6);
+    width: 28px;
 }
 
-/* ── Nav ── */
+#sb-toggle-pill .material-symbols-rounded {
+    font-size: 17px;
+    color: #818cf8;
+    font-variation-settings: 'wght' 700;
+    transition: transform 350ms cubic-bezier(.4,0,.2,1), color 200ms;
+    flex-shrink: 0;
+}
+#sb-toggle:hover #sb-toggle-pill .material-symbols-rounded { color: #a5b4fc; }
+#sidebar.sb-mini #sb-toggle-pill .material-symbols-rounded { transform: rotate(180deg); }
+
+/* ─── Nav ─── */
 #sidebar nav {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 4px 10px 20px;
+    padding: 20px 12px;
     scrollbar-width: none;
 }
 #sidebar nav::-webkit-scrollbar { display: none; }
 
-/* ── Label de grupo ── */
+/* ─── Labels de grupo ─── */
 .sb-label {
     font-size: 10px;
     font-weight: 800;
-    letter-spacing: .1em;
+    letter-spacing: .12em;
     text-transform: uppercase;
-    color: #475569;
-    padding: 18px 8px 5px;
+    color: #3d5270;
+    padding: 20px 10px 6px;
     white-space: nowrap;
     overflow: hidden;
     opacity: 1;
-    max-height: 48px;
-    transition:
-        opacity 280ms ease,
-        max-height 300ms ease,
-        padding 300ms ease;
+    max-height: 52px;
+    transition: opacity 300ms, max-height 350ms ease, padding 350ms ease;
 }
 #sidebar.sb-mini .sb-label {
-    opacity: 0;
-    max-height: 0;
-    padding-top: 0;
-    padding-bottom: 0;
+    opacity: 0; max-height: 0;
+    padding-top: 0; padding-bottom: 0;
 }
 
-/* ── Item ── */
+/* ─── Itens ─── */
 .nav-item {
     display: flex;
     align-items: center;
-    gap: 13px;
-    padding: 11px 12px;
-    border-radius: 12px;
+    gap: 14px;
+    padding: 12px 14px;
+    border-radius: 14px;
     cursor: pointer;
     color: #64748b;
     white-space: nowrap;
     transition:
-        background 150ms,
-        color 150ms,
-        padding 320ms cubic-bezier(.4,0,.2,1),
-        gap 320ms cubic-bezier(.4,0,.2,1),
-        justify-content 320ms;
+        background 180ms,
+        color 180ms,
+        padding 350ms cubic-bezier(.4,0,.2,1),
+        gap 350ms cubic-bezier(.4,0,.2,1);
     position: relative;
-    margin-bottom: 3px;
+    margin-bottom: 4px;
     border: none;
     background: transparent;
     width: 100%;
     text-align: left;
     font-family: inherit;
 }
-
 .nav-item:hover {
     background: rgba(99,102,241,.1);
     color: #a5b4fc;
 }
-
 .nav-item.active-nav {
-    background: linear-gradient(135deg,rgba(99,102,241,.22),rgba(99,102,241,.07));
+    background: linear-gradient(135deg,rgba(99,102,241,.22),rgba(99,102,241,.06));
     color: #818cf8;
 }
-
-/* Barra ativa */
 .nav-item.active-nav::before {
     content: '';
     position: absolute;
     left: 0; top: 50%;
     transform: translateY(-50%);
-    width: 3px; height: 24px;
-    background: linear-gradient(180deg, #a5b4fc, #6366f1);
+    width: 3px; height: 26px;
+    background: linear-gradient(180deg,#a5b4fc,#6366f1);
     border-radius: 0 4px 4px 0;
 }
 
-/* Ícone */
 .nav-item .material-symbols-rounded {
-    font-size: 22px;
+    font-size: 23px;
     flex-shrink: 0;
-    font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
-    transition: transform 150ms, font-variation-settings 200ms;
+    font-variation-settings: 'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24;
+    transition: transform 180ms, font-variation-settings 200ms;
 }
 .nav-item.active-nav .material-symbols-rounded {
-    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    font-variation-settings: 'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24;
 }
-.nav-item:hover .material-symbols-rounded {
-    transform: scale(1.12);
-}
+.nav-item:hover .material-symbols-rounded { transform: scale(1.1); }
 
-/* ── Texto ── */
+/* Texto + badge */
 .nav-txt {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    overflow: hidden;
-    flex: 1;
-    opacity: 1;
-    max-width: 200px;
-    transition:
-        opacity 250ms ease,
-        max-width 320ms cubic-bezier(.4,0,.2,1);
+    display: flex; align-items: center; gap: 10px;
+    overflow: hidden; flex: 1;
+    opacity: 1; max-width: 220px;
+    transition: opacity 280ms ease, max-width 350ms cubic-bezier(.4,0,.2,1);
 }
-#sidebar.sb-mini .nav-txt {
-    opacity: 0;
-    max-width: 0;
-}
+#sidebar.sb-mini .nav-txt { opacity: 0; max-width: 0; }
 
 .nav-name {
-    font-size: 14px;
-    font-weight: 500;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    font-size: 14.5px; font-weight: 500;
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
 }
 .nav-item.active-nav .nav-name { font-weight: 600; }
 
-/* Badge */
 .nav-badge {
-    font-size: 9px;
-    font-weight: 800;
-    padding: 2px 7px;
-    border-radius: 20px;
-    background: rgba(99,102,241,.25);
-    color: #818cf8;
+    font-size: 9px; font-weight: 800;
+    padding: 2px 8px; border-radius: 20px;
+    background: rgba(99,102,241,.25); color: #818cf8;
     flex-shrink: 0;
+    transition: opacity 280ms;
 }
+#sidebar.sb-mini .nav-badge { opacity: 0; }
 
-/* ── Mini: centraliza ícone ── */
+/* ─── Mini: centraliza ícone ─── */
 #sidebar.sb-mini .nav-item {
     justify-content: center;
-    padding-left: 0;
-    padding-right: 0;
-    gap: 0;
+    padding: 12px 0; gap: 0;
 }
-#sidebar.sb-mini .nav-item.active-nav::before {
-    height: 18px;
-}
+#sidebar.sb-mini .nav-item.active-nav::before { height: 20px; }
 
-/* ── Tooltip ao hover no modo mini ── */
-#sidebar.sb-mini .nav-item {
-    overflow: visible;
-}
+/* Tooltip mini */
 #sidebar.sb-mini .nav-item::after {
     content: attr(data-label);
     position: absolute;
-    left: 76px;
-    top: 50%;
-    transform: translateY(-50%) translateX(-4px);
+    left: 82px; top: 50%;
+    transform: translateY(-50%) translateX(-6px);
     background: #1e293b;
     color: #e2e8f0;
-    font-size: 12.5px;
-    font-weight: 600;
-    padding: 7px 14px;
-    border-radius: 9px;
-    border: 1px solid rgba(148,163,184,.15);
-    white-space: nowrap;
-    box-shadow: 0 6px 20px rgba(0,0,0,.5);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 180ms, transform 180ms;
-    z-index: 200;
+    font-size: 13px; font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(148,163,184,.12);
+    box-shadow: 0 6px 22px rgba(0,0,0,.55);
+    opacity: 0; pointer-events: none;
+    transition: opacity 160ms, transform 160ms;
+    z-index: 100; white-space: nowrap;
 }
 #sidebar.sb-mini .nav-item:hover::after {
     opacity: 1;
     transform: translateY(-50%) translateX(0);
 }
 
-/* ── Área de conteúdo ── */
+/* ─── Conteúdo ─── */
 #main-content {
-    margin-left: 260px;
-    transition: margin-left 320ms cubic-bezier(.4,0,.2,1);
+    margin-left: 280px !important;
+    transition: margin-left 350ms cubic-bezier(.4,0,.2,1);
 }
-#main-content.sb-mini-content {
-    margin-left: 72px;
-}
+#main-content.sb-mini-content { margin-left: 76px !important; }
 
 @media (max-width: 1023px) {
     #sidebar {
-        width: 260px !important;
+        width: 280px !important;
         transform: translateX(-100%) !important;
-        transition: transform 320ms cubic-bezier(.4,0,.2,1) !important;
+        transition: transform 350ms cubic-bezier(.4,0,.2,1) !important;
+        overflow: hidden !important;
     }
-    #sidebar.mobile-open {
-        transform: translateX(0) !important;
-    }
-    #sidebar.sb-mini {
-        width: 260px !important;
-    }
-    #main-content,
-    #main-content.sb-mini-content {
-        margin-left: 0 !important;
-    }
+    #sidebar.mobile-open { transform: translateX(0) !important; }
+    #sidebar.sb-mini { width: 280px !important; }
+    #sb-toggle { display: none; }
+    #main-content, #main-content.sb-mini-content { margin-left: 0 !important; }
 }
 </style>
 
 <aside id="sidebar">
-    <!-- Cabeçalho com toggle -->
-    <div class="sb-head">
-        <button id="sb-mini-btn" onclick="toggleSidebar()" title="Minimizar sidebar">
-            <span class="material-symbols-rounded" style="font-size:18px;font-variation-settings:'wght' 600;">
-                chevron_left
-            </span>
-        </button>
+    <!-- Aba recolher na borda direita -->
+    <div id="sb-toggle" onclick="toggleSidebar()" title="Recolher menu">
+        <div id="sb-toggle-pill">
+            <span class="material-symbols-rounded">chevron_left</span>
+        </div>
     </div>
 
     <nav>
-        <!-- PRINCIPAL -->
         <div class="sb-label">Principal</div>
 
-        <button class="nav-item active-nav"
-                data-page="dashboard"
-                data-label="Dashboard"
-                onclick="showPage('dashboard')">
+        <button class="nav-item active-nav" data-page="dashboard" data-label="Dashboard" onclick="showPage('dashboard')">
             <span class="material-symbols-rounded">dashboard</span>
             <span class="nav-txt">
                 <span class="nav-name">Dashboard</span>
@@ -291,88 +250,58 @@
             </span>
         </button>
 
-        <button class="nav-item"
-                data-page="kanban"
-                data-label="Quadro Kanban"
-                onclick="showPage('kanban')">
+        <button class="nav-item" data-page="kanban" data-label="Quadro Kanban" onclick="showPage('kanban')">
             <span class="material-symbols-rounded">view_kanban</span>
-            <span class="nav-txt">
-                <span class="nav-name">Quadro Kanban</span>
-            </span>
+            <span class="nav-txt"><span class="nav-name">Quadro Kanban</span></span>
         </button>
 
-        <button class="nav-item"
-                data-page="ordens"
-                data-label="Lista de Ordens"
-                onclick="showPage('ordens')">
+        <button class="nav-item" data-page="ordens" data-label="Lista de Ordens" onclick="showPage('ordens')">
             <span class="material-symbols-rounded">receipt_long</span>
-            <span class="nav-txt">
-                <span class="nav-name">Lista de Ordens</span>
-            </span>
+            <span class="nav-txt"><span class="nav-name">Lista de Ordens</span></span>
         </button>
 
-        <!-- GESTÃO -->
         <div class="sb-label">Gestão</div>
 
-        <button class="nav-item"
-                data-page="equipe"
-                data-label="Equipe"
-                onclick="showPage('equipe')">
+        <button class="nav-item" data-page="equipe" data-label="Equipe" onclick="showPage('equipe')">
             <span class="material-symbols-rounded">group</span>
-            <span class="nav-txt">
-                <span class="nav-name">Equipe</span>
-            </span>
+            <span class="nav-txt"><span class="nav-name">Equipe</span></span>
         </button>
 
-        <button class="nav-item"
-                data-page="estoque"
-                data-label="Estoque"
-                onclick="showPage('estoque')">
+        <button class="nav-item" data-page="estoque" data-label="Estoque" onclick="showPage('estoque')">
             <span class="material-symbols-rounded">inventory_2</span>
-            <span class="nav-txt">
-                <span class="nav-name">Estoque</span>
-            </span>
+            <span class="nav-txt"><span class="nav-name">Estoque</span></span>
         </button>
 
-        <button class="nav-item"
-                data-page="entrega"
-                data-label="Entrega de Ordem"
-                onclick="showPage('entrega')">
+        <button class="nav-item" data-page="entrega" data-label="Entrega de Ordem" onclick="showPage('entrega')">
             <span class="material-symbols-rounded">local_shipping</span>
-            <span class="nav-txt">
-                <span class="nav-name">Entrega de Ordem</span>
-            </span>
+            <span class="nav-txt"><span class="nav-name">Entrega de Ordem</span></span>
         </button>
     </nav>
 </aside>
 
 <script>
 (function () {
-    const LS   = 'sb_mini';
-    let mini   = localStorage.getItem(LS) === 'true';
+    const LS = 'sb_mini';
+    let mini = localStorage.getItem(LS) === 'true';
 
     function apply(instant) {
         const sb = document.getElementById('sidebar');
         const mc = document.getElementById('main-content');
         if (!sb) return;
-
         if (instant) {
-            sb.style.transition  = 'none';
+            sb.style.transition = 'none';
             if (mc) mc.style.transition = 'none';
         }
-
         sb.classList.toggle('sb-mini', mini);
         mc?.classList.toggle('sb-mini-content', mini);
-
         if (instant) {
             requestAnimationFrame(() => {
-                sb.style.transition  = '';
+                sb.style.transition = '';
                 if (mc) mc.style.transition = '';
             });
         }
     }
 
-    /* Toggle global (chamado pelo botão e pelo header mobile) */
     window.toggleSidebar = function () {
         if (window.innerWidth < 1024) {
             document.getElementById('sidebar')?.classList.toggle('mobile-open');
@@ -383,20 +312,17 @@
         apply(false);
     };
 
-    /* Intercepta showPage para marcar ativo */
     const _orig = window.showPage;
     window.showPage = function (page) {
         if (_orig) _orig(page);
         document.querySelectorAll('.nav-item[data-page]').forEach(el => {
             el.classList.toggle('active-nav', el.dataset.page === page);
         });
-        /* Fecha overlay mobile */
         if (window.innerWidth < 1024) {
             document.getElementById('sidebar')?.classList.remove('mobile-open');
         }
     };
 
-    /* Aplica estado inicial sem animação */
     apply(true);
 })();
 </script>
