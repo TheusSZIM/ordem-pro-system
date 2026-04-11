@@ -1,123 +1,148 @@
-<!-- ============================================
-     SIDEBAR — Retrátil com animação
-     Aberta: 240px com texto | Fechada: 68px só ícones
-     ============================================ -->
+<!-- SIDEBAR RETRÁTIL -->
 <style>
-:root {
-    --sb-open:   240px;
-    --sb-closed:  68px;
-    --sb-dur:    .3s;
-    --sb-ease:   cubic-bezier(.4,0,.2,1);
+/* Reset defensivo para garantir que nada conflite */
+#sidebar,
+#sidebar * {
+    box-sizing: border-box;
 }
 
-/* ── Sidebar ── */
 #sidebar {
-    position: fixed;
-    left: 0; top: 64px; bottom: 0;
-    width: var(--sb-open);
-    background: #0f172a;
-    border-right: 1px solid rgba(148,163,184,.08);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    z-index: 40;
-    transition: width var(--sb-dur) var(--sb-ease);
+    position: fixed !important;
+    left: 0 !important;
+    top: 64px !important;
+    bottom: 0 !important;
+    width: 260px !important;
+    background: #0f172a !important;
+    border-right: 1px solid rgba(148,163,184,.09) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    z-index: 40 !important;
+    transition: width 320ms cubic-bezier(.4,0,.2,1) !important;
     will-change: width;
+    transform: none !important;
 }
 
-/* Estado fechado */
-#sidebar.sb-closed { width: var(--sb-closed); }
+/* Estado fechado — só ícones */
+#sidebar.sb-mini {
+    width: 72px !important;
+}
 
-/* ── Botão toggle flutuante ── */
-#sb-toggle-btn {
-    position: absolute;
-    top: 18px;
-    right: -14px;
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    background: #1e293b;
-    border: 1.5px solid rgba(148,163,184,.15);
-    color: #94a3b8;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,.4);
-    transition: background .15s, color .15s, transform var(--sb-dur) var(--sb-ease);
-    z-index: 41;
+/* ── Cabeçalho da sidebar com botão toggle ── */
+.sb-head {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 12px 12px 8px;
     flex-shrink: 0;
 }
-#sb-toggle-btn:hover { background: #334155; color: #e2e8f0; }
-#sidebar.sb-closed #sb-toggle-btn { transform: rotate(180deg); }
+
+#sb-mini-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: 1.5px solid rgba(148,163,184,.15);
+    background: rgba(30,41,59,.8);
+    color: #94a3b8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 150ms, color 150ms, transform 320ms cubic-bezier(.4,0,.2,1);
+    flex-shrink: 0;
+}
+#sb-mini-btn:hover {
+    background: rgba(99,102,241,.2);
+    color: #a5b4fc;
+}
+/* Gira o ícone ao colapsar */
+#sidebar.sb-mini #sb-mini-btn {
+    transform: rotate(180deg);
+}
+/* Quando mini, centraliza o botão */
+#sidebar.sb-mini .sb-head {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+}
 
 /* ── Nav ── */
 #sidebar nav {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 16px 10px;
+    padding: 4px 10px 20px;
     scrollbar-width: none;
 }
 #sidebar nav::-webkit-scrollbar { display: none; }
 
 /* ── Label de grupo ── */
-.sb-group-label {
-    font-size: 9.5px;
+.sb-label {
+    font-size: 10px;
     font-weight: 800;
     letter-spacing: .1em;
     text-transform: uppercase;
     color: #475569;
-    padding: 16px 12px 6px;
+    padding: 18px 8px 5px;
     white-space: nowrap;
     overflow: hidden;
-    transition: opacity var(--sb-dur), height var(--sb-dur), padding var(--sb-dur);
-    height: 36px;
     opacity: 1;
+    max-height: 48px;
+    transition:
+        opacity 280ms ease,
+        max-height 300ms ease,
+        padding 300ms ease;
 }
-#sidebar.sb-closed .sb-group-label {
+#sidebar.sb-mini .sb-label {
     opacity: 0;
-    height: 0;
+    max-height: 0;
     padding-top: 0;
     padding-bottom: 0;
 }
 
-/* ── Item de navegação ── */
+/* ── Item ── */
 .nav-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 12px;
+    gap: 13px;
+    padding: 11px 12px;
     border-radius: 12px;
     cursor: pointer;
     color: #64748b;
     white-space: nowrap;
     transition:
-        background .15s,
-        color .15s,
-        padding var(--sb-dur) var(--sb-ease),
-        gap var(--sb-dur) var(--sb-ease);
+        background 150ms,
+        color 150ms,
+        padding 320ms cubic-bezier(.4,0,.2,1),
+        gap 320ms cubic-bezier(.4,0,.2,1),
+        justify-content 320ms;
     position: relative;
     margin-bottom: 3px;
     border: none;
-    background: none;
+    background: transparent;
     width: 100%;
     text-align: left;
     font-family: inherit;
 }
+
 .nav-item:hover {
     background: rgba(99,102,241,.1);
     color: #a5b4fc;
 }
+
 .nav-item.active-nav {
-    background: linear-gradient(135deg, rgba(99,102,241,.2), rgba(99,102,241,.06));
+    background: linear-gradient(135deg,rgba(99,102,241,.22),rgba(99,102,241,.07));
     color: #818cf8;
 }
-/* Barra lateral ativa */
+
+/* Barra ativa */
 .nav-item.active-nav::before {
     content: '';
     position: absolute;
     left: 0; top: 50%;
     transform: translateY(-50%);
-    width: 3px; height: 22px;
-    background: linear-gradient(180deg, #818cf8, #6366f1);
+    width: 3px; height: 24px;
+    background: linear-gradient(180deg, #a5b4fc, #6366f1);
     border-radius: 0 4px 4px 0;
 }
 
@@ -125,127 +150,145 @@
 .nav-item .material-symbols-rounded {
     font-size: 22px;
     flex-shrink: 0;
-    transition: transform .15s;
-    font-variation-settings: 'FILL' 0, 'wght' 300;
+    font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+    transition: transform 150ms, font-variation-settings 200ms;
 }
 .nav-item.active-nav .material-symbols-rounded {
-    font-variation-settings: 'FILL' 1, 'wght' 400;
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
-.nav-item:hover .material-symbols-rounded { transform: scale(1.1); }
+.nav-item:hover .material-symbols-rounded {
+    transform: scale(1.12);
+}
 
-/* Texto do item */
-.nav-label {
-    font-size: 13.5px;
+/* ── Texto ── */
+.nav-txt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow: hidden;
+    flex: 1;
+    opacity: 1;
+    max-width: 200px;
+    transition:
+        opacity 250ms ease,
+        max-width 320ms cubic-bezier(.4,0,.2,1);
+}
+#sidebar.sb-mini .nav-txt {
+    opacity: 0;
+    max-width: 0;
+}
+
+.nav-name {
+    font-size: 14px;
     font-weight: 500;
     overflow: hidden;
     white-space: nowrap;
-    max-width: 180px;
-    opacity: 1;
-    transition:
-        opacity var(--sb-dur),
-        max-width var(--sb-dur) var(--sb-ease);
+    text-overflow: ellipsis;
 }
-.nav-item.active-nav .nav-label { font-weight: 600; }
-
-#sidebar.sb-closed .nav-label {
-    max-width: 0;
-    opacity: 0;
-}
+.nav-item.active-nav .nav-name { font-weight: 600; }
 
 /* Badge */
 .nav-badge {
-    margin-left: auto;
     font-size: 9px;
     font-weight: 800;
     padding: 2px 7px;
     border-radius: 20px;
-    background: rgba(99,102,241,.2);
+    background: rgba(99,102,241,.25);
     color: #818cf8;
-    white-space: nowrap;
-    transition: opacity var(--sb-dur);
     flex-shrink: 0;
 }
-#sidebar.sb-closed .nav-badge {
-    opacity: 0;
-    pointer-events: none;
-}
 
-/* ── Centraliza ícones quando fechado ── */
-#sidebar.sb-closed .nav-item {
+/* ── Mini: centraliza ícone ── */
+#sidebar.sb-mini .nav-item {
     justify-content: center;
-    padding: 10px 0;
+    padding-left: 0;
+    padding-right: 0;
     gap: 0;
 }
-#sidebar.sb-closed .nav-item.active-nav::before {
+#sidebar.sb-mini .nav-item.active-nav::before {
     height: 18px;
 }
 
-/* ── Tooltip quando fechado ── */
-#sidebar.sb-closed .nav-item::after {
+/* ── Tooltip ao hover no modo mini ── */
+#sidebar.sb-mini .nav-item {
+    overflow: visible;
+}
+#sidebar.sb-mini .nav-item::after {
     content: attr(data-label);
     position: absolute;
-    left: calc(var(--sb-closed) + 10px);
+    left: 76px;
     top: 50%;
-    transform: translateY(-50%) translateX(-6px);
+    transform: translateY(-50%) translateX(-4px);
     background: #1e293b;
     color: #e2e8f0;
-    font-size: 12px;
+    font-size: 12.5px;
     font-weight: 600;
-    padding: 6px 12px;
-    border-radius: 8px;
-    border: 1px solid rgba(148,163,184,.12);
+    padding: 7px 14px;
+    border-radius: 9px;
+    border: 1px solid rgba(148,163,184,.15);
     white-space: nowrap;
-    box-shadow: 0 4px 16px rgba(0,0,0,.5);
+    box-shadow: 0 6px 20px rgba(0,0,0,.5);
     opacity: 0;
     pointer-events: none;
-    transition: opacity .15s, transform .15s;
-    z-index: 100;
+    transition: opacity 180ms, transform 180ms;
+    z-index: 200;
 }
-#sidebar.sb-closed .nav-item:hover::after {
+#sidebar.sb-mini .nav-item:hover::after {
     opacity: 1;
     transform: translateY(-50%) translateX(0);
 }
 
-/* ── Área de conteúdo principal ── */
+/* ── Área de conteúdo ── */
 #main-content {
-    margin-left: var(--sb-open);
-    transition: margin-left var(--sb-dur) var(--sb-ease);
+    margin-left: 260px;
+    transition: margin-left 320ms cubic-bezier(.4,0,.2,1);
 }
-#main-content.sb-collapsed {
-    margin-left: var(--sb-closed);
+#main-content.sb-mini-content {
+    margin-left: 72px;
 }
 
-/* Mobile */
 @media (max-width: 1023px) {
     #sidebar {
-        transform: translateX(-100%);
-        width: var(--sb-open) !important;
-        transition: transform var(--sb-dur) var(--sb-ease);
-        box-shadow: 4px 0 24px rgba(0,0,0,.5);
+        width: 260px !important;
+        transform: translateX(-100%) !important;
+        transition: transform 320ms cubic-bezier(.4,0,.2,1) !important;
     }
-    #sidebar.mobile-open { transform: translateX(0); }
-    #main-content { margin-left: 0 !important; }
-    #sb-toggle-btn { display: none; }
+    #sidebar.mobile-open {
+        transform: translateX(0) !important;
+    }
+    #sidebar.sb-mini {
+        width: 260px !important;
+    }
+    #main-content,
+    #main-content.sb-mini-content {
+        margin-left: 0 !important;
+    }
 }
 </style>
 
 <aside id="sidebar">
-    <!-- Botão toggle flutuante na borda direita -->
-    <button id="sb-toggle-btn" onclick="toggleSidebar()" aria-label="Toggle sidebar">
-        <span class="material-symbols-rounded" style="font-size:16px;font-variation-settings:'wght' 600;">chevron_left</span>
-    </button>
+    <!-- Cabeçalho com toggle -->
+    <div class="sb-head">
+        <button id="sb-mini-btn" onclick="toggleSidebar()" title="Minimizar sidebar">
+            <span class="material-symbols-rounded" style="font-size:18px;font-variation-settings:'wght' 600;">
+                chevron_left
+            </span>
+        </button>
+    </div>
 
     <nav>
         <!-- PRINCIPAL -->
-        <div class="sb-group-label">Principal</div>
+        <div class="sb-label">Principal</div>
 
         <button class="nav-item active-nav"
                 data-page="dashboard"
                 data-label="Dashboard"
                 onclick="showPage('dashboard')">
             <span class="material-symbols-rounded">dashboard</span>
-            <span class="nav-label">Dashboard</span>
-            <span class="nav-badge">Novo</span>
+            <span class="nav-txt">
+                <span class="nav-name">Dashboard</span>
+                <span class="nav-badge">Novo</span>
+            </span>
         </button>
 
         <button class="nav-item"
@@ -253,7 +296,9 @@
                 data-label="Quadro Kanban"
                 onclick="showPage('kanban')">
             <span class="material-symbols-rounded">view_kanban</span>
-            <span class="nav-label">Quadro Kanban</span>
+            <span class="nav-txt">
+                <span class="nav-name">Quadro Kanban</span>
+            </span>
         </button>
 
         <button class="nav-item"
@@ -261,18 +306,22 @@
                 data-label="Lista de Ordens"
                 onclick="showPage('ordens')">
             <span class="material-symbols-rounded">receipt_long</span>
-            <span class="nav-label">Lista de Ordens</span>
+            <span class="nav-txt">
+                <span class="nav-name">Lista de Ordens</span>
+            </span>
         </button>
 
         <!-- GESTÃO -->
-        <div class="sb-group-label">Gestão</div>
+        <div class="sb-label">Gestão</div>
 
         <button class="nav-item"
                 data-page="equipe"
                 data-label="Equipe"
                 onclick="showPage('equipe')">
             <span class="material-symbols-rounded">group</span>
-            <span class="nav-label">Equipe</span>
+            <span class="nav-txt">
+                <span class="nav-name">Equipe</span>
+            </span>
         </button>
 
         <button class="nav-item"
@@ -280,7 +329,9 @@
                 data-label="Estoque"
                 onclick="showPage('estoque')">
             <span class="material-symbols-rounded">inventory_2</span>
-            <span class="nav-label">Estoque</span>
+            <span class="nav-txt">
+                <span class="nav-name">Estoque</span>
+            </span>
         </button>
 
         <button class="nav-item"
@@ -288,57 +339,64 @@
                 data-label="Entrega de Ordem"
                 onclick="showPage('entrega')">
             <span class="material-symbols-rounded">local_shipping</span>
-            <span class="nav-label">Entrega de Ordem</span>
+            <span class="nav-txt">
+                <span class="nav-name">Entrega de Ordem</span>
+            </span>
         </button>
     </nav>
 </aside>
 
 <script>
-(function() {
-    const LS_KEY  = 'sb_collapsed';
-    let collapsed = localStorage.getItem(LS_KEY) === 'true';
+(function () {
+    const LS   = 'sb_mini';
+    let mini   = localStorage.getItem(LS) === 'true';
 
-    function applyState() {
-        const sb  = document.getElementById('sidebar');
-        const mc  = document.getElementById('main-content');
+    function apply(instant) {
+        const sb = document.getElementById('sidebar');
+        const mc = document.getElementById('main-content');
         if (!sb) return;
-        if (collapsed) {
-            sb.classList.add('sb-closed');
-            mc?.classList.add('sb-collapsed');
-        } else {
-            sb.classList.remove('sb-closed');
-            mc?.classList.remove('sb-collapsed');
+
+        if (instant) {
+            sb.style.transition  = 'none';
+            if (mc) mc.style.transition = 'none';
+        }
+
+        sb.classList.toggle('sb-mini', mini);
+        mc?.classList.toggle('sb-mini-content', mini);
+
+        if (instant) {
+            requestAnimationFrame(() => {
+                sb.style.transition  = '';
+                if (mc) mc.style.transition = '';
+            });
         }
     }
 
-    window.toggleSidebar = function() {
+    /* Toggle global (chamado pelo botão e pelo header mobile) */
+    window.toggleSidebar = function () {
         if (window.innerWidth < 1024) {
             document.getElementById('sidebar')?.classList.toggle('mobile-open');
             return;
         }
-        collapsed = !collapsed;
-        localStorage.setItem(LS_KEY, collapsed);
-        applyState();
+        mini = !mini;
+        localStorage.setItem(LS, mini);
+        apply(false);
     };
 
-    // Intercepta showPage para atualizar nav ativo
+    /* Intercepta showPage para marcar ativo */
     const _orig = window.showPage;
-    window.showPage = function(page) {
+    window.showPage = function (page) {
         if (_orig) _orig(page);
         document.querySelectorAll('.nav-item[data-page]').forEach(el => {
             el.classList.toggle('active-nav', el.dataset.page === page);
         });
+        /* Fecha overlay mobile */
         if (window.innerWidth < 1024) {
             document.getElementById('sidebar')?.classList.remove('mobile-open');
         }
     };
 
-    // Aplica estado inicial (sem animação)
-    const sb = document.getElementById('sidebar');
-    if (sb) sb.style.transition = 'none';
-    applyState();
-    requestAnimationFrame(() => {
-        if (sb) sb.style.transition = '';
-    });
+    /* Aplica estado inicial sem animação */
+    apply(true);
 })();
 </script>
