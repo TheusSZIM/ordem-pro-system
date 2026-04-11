@@ -1,59 +1,326 @@
 <!-- ============================================
-     CONTROLE DE ORDENS PRO - SIDEBAR COMPONENT
+     SIDEBAR — Retrátil · só ícones quando fechada
      ============================================ -->
+<style>
+/* ── Variáveis ── */
+:root {
+    --sb-w-open:   220px;
+    --sb-w-closed: 64px;
+    --sb-dur:      .28s;
+    --sb-ease:     cubic-bezier(.4,0,.2,1);
+}
 
-<!-- Sidebar -->
-<aside id="sidebar" class="fixed left-0 top-16 bottom-0 w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 z-40 overflow-y-auto">
-    <nav class="p-4 space-y-1">
-        <div class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 px-3">Principal</div>
-        
-        <a onclick="showPage('dashboard')" data-page="dashboard" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-200 active-nav cursor-pointer">
-            <span class="material-symbols-rounded">dashboard</span>
-            Dashboard
-            <span class="ml-auto text-[10px] bg-primary-100 dark:bg-primary-900/30 text-primary-600 px-2 py-0.5 rounded-full">Novo</span>
-        </a>
+/* ── Sidebar base ── */
+#sidebar {
+    position: fixed;
+    left: 0; top: 64px; bottom: 0;
+    width: var(--sb-w-open);
+    background: var(--sb-bg, #0f172a);
+    border-right: 1px solid rgba(148,163,184,.1);
+    transition: width var(--sb-dur) var(--sb-ease);
+    overflow: hidden;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+}
 
-        <a onclick="showPage('kanban')" data-page="kanban" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-200 cursor-pointer">
-            <span class="material-symbols-rounded">view_kanban</span>
-            Quadro Kanban
-        </a>
+/* Modo fechado */
+#sidebar.collapsed {
+    width: var(--sb-w-closed);
+}
 
-        <a onclick="showPage('ordens')" data-page="ordens" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-200 cursor-pointer">
-            <span class="material-symbols-rounded">receipt_long</span>
-            Lista de Ordens
-        </a>
+/* ── Botão toggle (topo da sidebar) ── */
+#sb-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(148,163,184,.07);
+    flex-shrink: 0;
+}
+#sb-toggle button {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(99,102,241,.12);
+    color: #818cf8;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s, transform .2s;
+}
+#sb-toggle button:hover { background: rgba(99,102,241,.22); }
+#sidebar.collapsed #sb-toggle { justify-content: center; padding: 10px 0; }
+#sidebar.collapsed #sb-toggle button { transform: rotate(180deg); }
 
-        <div class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-6 mb-2 px-3">Gestão</div>
+/* ── Nav ── */
+#sidebar nav {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 8px 8px 8px;
+    scrollbar-width: none;
+}
+#sidebar nav::-webkit-scrollbar { display: none; }
 
-        <a onclick="showPage('equipe')" data-page="equipe" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-200 cursor-pointer">
-            <span class="material-symbols-rounded">group</span>
-            Equipe
-        </a>
+/* ── Grupo label ── */
+.sb-group-label {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #475569;
+    padding: 14px 10px 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: opacity var(--sb-dur), max-height var(--sb-dur);
+    max-height: 40px;
+    opacity: 1;
+}
+#sidebar.collapsed .sb-group-label {
+    opacity: 0;
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
 
-        <a onclick="showPage('estoque')" data-page="estoque" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-200 cursor-pointer">
-            <span class="material-symbols-rounded">inventory_2</span>
-            Estoque
-        </a>
+/* ── Item de nav ── */
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 9px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: #94a3b8;
+    white-space: nowrap;
+    transition: background .15s, color .15s, padding var(--sb-dur);
+    position: relative;
+    margin-bottom: 2px;
+    text-decoration: none;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+}
+.nav-item:hover {
+    background: rgba(99,102,241,.10);
+    color: #a5b4fc;
+}
+.nav-item.active-nav {
+    background: linear-gradient(135deg,rgba(99,102,241,.18),rgba(99,102,241,.08));
+    color: #818cf8;
+    font-weight: 600;
+}
+.nav-item.active-nav::before {
+    content:'';
+    position: absolute;
+    left: 0; top: 50%;
+    transform: translateY(-50%);
+    width: 3px; height: 18px;
+    background: #6366f1;
+    border-radius: 0 3px 3px 0;
+}
+.nav-item .material-symbols-rounded {
+    font-size: 20px;
+    flex-shrink: 0;
+    transition: transform .15s;
+}
+.nav-item:hover .material-symbols-rounded { transform: scale(1.1); }
 
-        <a onclick="showPage('entrega')" data-page="entrega" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-200 cursor-pointer">
-            <span class="material-symbols-rounded">local_shipping</span>
-            Entrega de Ordem
-        </a>
-    </nav>
+/* Texto do item */
+.nav-item .nav-label {
+    overflow: hidden;
+    white-space: nowrap;
+    transition: opacity var(--sb-dur), max-width var(--sb-dur);
+    max-width: 160px;
+    opacity: 1;
+}
+#sidebar.collapsed .nav-item .nav-label {
+    max-width: 0;
+    opacity: 0;
+}
 
-    <div class="p-4 mt-auto">
-        <div class="bg-gradient-to-br from-primary-600 to-primary-800 rounded-2xl p-4 text-white relative overflow-hidden group cursor-pointer hover:shadow-glow transition-all duration-300">
-            <div class="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10 transition-transform duration-500 group-hover:scale-150"></div>
-            <div class="relative z-10">
-                <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center mb-3">
-                    <span class="material-symbols-rounded text-white">workspace_premium</span>
-                </div>
-                <p class="font-semibold text-sm mb-1">Versão Pro</p>
-                <p class="text-[10px] text-white/70 mb-3">Acesse recursos avançados</p>
-                <button class="w-full py-2 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-semibold transition-colors backdrop-blur-sm">
-                    Ver planos
-                </button>
-            </div>
-        </div>
+/* Badge (ex: "Novo") */
+.nav-badge {
+    margin-left: auto;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 20px;
+    background: rgba(99,102,241,.2);
+    color: #818cf8;
+    white-space: nowrap;
+    transition: opacity var(--sb-dur);
+}
+#sidebar.collapsed .nav-badge { opacity: 0; pointer-events: none; }
+
+/* ── Tooltip quando fechado ── */
+#sidebar.collapsed .nav-item {
+    justify-content: center;
+    padding: 9px 0;
+}
+#sidebar.collapsed .nav-item:hover::after {
+    content: attr(data-label);
+    position: absolute;
+    left: calc(var(--sb-w-closed) + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: #1e293b;
+    color: #e2e8f0;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 7px;
+    border: 1px solid rgba(148,163,184,.15);
+    white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(0,0,0,.4);
+    pointer-events: none;
+    z-index: 99;
+}
+#sidebar.collapsed .nav-item:hover::before {
+    /* remove active bar conflict */
+}
+
+/* ── Ajuste do conteúdo principal ── */
+#main-content {
+    margin-left: var(--sb-w-open);
+    transition: margin-left var(--sb-dur) var(--sb-ease);
+}
+#main-content.sb-collapsed {
+    margin-left: var(--sb-w-closed);
+}
+
+/* Mobile — hidden by default, overlay when open */
+@media (max-width: 1023px) {
+    #sidebar {
+        transform: translateX(-100%);
+        width: var(--sb-w-open) !important;
+        transition: transform var(--sb-dur) var(--sb-ease);
+    }
+    #sidebar.mobile-open { transform: translateX(0); }
+    #main-content { margin-left: 0 !important; }
+}
+</style>
+
+<aside id="sidebar">
+    <!-- Botão toggle -->
+    <div id="sb-toggle">
+        <button onclick="toggleSidebar()" title="Recolher menu" aria-label="Toggle sidebar">
+            <span class="material-symbols-rounded" style="font-size:18px;">chevron_left</span>
+        </button>
     </div>
+
+    <nav>
+        <!-- PRINCIPAL -->
+        <div class="sb-group-label">Principal</div>
+
+        <button class="nav-item active-nav"
+                data-page="dashboard"
+                data-label="Dashboard"
+                onclick="showPage('dashboard')">
+            <span class="material-symbols-rounded">dashboard</span>
+            <span class="nav-label">Dashboard</span>
+            <span class="nav-badge">Novo</span>
+        </button>
+
+        <button class="nav-item"
+                data-page="kanban"
+                data-label="Quadro Kanban"
+                onclick="showPage('kanban')">
+            <span class="material-symbols-rounded">view_kanban</span>
+            <span class="nav-label">Quadro Kanban</span>
+        </button>
+
+        <button class="nav-item"
+                data-page="ordens"
+                data-label="Lista de Ordens"
+                onclick="showPage('ordens')">
+            <span class="material-symbols-rounded">receipt_long</span>
+            <span class="nav-label">Lista de Ordens</span>
+        </button>
+
+        <!-- GESTÃO -->
+        <div class="sb-group-label">Gestão</div>
+
+        <button class="nav-item"
+                data-page="equipe"
+                data-label="Equipe"
+                onclick="showPage('equipe')">
+            <span class="material-symbols-rounded">group</span>
+            <span class="nav-label">Equipe</span>
+        </button>
+
+        <button class="nav-item"
+                data-page="estoque"
+                data-label="Estoque"
+                onclick="showPage('estoque')">
+            <span class="material-symbols-rounded">inventory_2</span>
+            <span class="nav-label">Estoque</span>
+        </button>
+
+        <button class="nav-item"
+                data-page="entrega"
+                data-label="Entrega de Ordem"
+                onclick="showPage('entrega')">
+            <span class="material-symbols-rounded">local_shipping</span>
+            <span class="nav-label">Entrega de Ordem</span>
+        </button>
+    </nav>
 </aside>
+
+<script>
+(function() {
+    // Estado do sidebar
+    const STORAGE_KEY = 'sb_collapsed';
+    let collapsed = localStorage.getItem(STORAGE_KEY) === 'true';
+
+    function applyState(animate) {
+        const sb      = document.getElementById('sidebar');
+        const content = document.getElementById('main-content');
+        if (!sb) return;
+
+        if (collapsed) {
+            sb.classList.add('collapsed');
+            content?.classList.add('sb-collapsed');
+        } else {
+            sb.classList.remove('collapsed');
+            content?.classList.remove('sb-collapsed');
+        }
+    }
+
+    // Expõe o toggle globalmente (sobrescreve o anterior)
+    window.toggleSidebar = function() {
+        const isMobile = window.innerWidth < 1024;
+        if (isMobile) {
+            const sb = document.getElementById('sidebar');
+            sb?.classList.toggle('mobile-open');
+            return;
+        }
+        collapsed = !collapsed;
+        localStorage.setItem(STORAGE_KEY, collapsed);
+        applyState(true);
+    };
+
+    // Aplica estado salvo sem animação na carga
+    document.addEventListener('DOMContentLoaded', () => applyState(false));
+
+    // Também aplica quando sidebar.html é injetado dinamicamente
+    applyState(false);
+
+    // Atualiza nav-item ativo ao mudar de página
+    const origShowPage = window.showPage;
+    window.showPage = function(pageName) {
+        if (origShowPage) origShowPage(pageName);
+        document.querySelectorAll('.nav-item').forEach(item => {
+            const isActive = item.dataset.page === pageName;
+            item.classList.toggle('active-nav', isActive);
+        });
+        // Fecha sidebar no mobile após navegar
+        if (window.innerWidth < 1024) {
+            document.getElementById('sidebar')?.classList.remove('mobile-open');
+        }
+    };
+})();
+</script>
