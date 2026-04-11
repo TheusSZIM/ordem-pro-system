@@ -75,12 +75,41 @@ async function syncSheets() {
 // ── FETCH + CSV ───────────────────────────────────────────────────────────────
 
 async function fetchCSV(url) {
-    const u = url.includes('output=csv') ? url
-        : url.replace(/\/d\/([^/]+).*/, (_, id) =>
-            `https://docs.google.com/spreadsheets/d/${id}/pub?output=csv`);
+    const u = toCSVUrl(url.trim());
+    console.log('[Kanban] Fetching CSV:', u);
     const r = await fetch(u);
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     return r.text();
+}
+
+/**
+ * Converte qualquer URL do Google Sheets para URL CSV pública.
+ *
+ * Formatos aceitos:
+ *  A) URL já publicada como CSV (contém "output=csv") → retorna como está
+ *  B) URL de edição (/d/{ID}/edit...) → extrai ID e monta URL pub
+ *  C) URL de edição com gid → preserva gid na URL pub
+ *
+ * BUG CORRIGIDO: o replace anterior deixava o prefixo
+ * "https://docs.google.com/spreadsheets" e concatenava outro,
+ * gerando URLs duplicadas. Agora o ID é extraído e a URL é
+ * construída do zero.
+ */
+function toCSVUrl(url) {
+    // Já é CSV publicado — usa direto
+    if (url.includes('output=csv')) return url;
+
+    // Extrai o ID da planilha de qualquer formato de URL
+    const mId = url.match(/\/d\/(?:e\/)?([a-zA-Z0-9_-]+)/);
+    if (!mId) return url; // não reconhecido — tenta assim mesmo
+
+    const id = mId[1];
+
+    // Preserva gid se existir (?gid=XXXX ou #gid=XXXX)
+    const mGid = url.match(/[?&#]gid=(\d+)/);
+    const gid  = mGid ? `&gid=${mGid[1]}` : '';
+
+    return `https://docs.google.com/spreadsheets/d/${id}/pub?output=csv${gid}`;
 }
 
 function parseCSVRows(csv) {
