@@ -10,19 +10,18 @@
     border-right: 1px solid rgba(148,163,184,.08) !important;
     display: flex !important;
     flex-direction: column !important;
-    overflow: hidden !important;      /* Clips o conteúdo interno */
+    overflow: hidden !important;
     z-index: 40 !important;
     transition: width 380ms cubic-bezier(.65,0,.35,1) !important;
     will-change: width;
 }
 #sidebar.sb-mini { width: 76px !important; }
 
-/* ─── Botão de recolher — FORA da sidebar ─── */
-/* Posicionado fixo, acompanha a largura da sidebar via JS */
+/* ─── Botão recolher — fixo, acompanha a borda da sidebar ─── */
 #sb-tab {
     position: fixed;
     top: 50%;
-    /* left calculado pelo JS = largura sidebar */
+    left: 280px; /* atualizado pelo JS */
     transform: translateY(-50%);
     z-index: 42;
     cursor: pointer;
@@ -30,21 +29,6 @@
     align-items: center;
     transition: left 380ms cubic-bezier(.65,0,.35,1);
 }
-
-/* Traço decorativo */
-#sb-tab::before {
-    content: '';
-    position: absolute;
-    left: -1px; top: 50%;
-    transform: translateY(-50%);
-    width: 2px; height: 40px;
-    background: rgba(99,102,241,.22);
-    border-radius: 2px;
-    transition: height 200ms, background 200ms;
-}
-#sb-tab:hover::before { height: 60px; background: rgba(99,102,241,.55); }
-
-/* Pílula */
 #sb-pill {
     width: 20px; height: 52px;
     background: #151f35;
@@ -52,15 +36,14 @@
     border-left: none;
     border-radius: 0 14px 14px 0;
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 4px 0 16px rgba(0,0,0,.5);
+    box-shadow: 4px 0 14px rgba(0,0,0,.5);
     transition: background 200ms, border-color 200ms, width 200ms;
 }
 #sb-tab:hover #sb-pill {
-    background: rgba(99,102,241,.18);
+    background: rgba(99,102,241,.2);
     border-color: rgba(99,102,241,.65);
     width: 26px;
 }
-
 #sb-pill .material-symbols-rounded {
     font-size: 16px; color: #818cf8;
     font-variation-settings: 'wght' 700;
@@ -68,8 +51,7 @@
     flex-shrink: 0;
 }
 #sb-tab:hover #sb-pill .material-symbols-rounded { color: #c7d2fe; }
-/* Quando mini a seta aponta para direita */
-#sb-tab.sb-mini-tab #sb-pill .material-symbols-rounded { transform: rotate(180deg); }
+#sb-tab.mini-tab #sb-pill .material-symbols-rounded { transform: rotate(180deg); }
 
 /* ─── Nav ─── */
 #sidebar nav {
@@ -79,35 +61,26 @@
 }
 #sidebar nav::-webkit-scrollbar { display: none; }
 
-/* ─── Labels de grupo ─── */
+/* ─── Labels ─── */
 .sb-label {
     font-size: 10px; font-weight: 800;
     letter-spacing: .12em; text-transform: uppercase;
-    color: #3d5270;
-    padding: 20px 10px 6px;
+    color: #3d5270; padding: 20px 10px 6px;
     white-space: nowrap; overflow: hidden;
     opacity: 1; max-height: 52px;
-    transition:
-        opacity 280ms ease,
-        max-height 380ms cubic-bezier(.65,0,.35,1),
-        padding-top 380ms cubic-bezier(.65,0,.35,1),
-        padding-bottom 380ms cubic-bezier(.65,0,.35,1);
+    transition: opacity 280ms, max-height 380ms cubic-bezier(.65,0,.35,1),
+                padding-top 380ms, padding-bottom 380ms;
 }
-#sidebar.sb-mini .sb-label {
-    opacity: 0; max-height: 0;
-    padding-top: 0; padding-bottom: 0;
-}
+#sidebar.sb-mini .sb-label { opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; }
 
 /* ─── Itens ─── */
 .nav-item {
-    display: flex; align-items: center;
-    gap: 14px; padding: 12px 14px;
-    border-radius: 14px; cursor: pointer;
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 14px; border-radius: 14px; cursor: pointer;
     color: #64748b; white-space: nowrap;
-    transition:
-        background 180ms, color 180ms,
-        padding 380ms cubic-bezier(.65,0,.35,1),
-        gap 380ms cubic-bezier(.65,0,.35,1);
+    transition: background 180ms, color 180ms,
+                padding 380ms cubic-bezier(.65,0,.35,1),
+                gap 380ms cubic-bezier(.65,0,.35,1);
     position: relative; margin-bottom: 4px;
     border: none; background: transparent;
     width: 100%; text-align: left; font-family: inherit;
@@ -118,14 +91,12 @@
     color: #818cf8;
 }
 .nav-item.active-nav::before {
-    content: '';
-    position: absolute; left: 0; top: 50%;
+    content: ''; position: absolute; left: 0; top: 50%;
     transform: translateY(-50%);
     width: 3px; height: 26px;
     background: linear-gradient(180deg,#a5b4fc,#6366f1);
     border-radius: 0 4px 4px 0;
 }
-
 .nav-item .material-symbols-rounded {
     font-size: 23px; flex-shrink: 0;
     font-variation-settings: 'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24;
@@ -136,38 +107,27 @@
 }
 .nav-item:hover .material-symbols-rounded { transform: scale(1.1); }
 
-/* ─── Texto (GPU: translateX + opacity) ─── */
+/* Texto — GPU: translateX + opacity */
 .nav-txt {
     display: flex; align-items: center; gap: 10px;
     overflow: hidden; flex: 1;
     opacity: 1; transform: translateX(0);
-    transition:
-        opacity 260ms ease,
-        transform 380ms cubic-bezier(.65,0,.35,1);
+    transition: opacity 260ms, transform 380ms cubic-bezier(.65,0,.35,1);
 }
 #sidebar.sb-mini .nav-txt {
-    opacity: 0; transform: translateX(-14px);
-    pointer-events: none;
+    opacity: 0; transform: translateX(-14px); pointer-events: none;
 }
-
-.nav-name {
-    font-size: 14.5px; font-weight: 500;
-    overflow: hidden; white-space: nowrap;
-}
+.nav-name { font-size: 14.5px; font-weight: 500; overflow: hidden; white-space: nowrap; }
 .nav-item.active-nav .nav-name { font-weight: 600; }
-
 .nav-badge {
-    font-size: 9px; font-weight: 800;
-    padding: 2px 8px; border-radius: 20px;
-    background: rgba(99,102,241,.25); color: #818cf8;
-    flex-shrink: 0; transition: opacity 260ms;
+    font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 20px;
+    background: rgba(99,102,241,.25); color: #818cf8; flex-shrink: 0;
+    transition: opacity 260ms;
 }
 #sidebar.sb-mini .nav-badge { opacity: 0; }
 
 /* ─── Mini: centra ícones ─── */
-#sidebar.sb-mini .nav-item {
-    justify-content: center; padding: 12px 0; gap: 0;
-}
+#sidebar.sb-mini .nav-item { justify-content: center; padding: 12px 0; gap: 0; }
 #sidebar.sb-mini .nav-item.active-nav::before { height: 20px; }
 
 /* Tooltip mini */
@@ -188,14 +148,7 @@
     opacity: 1; transform: translateY(-50%) translateX(0);
 }
 
-/* ─── Conteúdo principal ─── */
-#main-content {
-    margin-left: 280px !important;
-    transition: margin-left 380ms cubic-bezier(.65,0,.35,1);
-}
-#main-content.sb-mini-content { margin-left: 76px !important; }
-
-/* ─── Mobile ─── */
+/* Mobile */
 @media (max-width: 1023px) {
     #sidebar {
         width: 280px !important;
@@ -204,12 +157,11 @@
     }
     #sidebar.mobile-open { transform: translateX(0) !important; }
     #sb-tab { display: none !important; }
-    #main-content, #main-content.sb-mini-content { margin-left: 0 !important; }
 }
 </style>
 
-<!-- Aba de recolher — FORA da sidebar para não ser cortada pelo overflow -->
-<div id="sb-tab" onclick="toggleSidebar()" title="Recolher / Expandir" style="left:280px">
+<!-- Botão fora da sidebar -->
+<div id="sb-tab" onclick="toggleSidebar()" title="Recolher / Expandir">
     <div id="sb-pill">
         <span class="material-symbols-rounded">chevron_left</span>
     </div>
@@ -221,10 +173,7 @@
 
         <button class="nav-item active-nav" data-page="dashboard" data-label="Dashboard" onclick="showPage('dashboard')">
             <span class="material-symbols-rounded">dashboard</span>
-            <span class="nav-txt">
-                <span class="nav-name">Dashboard</span>
-                <span class="nav-badge">Novo</span>
-            </span>
+            <span class="nav-txt"><span class="nav-name">Dashboard</span><span class="nav-badge">Novo</span></span>
         </button>
 
         <button class="nav-item" data-page="kanban" data-label="Quadro Kanban" onclick="showPage('kanban')">
@@ -258,38 +207,59 @@
 
 <script>
 (function () {
-    const LS  = 'sb_mini';
-    const W_OPEN  = 280;
-    const W_MINI  = 76;
+    const LS     = 'sb_mini';
+    const W_OPEN = 280;
+    const W_MINI = 76;
     let mini = localStorage.getItem(LS) === 'true';
+
+    /* ── Injeta <style> no <head> para controlar margem de TODO o conteúdo ── */
+    const styleEl = document.createElement('style');
+    styleEl.id = 'sb-dynamic-style';
+    document.head.appendChild(styleEl);
+
+    function getW() { return mini ? W_MINI : W_OPEN; }
+
+    function updateStyles() {
+        const w = getW();
+        /* Aplica margem a qualquer wrapper de conteúdo existente */
+        styleEl.textContent = `
+            #main-content,
+            .main-content,
+            main,
+            .lg\\:ml-64,
+            [class*="ml-64"] {
+                margin-left: ${w}px !important;
+                transition: margin-left 380ms cubic-bezier(.65,0,.35,1) !important;
+            }
+        `;
+    }
 
     function updateTab() {
         const tab = document.getElementById('sb-tab');
         if (!tab) return;
-        tab.style.left = (mini ? W_MINI : W_OPEN) + 'px';
-        tab.classList.toggle('sb-mini-tab', mini);
+        tab.style.left = getW() + 'px';
+        tab.classList.toggle('mini-tab', mini);
     }
 
     function apply(instant) {
-        const sb = document.getElementById('sidebar');
-        const mc = document.getElementById('main-content');
+        const sb  = document.getElementById('sidebar');
         const tab = document.getElementById('sb-tab');
         if (!sb) return;
 
         if (instant) {
-            sb.style.transition = 'none';
-            if (mc)  mc.style.transition  = 'none';
+            /* Sem transição na carga inicial */
+            if (styleEl) styleEl.textContent = ''; // limpa antes
+            sb.style.transition  = 'none';
             if (tab) tab.style.transition = 'none';
         }
 
         sb.classList.toggle('sb-mini', mini);
-        mc?.classList.toggle('sb-mini-content', mini);
+        updateStyles();
         updateTab();
 
         if (instant) {
             requestAnimationFrame(() => {
                 sb.style.transition  = '';
-                if (mc)  mc.style.transition  = '';
                 if (tab) tab.style.transition = '';
             });
         }
