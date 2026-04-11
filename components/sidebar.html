@@ -8,19 +8,16 @@
     width: 280px !important;
     background: #0c1628 !important;
     border-right: 1px solid rgba(148,163,184,.08) !important;
-    display: flex !important;
-    flex-direction: column !important;
-    overflow: hidden !important;
-    z-index: 40 !important;
+    display: flex !important; flex-direction: column !important;
+    overflow: hidden !important; z-index: 40 !important;
     transition: width 380ms cubic-bezier(.65,0,.35,1) !important;
     will-change: width;
 }
 #sidebar.sb-mini { width: 76px !important; }
 
-/* Botão recolher — fixo na borda da sidebar */
+/* Botão recolher — fora da sidebar */
 #sb-tab {
-    position: fixed;
-    top: 50%; left: 280px;
+    position: fixed; top: 50%; left: 280px;
     transform: translateY(-50%);
     z-index: 42; cursor: pointer;
     display: flex; align-items: center;
@@ -29,8 +26,7 @@
 #sb-pill {
     width: 20px; height: 52px;
     background: #151f35;
-    border: 1.5px solid rgba(99,102,241,.3);
-    border-left: none;
+    border: 1.5px solid rgba(99,102,241,.3); border-left: none;
     border-radius: 0 14px 14px 0;
     display: flex; align-items: center; justify-content: center;
     box-shadow: 4px 0 14px rgba(0,0,0,.5);
@@ -47,37 +43,29 @@
 #sb-tab.mini-tab #sb-pill .material-symbols-rounded { transform: rotate(180deg); }
 
 /* Nav */
-#sidebar nav {
-    flex: 1; overflow-y: auto; overflow-x: hidden;
-    padding: 16px 12px 24px; scrollbar-width: none;
-}
+#sidebar nav { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 16px 12px 24px; scrollbar-width: none; }
 #sidebar nav::-webkit-scrollbar { display: none; }
 
 .sb-label {
     font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
     color: #3d5270; padding: 20px 10px 6px;
     white-space: nowrap; overflow: hidden; opacity: 1; max-height: 52px;
-    transition: opacity 280ms, max-height 380ms cubic-bezier(.65,0,.35,1),
-                padding-top 380ms, padding-bottom 380ms;
+    transition: opacity 280ms, max-height 380ms cubic-bezier(.65,0,.35,1), padding-top 380ms, padding-bottom 380ms;
 }
 #sidebar.sb-mini .sb-label { opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; }
 
 .nav-item {
     display: flex; align-items: center; gap: 14px; padding: 12px 14px;
     border-radius: 14px; cursor: pointer; color: #64748b; white-space: nowrap;
-    transition: background 180ms, color 180ms,
-                padding 380ms cubic-bezier(.65,0,.35,1), gap 380ms cubic-bezier(.65,0,.35,1);
+    transition: background 180ms, color 180ms, padding 380ms cubic-bezier(.65,0,.35,1), gap 380ms cubic-bezier(.65,0,.35,1);
     position: relative; margin-bottom: 4px;
     border: none; background: transparent; width: 100%; text-align: left; font-family: inherit;
 }
 .nav-item:hover { background: rgba(99,102,241,.1); color: #a5b4fc; }
-.nav-item.active-nav {
-    background: linear-gradient(135deg,rgba(99,102,241,.22),rgba(99,102,241,.06)); color: #818cf8;
-}
+.nav-item.active-nav { background: linear-gradient(135deg,rgba(99,102,241,.22),rgba(99,102,241,.06)); color: #818cf8; }
 .nav-item.active-nav::before {
     content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
-    width: 3px; height: 26px;
-    background: linear-gradient(180deg,#a5b4fc,#6366f1); border-radius: 0 4px 4px 0;
+    width: 3px; height: 26px; background: linear-gradient(180deg,#a5b4fc,#6366f1); border-radius: 0 4px 4px 0;
 }
 .nav-item .material-symbols-rounded {
     font-size: 23px; flex-shrink: 0;
@@ -95,10 +83,7 @@
 #sidebar.sb-mini .nav-txt { opacity: 0; transform: translateX(-14px); pointer-events: none; }
 .nav-name { font-size: 14.5px; font-weight: 500; overflow: hidden; white-space: nowrap; }
 .nav-item.active-nav .nav-name { font-weight: 600; }
-.nav-badge {
-    font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 20px;
-    background: rgba(99,102,241,.25); color: #818cf8; flex-shrink: 0; transition: opacity 260ms;
-}
+.nav-badge { font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 20px; background: rgba(99,102,241,.25); color: #818cf8; flex-shrink: 0; transition: opacity 260ms; }
 #sidebar.sb-mini .nav-badge { opacity: 0; }
 
 #sidebar.sb-mini .nav-item { justify-content: center; padding: 12px 0; gap: 0; }
@@ -160,30 +145,35 @@
     const LS = 'sb_mini';
     const W_OPEN = 280, W_MINI = 76;
     let mini = localStorage.getItem(LS) === 'true';
+    let _contentEl = null;
 
-    /* Encontra o wrapper de conteúdo principal */
-    function getContentEl() {
-        // Tenta por ID primeiro
-        const byId = document.getElementById('main-content');
-        if (byId) return byId;
+    /* Injeta regra CSS no <head> — abordagem mais confiável */
+    const styleTag = document.createElement('style');
+    styleTag.id = 'sb-layout-style';
+    (document.head || document.documentElement).appendChild(styleTag);
 
-        // Procura o primeiro filho de body que não seja fixo
-        const bodies = Array.from(document.body.children);
-        return bodies.find(el => {
-            const s = window.getComputedStyle(el);
-            return s.position !== 'fixed' && s.position !== 'absolute'
-                && el.id !== 'sb-tab' && el.id !== 'sidebar';
-        }) || null;
-    }
-
-    function applyMargin(instant) {
-        const el = getContentEl();
-        if (!el) return;
+    function setLayoutCSS() {
         const w = mini ? W_MINI : W_OPEN;
-        if (instant) el.style.transition = 'none';
-        el.style.marginLeft = w + 'px';
-        if (instant) requestAnimationFrame(() => { el.style.transition = ''; });
-        else el.style.transition = 'margin-left 380ms cubic-bezier(.65,0,.35,1)';
+        /* 
+           Aplica SOMENTE ao container de páginas do Ordem Pro.
+           Usa o pai do primeiro .page encontrado — que é o wrapper real.
+           Fallback: #main-content ou elemento com ml-64 no Tailwind.
+        */
+        styleTag.textContent = `
+            /* Ordem Pro — ajuste de layout da sidebar */
+            #main-content { margin-left: ${w}px !important; transition: margin-left 380ms cubic-bezier(.65,0,.35,1) !important; }
+            .pages-wrapper { margin-left: ${w}px !important; transition: margin-left 380ms cubic-bezier(.65,0,.35,1) !important; }
+        `;
+
+        /* Também aplica direto no elemento pai das .page (mais confiável) */
+        if (!_contentEl) {
+            const firstPage = document.querySelector('.page');
+            _contentEl = firstPage?.parentElement;
+        }
+        if (_contentEl && _contentEl !== document.body) {
+            _contentEl.style.transition = 'margin-left 380ms cubic-bezier(.65,0,.35,1)';
+            _contentEl.style.marginLeft = w + 'px';
+        }
     }
 
     function updateTab() {
@@ -200,7 +190,7 @@
         if (instant) { sb.style.transition = 'none'; if (tab) tab.style.transition = 'none'; }
         sb.classList.toggle('sb-mini', mini);
         updateTab();
-        applyMargin(instant);
+        setLayoutCSS();
         if (instant) requestAnimationFrame(() => { sb.style.transition = ''; if (tab) tab.style.transition = ''; });
     }
 
@@ -211,6 +201,7 @@
         }
         mini = !mini;
         localStorage.setItem(LS, mini);
+        _contentEl = null; // reset para re-detectar
         apply(false);
     };
 
@@ -223,12 +214,9 @@
             document.getElementById('sidebar')?.classList.remove('mobile-open');
     };
 
-    /* Aplica imediatamente e também após o DOM estar pronto */
     apply(true);
-    document.addEventListener('DOMContentLoaded', () => apply(true));
-
-    /* Reaplica quando componentes são carregados (loadComponent injeta HTML) */
-    const obs = new MutationObserver(() => applyMargin(true));
-    obs.observe(document.body, { childList: true, subtree: false });
+    /* Reaplica após componentes carregarem (loadComponent é async) */
+    document.addEventListener('DOMContentLoaded', () => { _contentEl = null; apply(true); });
+    setTimeout(() => { _contentEl = null; apply(true); }, 600);
 })();
 </script>
