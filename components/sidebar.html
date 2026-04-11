@@ -15,7 +15,7 @@
 }
 #sidebar.sb-mini { width: 76px !important; }
 
-/* Botão recolher — fora da sidebar para não ser cortado */
+/* ── Botão toggle ── */
 #sb-tab {
     position: fixed; top: 50%; left: 280px;
     transform: translateY(-50%);
@@ -77,9 +77,7 @@
     font-variation-settings: 'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24;
     transition: transform 180ms, font-variation-settings 200ms;
 }
-.nav-item.active-nav .material-symbols-rounded {
-    font-variation-settings: 'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24;
-}
+.nav-item.active-nav .material-symbols-rounded { font-variation-settings: 'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24; }
 .nav-item:hover .material-symbols-rounded { transform: scale(1.1); }
 
 .nav-txt {
@@ -95,7 +93,6 @@
     background: rgba(99,102,241,.25); color: #818cf8; flex-shrink: 0; transition: opacity 260ms;
 }
 #sidebar.sb-mini .nav-badge { opacity: 0; }
-
 #sidebar.sb-mini .nav-item { justify-content: center; padding: 12px 0; gap: 0; }
 #sidebar.sb-mini .nav-item.active-nav::before { height: 20px; }
 #sidebar.sb-mini .nav-item::after {
@@ -107,14 +104,6 @@
     transition: opacity 160ms, transform 160ms; z-index: 100; white-space: nowrap;
 }
 #sidebar.sb-mini .nav-item:hover::after { opacity: 1; transform: translateY(-50%) translateX(0); }
-
-@media (max-width: 1023px) {
-    #sidebar { width: 280px !important; transform: translateX(-100%) !important;
-               transition: transform 380ms cubic-bezier(.65,0,.35,1) !important; }
-    #sidebar.mobile-open { transform: translateX(0) !important; }
-    #sb-tab { display: none !important; }
-    #main-content { margin-left: 0 !important; }
-}
 </style>
 
 <div id="sb-tab" onclick="toggleSidebar()" title="Recolher / Expandir">
@@ -158,43 +147,47 @@
     const W_OPEN = 280, W_MINI = 76;
     let mini = localStorage.getItem(LS) === 'true';
 
-    function getMain() {
-        return document.getElementById('main-content');
-    }
+    /* Injeta CSS de layout baseado em classes — mais confiável que inline */
+    const styleTag = document.createElement('style');
+    styleTag.id = 'sb-css';
+    document.head.appendChild(styleTag);
+    styleTag.textContent = `
+        /* Desktop: margem controlada por classe */
+        @media (min-width: 1024px) {
+            #main-content           { margin-left: ${W_OPEN}px; transition: margin-left 380ms cubic-bezier(.65,0,.35,1); }
+            #main-content.sb-mini   { margin-left: ${W_MINI}px; }
+        }
+        /* Mobile: sem margem, sidebar é overlay */
+        @media (max-width: 1023px) {
+            #main-content, #main-content.sb-mini { margin-left: 0 !important; }
+            #sidebar { transform: translateX(-100%) !important; transition: transform 380ms cubic-bezier(.65,0,.35,1) !important; width: 280px !important; }
+            #sidebar.mobile-open { transform: translateX(0) !important; }
+            #sb-tab { display: none !important; }
+        }
+    `;
 
-    function applyAll(instant) {
+    function applyAll(animate) {
         const sb  = document.getElementById('sidebar');
         const tab = document.getElementById('sb-tab');
-        const mc  = getMain();
+        const mc  = document.getElementById('main-content');
         if (!sb) return;
 
-        const w = mini ? W_MINI : W_OPEN;
-
-        if (instant) {
-            if (sb)  sb.style.transition  = 'none';
-            if (tab) tab.style.transition = 'none';
-            if (mc)  mc.style.transition  = 'none';
+        /* Desativa transição se for carga inicial */
+        if (!animate) {
+            [sb, tab, mc].forEach(el => el && (el.style.transition = 'none'));
         }
 
-        // Sidebar
         sb.classList.toggle('sb-mini', mini);
+        mc?.classList.toggle('sb-mini', mini);
 
-        // Botão tab
         if (tab) {
-            tab.style.left = w + 'px';
+            tab.style.left = (mini ? W_MINI : W_OPEN) + 'px';
             tab.classList.toggle('mini-tab', mini);
         }
 
-        // Conteúdo principal — agora sabemos que é #main-content
-        if (mc) {
-            mc.style.marginLeft = w + 'px';
-        }
-
-        if (instant) {
+        if (!animate) {
             requestAnimationFrame(() => {
-                if (sb)  sb.style.transition  = '';
-                if (tab) tab.style.transition = '';
-                if (mc)  mc.style.transition  = 'margin-left 380ms cubic-bezier(.65,0,.35,1)';
+                [sb, tab, mc].forEach(el => el && (el.style.transition = ''));
             });
         }
     }
@@ -206,7 +199,7 @@
         }
         mini = !mini;
         localStorage.setItem(LS, mini);
-        applyAll(false);
+        applyAll(true);
     };
 
     const _orig = window.showPage;
@@ -218,7 +211,6 @@
             document.getElementById('sidebar')?.classList.remove('mobile-open');
     };
 
-    // Aplica sem animação na carga
-    applyAll(true);
+    applyAll(false);
 })();
 </script>
