@@ -1,10 +1,9 @@
 // ============================================================
 // KANBAN SHEETS — Prateleira F · ALM
-// Lógica por estrutura de cada modelo
+// Lógica por estrutura + detecção de duplicidade
 // ============================================================
 
 // ── ESTRUTURAS DOS MODELOS ───────────────────────────────────
-// Cada PN tem: desc (descrição), mult (múltiplo por kanban)
 const ESTRUTURAS = {
     'FIREFLY': [
         { pn:'20.001.3192', desc:'Rolamento B.Agua WB1630064 Firefly',    mult:1 },
@@ -112,11 +111,38 @@ const NIVEL_SKIP = new Set([10]);
 const POS_MODELO = {};
 MODELOS.forEach(m => m.pos.forEach(p => POS_MODELO[p] = m));
 
+// ── CONFIGURAÇÃO DE QUANTIDADES BASE ─────────────────────────
+// qtdBase[modelo] = quantidade base do kanban (1 ciclo)
+// A quantidade esperada de cada PN = qtdBase × mult do componente
+// Se saldo > qtdEsperada × 1.8 → DUPLICADO
+
+const LS_QTDS = 'ks_qtd_base';
+
+function getQtdBase() {
+    try {
+        const saved = localStorage.getItem(LS_QTDS);
+        if (saved) return JSON.parse(saved);
+    } catch(_) {}
+    // Valores padrão
+    return {
+        'FIREFLY':        1000,
+        'GM ASP':         1000,
+        'GM TURBO':       1000,
+        'FRONT COVER':    1000,
+        'RENAULT':        1000,
+        'HYUNDAI VOLUTA': 375,
+        'HYUNDAI PRIME':  1000,
+        'MAN D08':        1000,
+    };
+}
+
+function saveQtdBase(qtds) {
+    localStorage.setItem(LS_QTDS, JSON.stringify(qtds));
+}
+
 const KS = {
     POSICOES: 11,
-    LS_ESTOQUE:   'ks_url_estoque',
-    LS_ESTRUTURA: 'ks_url_estrutura',
-    // grade[nivel][pos] = { pns: {pn: qtd}, estranhos: [{pn,qtd}] }
+    LS_ESTOQUE: 'ks_url_estoque',
     grade: {},
     currentFilter: 'all',
 };
@@ -126,9 +152,7 @@ const KS = {
 function initKanban() {
     renderShelfSkeleton();
     const urlE = localStorage.getItem(KS.LS_ESTOQUE);
-    const urlS = localStorage.getItem(KS.LS_ESTRUTURA);
     if (urlE) { setVal('sheets-url', urlE); setVal('cfg-sheets-url', urlE); }
-    if (urlS)   setVal('cfg-struct-url', urlS);
     if (urlE) syncSheets(); else setSyncStatus('Configure o Google Sheets', 'neutral');
 }
 
@@ -144,7 +168,6 @@ async function syncSheets() {
         const csvE = await fetchCSV(urlE);
         KS.grade = parseEstoqueALM(csvE);
         renderShelf();
-        updateStats();
         const now = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
         setSyncStatus('✓ Sincronizado', 'ok');
         setText('last-sync', `às ${now}`);
@@ -156,284 +179,199 @@ async function syncSheets() {
     animateSyncIcon(false);
 }
 
-// ── FETCH CSV ─────────────────────────────────────────────────
+// ── CSV ───────────────────────────────────────────────────────
 
 async function fetchCSV(url) {
     const u = toCSVUrl(url.trim());
-    console.log('[Kanban] Fetching:', u);
     const r = await fetch(u);
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     return r.text();
 }
 
 function toCSVUrl(url) {
-    if (url.includes('output=')) {
-        return url.replace('output=tsv','output=csv')
-                  .replace('output=xlsx','output=csv')
-                  .replace('output=pdf','output=csv');
-    }
+    if (url.includes('output='))
+        return url.replace('output=tsv','output=csv').replace('output=xlsx','output=csv').replace('output=pdf','output=csv');
     const mId = url.match(/\/d\/(?:e\/)?([a-zA-Z0-9_-]+)/);
     if (!mId) return url;
-    const id = mId[1];
-    const mGid = url.match(/[?&#]gid=(\d+)/);
-    const gid  = mGid ? `&gid=${mGid[1]}` : '';
-    if (url.includes('/d/e/'))
-        return `https://docs.google.com/spreadsheets/d/e/${id}/pub?single=true&output=csv${gid}`;
+    const id = mId[1]; const mGid = url.match(/[?&#]gid=(\d+)/); const gid = mGid?`&gid=${mGid[1]}`:'';
+    if (url.includes('/d/e/')) return `https://docs.google.com/spreadsheets/d/e/${id}/pub?single=true&output=csv${gid}`;
     return `https://docs.google.com/spreadsheets/d/${id}/pub?output=csv${gid}`;
 }
 
 function parseCSVRows(csv) {
     return csv.trim().split('\n').map(line => {
-        const cells = []; let cur = '', inQ = false;
+        const cells=[]; let cur='', inQ=false;
         for (const ch of line) {
             if (ch==='"') inQ=!inQ;
-            else if ((ch===','||ch===';') && !inQ) { cells.push(cur.trim()); cur=''; }
+            else if ((ch===','||ch===';')&&!inQ) { cells.push(cur.trim()); cur=''; }
             else cur+=ch;
         }
         cells.push(cur.trim()); return cells;
     });
 }
 
-// ── PARSER — grade por posição com PNs ───────────────────────
-// grade[nivel][pos] = Map<pn, qtd>
-
 function parseEstoqueALM(csv) {
     const rows = parseCSVRows(csv);
     if (rows.length < 2) return {};
-
-    const h   = rows[0].map(c=>(c||'').toLowerCase().trim());
-    const fi  = names => { for(const n of names){ const i=h.findIndex(c=>c.includes(n)); if(i>=0)return i; } return -1; };
-    const iPN  = fi(['item']);
-    const iDep = fi(['dep']);
-    const iLoc = fi(['localiz']);
-    const iQty = fi(['qtd liq','quantidade','qtd']);
-
+    const h = rows[0].map(c=>(c||'').toLowerCase().trim());
+    const fi = names => { for(const n of names){ const i=h.findIndex(c=>c.includes(n)); if(i>=0)return i; } return -1; };
+    const iPN=fi(['item']), iDep=fi(['dep']), iLoc=fi(['localiz']), iQty=fi(['qtd liq','quantidade','qtd']);
     const grade = {};
     rows.slice(1).forEach(r => {
-        if ((r[iDep]||'').trim().toUpperCase() !== 'ALM') return;
-        const loc = (r[iLoc]||'').trim().toUpperCase();
-        const m   = loc.match(/^F(\d+)-0*(\d+)$/);
-        if (!m) return;
-        const nivel = parseInt(m[1]);
-        const pos   = parseInt(m[2]);
-        if (pos > KS.POSICOES || nivel > 12) return;
-
-        const pn  = (r[iPN]||'').trim();
-        const qtd = parseFloat(String(r[iQty]||'0').replace(',','.')) || 0;
-        if (!pn) return;
-
-        if (!grade[nivel]) grade[nivel] = {};
-        if (!grade[nivel][pos]) grade[nivel][pos] = new Map();
-        const atual = grade[nivel][pos].get(pn) || 0;
-        grade[nivel][pos].set(pn, atual + qtd);
+        if ((r[iDep]||'').trim().toUpperCase()!=='ALM') return;
+        const loc=(r[iLoc]||'').trim().toUpperCase();
+        const m=loc.match(/^F(\d+)-0*(\d+)$/); if(!m) return;
+        const nivel=parseInt(m[1]), pos=parseInt(m[2]);
+        if (pos>KS.POSICOES||nivel>12) return;
+        const pn=(r[iPN]||'').trim(); if(!pn) return;
+        const qtd=parseFloat(String(r[iQty]||'0').replace(',','.'))||0;
+        if (!grade[nivel]) grade[nivel]={};
+        if (!grade[nivel][pos]) grade[nivel][pos]=new Map();
+        grade[nivel][pos].set(pn, (grade[nivel][pos].get(pn)||0)+qtd);
     });
     return grade;
 }
 
-// ── AVALIA ESTADO DE UMA POSIÇÃO ──────────────────────────────
-// Retorna: { status, estruturaOk[], estruturaFalta[], estranhos[] }
+// ── AVALIA POSIÇÃO com detecção de duplicidade ────────────────
 
 function avaliarPosicao(nivel, pos) {
     const modelo    = POS_MODELO[pos];
-    if (!modelo) return { status:'vazio', estruturaOk:[], estruturaFalta:[], estranhos:[] };
+    if (!modelo) return { status:'vazio', itens:[], estranhos:[] };
 
     const estrutura = ESTRUTURAS[modelo.nome] || [];
-    const pnsPos    = KS.grade[nivel]?.[pos] || new Map(); // Map<pn, qtd>
+    const pnsPos    = KS.grade[nivel]?.[pos] || new Map();
+    const qtdBase   = getQtdBase()[modelo.nome] || 1000;
+    const estruturaPNs = new Set(estrutura.map(e=>e.pn));
 
-    const estruturaPNs = new Set(estrutura.map(e => e.pn));
-    const estruturaOk  = [];
-    const estruturaFalta = [];
+    const itens = estrutura.map(comp => {
+        const qtdReal     = pnsPos.get(comp.pn) || 0;
+        const qtdEsperada = qtdBase * comp.mult;
+        let estado = 'falta';
+        if (qtdReal <= 0) { estado = 'falta'; }
+        else if (qtdReal >= qtdEsperada * 1.8) { estado = 'duplicado'; }
+        else { estado = 'ok'; }
+        return { ...comp, qtdReal, qtdEsperada, estado };
+    });
 
-    // Verifica cada componente da estrutura
-    for (const comp of estrutura) {
-        const qtd = pnsPos.get(comp.pn) || 0;
-        if (qtd > 0) {
-            estruturaOk.push({ ...comp, qtd });
-        } else {
-            estruturaFalta.push({ ...comp, qtd: 0 });
-        }
-    }
-
-    // Verifica PNs na posição que NÃO fazem parte da estrutura
     const estranhos = [];
     for (const [pn, qtd] of pnsPos) {
-        if (!estruturaPNs.has(pn) && qtd > 0) {
-            estranhos.push({ pn, qtd });
-        }
+        if (!estruturaPNs.has(pn) && qtd > 0) estranhos.push({ pn, qtd });
     }
 
-    // Determina status
+    const totalOk   = itens.filter(i=>i.estado==='ok').length;
+    const totalFalta = itens.filter(i=>i.estado==='falta').length;
+    const totalDup   = itens.filter(i=>i.estado==='duplicado').length;
+
     let status;
-    if (pnsPos.size === 0 || (estruturaOk.length === 0 && estranhos.length === 0)) {
-        status = 'vazio';
-    } else if (estruturaFalta.length === 0 && estranhos.length === 0) {
-        status = 'ok';         // 🟢 todos os PNs presentes
-    } else if (estruturaFalta.length > 0 && estruturaOk.length > 0) {
-        status = 'incompleto'; // 🟡 faltam alguns
-    } else if (estruturaFalta.length === estrutura.length && estranhos.length === 0) {
-        status = 'vazio';      // estrutura toda zerada = vazio
-    } else if (estranhos.length > 0 && estruturaOk.length === 0) {
-        status = 'estranho';   // 🟠 só tem material que não é da estrutura
-    } else if (estranhos.length > 0) {
-        status = 'incompleto'; // tem estrutura parcial + estranhos
-    } else {
-        status = 'vazio';
-    }
+    if (pnsPos.size===0) { status='vazio'; }
+    else if (totalDup > 0 && totalFalta===0) { status='duplicado'; }
+    else if (totalDup > 0 && totalFalta > 0) { status='incompleto'; }
+    else if (totalFalta===estrutura.length && estranhos.length===0) { status='vazio'; }
+    else if (totalFalta > 0) { status='incompleto'; }
+    else if (estranhos.length > 0 && totalOk===0) { status='estranho'; }
+    else { status='ok'; }
 
-    return { status, estruturaOk, estruturaFalta, estranhos };
+    return { status, itens, estranhos, qtdBase };
 }
 
-// ── RENDER SKELETON ───────────────────────────────────────────
+// ── RENDER ────────────────────────────────────────────────────
 
 function renderShelfSkeleton() {
-    const tbl = document.getElementById('shelf-table');
-    if (!tbl) return;
-    tbl.innerHTML = '';
-    tbl.appendChild(buildModeloHeader());
+    const tbl=document.getElementById('shelf-table'); if(!tbl) return;
+    tbl.innerHTML=''; tbl.appendChild(buildModeloHeader());
     for (let n=12; n>=0; n--) {
         if (NIVEL_SKIP.has(n)) continue;
-        const tr = document.createElement('tr');
-        const th = document.createElement('th');
-        th.className = 'nivel-cell'; th.textContent = `F${n}`;
-        tr.appendChild(th);
+        const tr=document.createElement('tr');
+        const th=document.createElement('th'); th.className='nivel-cell'; th.textContent=`F${n}`; tr.appendChild(th);
         for (let v=1; v<=KS.POSICOES; v++) {
-            const td = document.createElement('td');
-            td.className = `vaga skel ${POS_MODELO[v]?.cls||''}`;
-            td.style.opacity = '.3';
-            tr.appendChild(td);
+            const td=document.createElement('td');
+            td.className=`vaga skel ${POS_MODELO[v]?.cls||''}`; td.style.opacity='.3'; tr.appendChild(td);
         }
         tbl.appendChild(tr);
     }
 }
 
-// ── RENDER SHELF ──────────────────────────────────────────────
-
 function renderShelf() {
-    const tbl = document.getElementById('shelf-table');
-    if (!tbl) return;
-    tbl.innerHTML = '';
-    tbl.appendChild(buildModeloHeader());
-
-    let cntOk=0, cntInc=0, cntEst=0, cntVazio=0;
+    const tbl=document.getElementById('shelf-table'); if(!tbl) return;
+    tbl.innerHTML=''; tbl.appendChild(buildModeloHeader());
+    let cntOk=0,cntInc=0,cntEst=0,cntDup=0;
 
     for (let n=12; n>=0; n--) {
         if (NIVEL_SKIP.has(n)) continue;
-        const tr = document.createElement('tr');
-        const th = document.createElement('th');
-        th.className='nivel-cell'; th.textContent=`F${n}`;
-        tr.appendChild(th);
+        const tr=document.createElement('tr');
+        const th=document.createElement('th'); th.className='nivel-cell'; th.textContent=`F${n}`; tr.appendChild(th);
 
         for (let v=1; v<=KS.POSICOES; v++) {
-            const td     = document.createElement('td');
-            const modelo = POS_MODELO[v];
-            const avalia = avaliarPosicao(n, v);
-            const posKey = `F${n}-${String(v).padStart(2,'0')}`;
+            const td=document.createElement('td');
+            const modelo=POS_MODELO[v];
+            const avalia=avaliarPosicao(n,v);
+            const posKey=`F${n}-${String(v).padStart(2,'0')}`;
 
-            // Classes e estilos por status
-            let extra = '';
             switch(avalia.status) {
-                case 'ok':
-                    td.className = `vaga vaga-ok ${modelo?.cls||''}`;
-                    td.dataset.filter = 'ok';
-                    cntOk++;
-                    break;
-                case 'incompleto':
-                    td.className = `vaga vaga-inc pulse-anim ${modelo?.cls||''}`;
-                    td.dataset.filter = 'incompleto';
-                    cntInc++;
-                    break;
-                case 'estranho':
-                    td.className = `vaga vaga-est pulse-anim ${modelo?.cls||''}`;
-                    td.dataset.filter = 'estranho';
-                    cntEst++;
-                    break;
-                default:
-                    td.className = `vaga vaga-vazio ${modelo?.cls||''}`;
-                    td.dataset.filter = 'vazio';
-                    cntVazio++;
+                case 'ok':        td.className=`vaga vaga-ok ${modelo?.cls||''}`;                      cntOk++;  td.dataset.filter='ok';        break;
+                case 'incompleto':td.className=`vaga vaga-inc pulse-anim ${modelo?.cls||''}`;          cntInc++; td.dataset.filter='incompleto'; break;
+                case 'duplicado': td.className=`vaga vaga-dup pulse-anim-blue ${modelo?.cls||''}`;     cntDup++; td.dataset.filter='duplicado';  break;
+                case 'estranho':  td.className=`vaga vaga-est pulse-anim ${modelo?.cls||''}`;          cntEst++; td.dataset.filter='estranho';   break;
+                default:          td.className=`vaga vaga-vazio ${modelo?.cls||''}`;                             td.dataset.filter='vazio';
             }
 
-            td.dataset.nivel = n;
-            td.dataset.vaga  = v;
-            td.dataset.pos   = posKey;
+            td.dataset.nivel=n; td.dataset.vaga=v; td.dataset.pos=posKey;
+            td.innerHTML=buildCardHTML(avalia, modelo);
 
-            // Conteúdo do card
-            td.innerHTML = buildCardHTML(avalia, modelo, posKey);
-
-            // Click abre detalhe
-            if (avalia.status !== 'vazio') {
+            if (avalia.status!=='vazio') {
                 td.classList.add('ocupada');
-                td.onclick = () => openKanbanDetail(avalia, modelo, posKey);
+                td.onclick=()=>openKanbanDetail(avalia, modelo, posKey);
             }
-
             tr.appendChild(td);
         }
         tbl.appendChild(tr);
     }
 
-    setText('ks-total', cntOk + cntInc + cntEst);
+    setText('ks-total', cntOk+cntInc+cntEst+cntDup);
     setText('ks-ok',    cntOk);
     setText('ks-low',   cntInc);
     setText('ks-empty', cntEst);
+    setText('ks-dup',   cntDup);
     applyFilter(KS.currentFilter);
 }
 
-// ── HTML DO CARD ─────────────────────────────────────────────
-
-function buildCardHTML(avalia, modelo, posKey) {
-    const bar = `<div class="modelo-bar" style="background:${modelo?.barColor||'#64748b'}"></div>`;
-
+function buildCardHTML(avalia, modelo) {
+    const bar=`<div class="modelo-bar" style="background:${modelo?.barColor||'#64748b'}"></div>`;
+    const total=avalia.itens.length;
     switch(avalia.status) {
         case 'ok':
-            return `
-                ${bar}
-                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:calc(100% - 4px);margin-top:4px;gap:3px;">
-                    <span class="material-symbols-rounded" style="font-size:20px;color:#22c55e;font-variation-settings:'FILL' 1">check_circle</span>
-                    <p style="font-size:9px;font-weight:800;color:#22c55e;text-align:center;">KANBAN OK</p>
-                    <p style="font-size:8px;color:#64748b;text-align:center;">${avalia.estruturaOk.length} / ${avalia.estruturaOk.length} itens</p>
-                </div>`;
-
+            return `${bar}<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:calc(100% - 4px);margin-top:4px;gap:3px;">
+                <span class="material-symbols-rounded" style="font-size:20px;color:#22c55e;font-variation-settings:'FILL' 1">check_circle</span>
+                <p style="font-size:9px;font-weight:800;color:#22c55e;text-align:center;">KANBAN OK</p>
+                <p style="font-size:8px;color:#64748b;">${total}/${total} itens</p></div>`;
+        case 'duplicado':
+            const ndups=avalia.itens.filter(i=>i.estado==='duplicado').length;
+            return `${bar}<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:calc(100% - 4px);margin-top:4px;gap:3px;">
+                <span class="material-symbols-rounded" style="font-size:18px;color:#60a5fa;font-variation-settings:'FILL' 1">content_copy</span>
+                <p style="font-size:8.5px;font-weight:800;color:#60a5fa;text-align:center;">DUPLICADO</p>
+                <p style="font-size:8px;color:#60a5fa;">${ndups} PN(s)</p></div>`;
         case 'incompleto':
-            const faltam = avalia.estruturaFalta.length;
-            return `
-                ${bar}
-                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:calc(100% - 4px);margin-top:4px;gap:3px;">
-                    <span class="material-symbols-rounded" style="font-size:18px;color:#f59e0b;font-variation-settings:'FILL' 1">warning</span>
-                    <p style="font-size:8.5px;font-weight:800;color:#f59e0b;text-align:center;">INCOMPLETO</p>
-                    <p style="font-size:8px;color:#f59e0b;text-align:center;">${faltam} faltando</p>
-                </div>`;
-
+            const nfalta=avalia.itens.filter(i=>i.estado==='falta').length;
+            return `${bar}<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:calc(100% - 4px);margin-top:4px;gap:3px;">
+                <span class="material-symbols-rounded" style="font-size:18px;color:#f59e0b;font-variation-settings:'FILL' 1">warning</span>
+                <p style="font-size:8.5px;font-weight:800;color:#f59e0b;text-align:center;">INCOMPLETO</p>
+                <p style="font-size:8px;color:#f59e0b;">${nfalta} faltando</p></div>`;
         case 'estranho':
-            return `
-                ${bar}
-                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:calc(100% - 4px);margin-top:4px;gap:3px;">
-                    <span class="material-symbols-rounded" style="font-size:18px;color:#f97316;font-variation-settings:'FILL' 1">help</span>
-                    <p style="font-size:8px;font-weight:800;color:#f97316;text-align:center;">MAT. EXTRA</p>
-                    <p style="font-size:8px;color:#f97316;text-align:center;">${avalia.estranhos.length} PN(s)</p>
-                </div>`;
-
-        default: // vazio
-            return `${bar}`;
+            return `${bar}<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:calc(100% - 4px);margin-top:4px;gap:3px;">
+                <span class="material-symbols-rounded" style="font-size:18px;color:#f97316;font-variation-settings:'FILL' 1">help</span>
+                <p style="font-size:8px;font-weight:800;color:#f97316;text-align:center;">MAT. EXTRA</p>
+                <p style="font-size:8px;color:#f97316;">${avalia.estranhos.length} PN(s)</p></div>`;
+        default:
+            return bar;
     }
 }
 
-// ── HEADER DE MODELOS ─────────────────────────────────────────
-
 function buildModeloHeader() {
-    const tr = document.createElement('tr');
-    const th0 = document.createElement('th'); th0.className = 'nivel-cell';
-    tr.appendChild(th0);
-    MODELOS.forEach(m => {
-        const th = document.createElement('th');
-        th.colSpan = m.pos.length;
-        th.style.paddingBottom = '8px';
-        th.innerHTML = `
-          <div style="background:${m.cor}22;color:${m.barColor};
-                      border:1.5px solid ${m.barColor}55;padding:6px 4px;
-                      border-radius:8px;font-size:10px;font-weight:800;
-                      text-transform:uppercase;letter-spacing:.5px;text-align:center;">
-            ${m.nome}
-          </div>`;
+    const tr=document.createElement('tr');
+    const th0=document.createElement('th'); th0.className='nivel-cell'; tr.appendChild(th0);
+    MODELOS.forEach(m=>{
+        const th=document.createElement('th'); th.colSpan=m.pos.length; th.style.paddingBottom='8px';
+        th.innerHTML=`<div style="background:${m.cor}22;color:${m.barColor};border:1.5px solid ${m.barColor}55;padding:6px 4px;border-radius:8px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;text-align:center;">${m.nome}</div>`;
         tr.appendChild(th);
     });
     return tr;
@@ -442,91 +380,150 @@ function buildModeloHeader() {
 // ── MODAL DETALHE ─────────────────────────────────────────────
 
 function openKanbanDetail(avalia, modelo, posKey) {
-    const { status, estruturaOk, estruturaFalta, estranhos } = avalia;
     setText('kd-pn', posKey);
-    document.getElementById('kd-modelo').innerHTML =
-        `<span style="color:${modelo?.barColor||'#6366f1'};font-weight:700;">${modelo?.nome||'—'}</span>`;
+    document.getElementById('kd-modelo').innerHTML=
+        `<span style="color:${modelo?.barColor||'#6366f1'};font-weight:700;">${modelo?.nome||'—'}</span>
+         <span style="font-size:10px;color:#64748b;margin-left:8px;">Base: ${avalia.qtdBase} un/kanban</span>`;
 
-    // Badge de status
-    const statusBadge = {
-        ok:         '<span style="background:rgba(34,197,94,.2);color:#22c55e;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;">✅ KANBAN OK</span>',
-        incompleto: '<span style="background:rgba(245,158,11,.2);color:#f59e0b;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;">⚠️ INCOMPLETO</span>',
-        estranho:   '<span style="background:rgba(249,115,22,.2);color:#f97316;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;">🟠 MATERIAL EXTRA</span>',
-    }[status] || '';
+    const statusBadge={
+        ok:        '<span style="background:rgba(34,197,94,.2);color:#22c55e;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;">✅ KANBAN OK</span>',
+        duplicado: '<span style="background:rgba(96,165,250,.2);color:#60a5fa;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;">🔵 DUPLICADO</span>',
+        incompleto:'<span style="background:rgba(245,158,11,.2);color:#f59e0b;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;">⚠️ INCOMPLETO</span>',
+        estranho:  '<span style="background:rgba(249,115,22,.2);color:#f97316;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;">🟠 MATERIAL EXTRA</span>',
+    }[avalia.status]||'';
 
-    let body = `<div class="mb-3">${statusBadge}</div>`;
+    const corEstado={ok:'#22c55e',duplicado:'#60a5fa',falta:'#f59e0b'};
 
-    // Componentes OK
-    if (estruturaOk.length > 0) {
-        body += `<p class="text-xs font-bold text-emerald-500 mb-2">✅ Presentes (${estruturaOk.length})</p>`;
-        body += estruturaOk.map(c => `
-            <div class="flex justify-between items-center py-1.5 border-b border-slate-100 dark:border-slate-800">
-                <div>
-                    <span class="text-xs font-mono text-slate-600 dark:text-slate-300">${c.pn}</span>
-                    <p class="text-[10px] text-slate-400">${c.desc}</p>
-                </div>
-                <span class="text-xs font-bold text-emerald-500 ml-2">${c.qtd}</span>
-            </div>`).join('');
+    let body=`<div class="mb-3">${statusBadge}</div>`;
+
+    // Tabela de componentes
+    body+=`<div class="overflow-y-auto max-h-64">
+        <table style="width:100%;border-collapse:collapse;font-size:11px;">
+            <thead><tr style="border-bottom:1px solid rgba(148,163,184,.2);">
+                <th style="text-align:left;padding:4px 6px;color:#94a3b8;font-weight:600;">PN</th>
+                <th style="text-align:left;padding:4px 6px;color:#94a3b8;font-weight:600;">Descrição</th>
+                <th style="text-align:right;padding:4px 6px;color:#94a3b8;font-weight:600;">Saldo</th>
+                <th style="text-align:right;padding:4px 6px;color:#94a3b8;font-weight:600;">Esperado</th>
+                <th style="text-align:center;padding:4px 6px;color:#94a3b8;font-weight:600;">Status</th>
+            </tr></thead><tbody>`;
+
+    avalia.itens.forEach(comp => {
+        const icon = comp.estado==='ok' ? '✅' : comp.estado==='duplicado' ? '🔵' : '⚠️';
+        const cor  = comp.estado==='ok' ? '#22c55e' : comp.estado==='duplicado' ? '#60a5fa' : '#f59e0b';
+        body+=`<tr style="border-bottom:1px solid rgba(148,163,184,.08);">
+            <td style="padding:5px 6px;font-family:monospace;color:#cbd5e1;">${comp.pn}</td>
+            <td style="padding:5px 6px;color:#94a3b8;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${comp.desc}</td>
+            <td style="padding:5px 6px;text-align:right;font-weight:700;color:${cor};">${comp.qtdReal}</td>
+            <td style="padding:5px 6px;text-align:right;color:#64748b;">${comp.qtdEsperada}</td>
+            <td style="padding:5px 6px;text-align:center;">${icon}</td>
+        </tr>`;
+    });
+    body+='</tbody></table></div>';
+
+    if (avalia.estranhos.length>0) {
+        body+=`<p class="text-xs font-bold text-orange-500 mt-3 mb-1">🟠 Fora da estrutura</p>`;
+        avalia.estranhos.forEach(e=>{
+            body+=`<div style="display:flex;justify-content:space-between;padding:4px 6px;font-size:11px;border-bottom:1px solid rgba(148,163,184,.08);">
+                <span style="font-family:monospace;color:#cbd5e1;">${e.pn}</span>
+                <span style="color:#f97316;font-weight:700;">${e.qtd}</span></div>`;
+        });
     }
 
-    // Faltando
-    if (estruturaFalta.length > 0) {
-        body += `<p class="text-xs font-bold text-amber-500 mt-3 mb-2">⚠️ Faltando (${estruturaFalta.length})</p>`;
-        body += estruturaFalta.map(c => `
-            <div class="flex justify-between items-center py-1.5 border-b border-amber-100 dark:border-amber-900/20">
-                <div>
-                    <span class="text-xs font-mono text-slate-600 dark:text-slate-300">${c.pn}</span>
-                    <p class="text-[10px] text-slate-400">${c.desc}</p>
-                </div>
-                <span class="text-xs font-bold text-amber-500 ml-2">0 / mult ${c.mult}</span>
-            </div>`).join('');
-    }
-
-    // Estranhos
-    if (estranhos.length > 0) {
-        body += `<p class="text-xs font-bold text-orange-500 mt-3 mb-2">🟠 Não pertence à estrutura (${estranhos.length})</p>`;
-        body += estranhos.map(c => `
-            <div class="flex justify-between items-center py-1.5 border-b border-orange-100 dark:border-orange-900/20">
-                <span class="text-xs font-mono text-slate-600 dark:text-slate-300">${c.pn}</span>
-                <span class="text-xs font-bold text-orange-500 ml-2">${c.qtd}</span>
-            </div>`).join('');
-    }
-
-    document.getElementById('kd-body').innerHTML = `<div class="space-y-0 max-h-72 overflow-y-auto">${body}</div>`;
-
+    document.getElementById('kd-body').innerHTML=body;
     const modal=document.getElementById('kanban-detail-modal');
-    const cont =document.getElementById('kanban-detail-content');
+    const cont=document.getElementById('kanban-detail-content');
     modal.classList.remove('hidden');
     requestAnimationFrame(()=>{ cont.style.transform='scale(1)'; cont.style.opacity='1'; });
 }
 
 function closeKanbanDetail() {
-    const modal=document.getElementById('kanban-detail-modal');
-    const cont =document.getElementById('kanban-detail-content');
+    const modal=document.getElementById('kanban-detail-modal'), cont=document.getElementById('kanban-detail-content');
     cont.style.transform='scale(.95)'; cont.style.opacity='0';
     setTimeout(()=>{ modal.classList.add('hidden'); cont.style.transform='scale(.95)'; },250);
 }
 
-// ── FILTRO ────────────────────────────────────────────────────
+// ── MODAL CONFIGURAÇÃO DE QUANTIDADES ────────────────────────
 
-function filterKanban(type) {
-    KS.currentFilter = type;
-    document.querySelectorAll('.kf-btn').forEach(b =>
-        b.classList.toggle('active', b.dataset.filter === type));
-    applyFilter(type);
+function openQtdConfig() {
+    const qtds=getQtdBase();
+    const existing=document.getElementById('qtd-config-modal');
+    if(existing) existing.remove();
+
+    const rows=MODELOS.map(m=>`
+        <div class="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex-1">
+                <span style="color:${m.barColor};font-weight:700;font-size:12px;">${m.nome}</span>
+                <p style="font-size:10px;color:#64748b;">Pos. ${m.pos.join(', ')} · ${ESTRUTURAS[m.nome]?.length||0} componentes</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <label style="font-size:10px;color:#94a3b8;">Base (un):</label>
+                <input type="number" min="1" step="1"
+                       data-modelo="${m.nome}"
+                       value="${qtds[m.nome]||1000}"
+                       class="w-24 px-2 py-1.5 text-sm text-right font-bold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg dark:text-white focus:border-primary-500 outline-none">
+            </div>
+        </div>`).join('');
+
+    const html=`
+        <div id="qtd-config-modal" class="fixed inset-0 z-[95] hidden">
+            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeQtdConfig()"></div>
+            <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+                <div id="qtd-config-content"
+                     class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md pointer-events-auto p-6"
+                     style="transform:scale(.95);opacity:0;transition:all .25s;">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="font-bold text-slate-900 dark:text-white">Quantidade Base por Kanban</h3>
+                            <p class="text-xs text-slate-400 mt-0.5">
+                                Qtd esperada = Base × Múltiplo do componente<br>
+                                Se saldo ≥ Base × 1,8 → detectado como DUPLICADO
+                            </p>
+                        </div>
+                        <button onclick="closeQtdConfig()" class="text-slate-400 hover:text-slate-600">
+                            <span class="material-symbols-rounded">close</span>
+                        </button>
+                    </div>
+                    <div class="space-y-0 max-h-80 overflow-y-auto">${rows}</div>
+                    <div class="flex gap-3 mt-5">
+                        <button onclick="closeQtdConfig()"
+                            class="flex-1 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-colors">
+                            Cancelar
+                        </button>
+                        <button onclick="salvarQtdConfig()"
+                            class="flex-1 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold transition-colors">
+                            Salvar e Recalcular
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
+    document.body.insertAdjacentHTML('beforeend', html);
+    const modal=document.getElementById('qtd-config-modal');
+    const cont=document.getElementById('qtd-config-content');
+    modal.classList.remove('hidden');
+    requestAnimationFrame(()=>{ cont.style.transform='scale(1)'; cont.style.opacity='1'; });
 }
 
-function applyFilter(type) {
-    const q = (document.getElementById('kanban-search')?.value||'').toLowerCase();
-    document.querySelectorAll('td.vaga').forEach(td => {
-        const f   = td.dataset.filter||'vazio';
-        const pos = td.dataset.pos||'';
-        let show = true;
-        if      (type==='search') show = pos.toLowerCase().includes(q);
-        else if (type!=='all')    show = f===type;
-        td.style.opacity       = show ? '1' : '0.06';
-        td.style.pointerEvents = show ? 'auto' : 'none';
+function closeQtdConfig() {
+    const modal=document.getElementById('qtd-config-modal');
+    const cont=document.getElementById('qtd-config-content');
+    if(!modal) return;
+    cont.style.transform='scale(.95)'; cont.style.opacity='0';
+    setTimeout(()=>{ modal.remove(); },250);
+}
+
+function salvarQtdConfig() {
+    const qtds={};
+    document.querySelectorAll('[data-modelo]').forEach(inp=>{
+        const v=parseInt(inp.value);
+        if (inp.dataset.modelo && v>0) qtds[inp.dataset.modelo]=v;
     });
+    saveQtdBase(qtds);
+    closeQtdConfig();
+    // Recalcula sem buscar da web
+    renderShelf();
+    if(typeof showToast==='function') showToast('✅ Quantidades salvas! Kanban recalculado.','success');
 }
 
 // ── CONFIG SHEETS ─────────────────────────────────────────────
@@ -543,26 +540,38 @@ function closeSheetsConfig() {
     setTimeout(()=>{ m.classList.add('hidden'); c.style.transform='scale(.95)'; },250);
 }
 function saveSheetsConfig() { closeSheetsConfig(); syncSheets(); }
-function updateStats() {}
+
+// ── FILTRO ────────────────────────────────────────────────────
+
+function filterKanban(type) {
+    KS.currentFilter=type;
+    document.querySelectorAll('.kf-btn').forEach(b=>b.classList.toggle('active',b.dataset.filter===type));
+    applyFilter(type);
+}
+function applyFilter(type) {
+    const q=(document.getElementById('kanban-search')?.value||'').toLowerCase();
+    document.querySelectorAll('td.vaga').forEach(td=>{
+        const f=td.dataset.filter||'vazio', pos=td.dataset.pos||'';
+        let show=true;
+        if (type==='search') show=pos.toLowerCase().includes(q);
+        else if (type!=='all') show=f===type;
+        td.style.opacity=show?'1':'0.06';
+        td.style.pointerEvents=show?'auto':'none';
+    });
+}
 
 // ── HELPERS ───────────────────────────────────────────────────
 
-function setSyncStatus(msg,type){
-    const e=document.getElementById('sync-status');if(!e)return;
-    const c={ok:'text-emerald-500',error:'text-rose-500',loading:'text-slate-400',neutral:'text-slate-400'};
-    e.className=`font-medium ${c[type]||'text-slate-400'}`;e.textContent=msg;
-}
+function setSyncStatus(msg,type){const e=document.getElementById('sync-status');if(!e)return;const c={ok:'text-emerald-500',error:'text-rose-500',loading:'text-slate-400',neutral:'text-slate-400'};e.className=`font-medium ${c[type]||'text-slate-400'}`;e.textContent=msg;}
 function setText(id,v){const e=document.getElementById(id);if(e)e.textContent=v??'—';}
 function getVal(id){return document.getElementById(id)?.value||'';}
 function setVal(id,v){const e=document.getElementById(id);if(e)e.value=v;}
 function animateSyncIcon(on){const i=document.getElementById('sync-icon');if(i)i.style.animation=on?'spin 1s linear infinite':'';}
 
-// ── EXPOSE ────────────────────────────────────────────────────
-
-window.initKanban=initKanban; window.syncSheets=syncSheets;
-window.filterKanban=filterKanban; window.openSheetsConfig=openSheetsConfig;
-window.closeSheetsConfig=closeSheetsConfig; window.saveSheetsConfig=saveSheetsConfig;
+window.initKanban=initKanban; window.syncSheets=syncSheets; window.filterKanban=filterKanban;
+window.openSheetsConfig=openSheetsConfig; window.closeSheetsConfig=closeSheetsConfig; window.saveSheetsConfig=saveSheetsConfig;
 window.openKanbanDetail=openKanbanDetail; window.closeKanbanDetail=closeKanbanDetail;
+window.openQtdConfig=openQtdConfig; window.closeQtdConfig=closeQtdConfig; window.salvarQtdConfig=salvarQtdConfig;
 
 document.addEventListener('pageChanged', e=>{ if(e.detail==='kanban') initKanban(); });
-console.log('✅ kanban-sheets.js — lógica por estrutura carregada!');
+console.log('✅ kanban-sheets.js — estruturas + duplicidade carregado!');
