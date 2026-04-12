@@ -170,6 +170,23 @@
     <script src="js/user-profile.js"></script>
 
     <script>
+        /* ── Bloqueia autocomplete e limpa inputs com URL antes de tudo ── */
+        document.addEventListener('DOMContentLoaded', () => {
+            // Roda imediatamente para pegar o search bar do header
+            const clearUrls = () => {
+                document.querySelectorAll('input').forEach(inp => {
+                    inp.setAttribute('autocomplete', 'off');
+                    if ((inp.value||'').includes('docs.google.com')) inp.value = '';
+                });
+            };
+            clearUrls();
+            // Roda novamente após componentes carregarem
+            setTimeout(clearUrls, 500);
+            setTimeout(clearUrls, 1500);
+        });
+    </script>
+
+    <script>
         /* ── Login ── */
         async function handleLogin(event) {
             event.preventDefault();
@@ -282,6 +299,22 @@
             // Esconde o modal de login após carregar tudo
             const lm = document.getElementById('login-modal');
             if (lm) { lm.classList.add('hidden'); lm.classList.remove('active'); }
+
+            // Limpa qualquer input que possa ter URL de Sheets + desativa autocomplete
+            requestAnimationFrame(() => {
+                document.querySelectorAll('input[type="text"], input:not([type])').forEach(inp => {
+                    inp.setAttribute('autocomplete', 'off');
+                    inp.setAttribute('autocorrect',  'off');
+                    // Limpa se o valor parecer uma URL do Sheets
+                    if ((inp.value||'').includes('docs.google.com') ||
+                        (inp.value||'').includes('spreadsheets')) {
+                        inp.value = '';
+                    }
+                });
+                // Garante que o search bar do header está limpo
+                const gs = document.getElementById('global-search');
+                if (gs) { gs.value = ''; gs.setAttribute('autocomplete','off'); }
+            });
 
             // Sidebar precisa rodar após HTML injetado
             initSidebar();
