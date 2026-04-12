@@ -1,11 +1,4 @@
-<!-- SIDEBAR RETRÁTIL — versão definitiva -->
-<!--
-    O CSS de layout fica APENAS no index.html (já está lá):
-        @media (min-width:1024px) { #main-content { margin-left:280px } }
-        #main-content.sb-mini    { margin-left:76px }
-        @media (max-width:1023px) { #main-content { margin-left:0 !important } }
-    Este arquivo só cuida do visual da sidebar + toggle.
--->
+<!-- SIDEBAR RETRÁTIL — apenas HTML + CSS (JS está no index.html) -->
 <style>
 #sidebar, #sidebar * { box-sizing: border-box; }
 
@@ -22,7 +15,6 @@
 }
 #sidebar.sb-mini { width: 76px !important; }
 
-/* Mobile: sidebar vira overlay */
 @media (max-width: 1023px) {
     #sidebar {
         width: 280px !important;
@@ -34,7 +26,6 @@
     #sb-tab { display: none !important; }
 }
 
-/* Botão recolher — fixo na borda direita da sidebar */
 #sb-tab {
     position: fixed; top: 50%; left: 280px;
     transform: translateY(-50%);
@@ -61,7 +52,6 @@
 #sb-tab:hover #sb-pill .material-symbols-rounded { color: #c7d2fe; }
 #sb-tab.mini-tab #sb-pill .material-symbols-rounded { transform: rotate(180deg); }
 
-/* Nav */
 #sidebar nav { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 16px 12px 24px; scrollbar-width: none; }
 #sidebar nav::-webkit-scrollbar { display: none; }
 
@@ -159,62 +149,3 @@
         </button>
     </nav>
 </aside>
-
-<script>
-(function () {
-    const LS = 'sb_mini';
-    const W_OPEN = 280, W_MINI = 76;
-    let mini = localStorage.getItem(LS) === 'true';
-
-    function apply(animate) {
-        const sb  = document.getElementById('sidebar');
-        const tab = document.getElementById('sb-tab');
-        const mc  = document.getElementById('main-content');
-        if (!sb) return;
-
-        if (!animate) {
-            sb.style.transition = 'none';
-            if (tab) tab.style.transition = 'none';
-        }
-
-        // Aplica classe em sidebar e main-content
-        sb.classList.toggle('sb-mini', mini);
-        mc?.classList.toggle('sb-mini', mini);
-
-        // Move o botão tab
-        if (tab) {
-            tab.style.left = (mini ? W_MINI : W_OPEN) + 'px';
-            tab.classList.toggle('mini-tab', mini);
-        }
-
-        if (!animate) {
-            requestAnimationFrame(() => {
-                sb.style.transition = '';
-                if (tab) tab.style.transition = '';
-            });
-        }
-    }
-
-    window.toggleSidebar = function () {
-        if (window.innerWidth < 1024) {
-            document.getElementById('sidebar')?.classList.toggle('mobile-open');
-            return;
-        }
-        mini = !mini;
-        localStorage.setItem(LS, mini);
-        apply(true);
-    };
-
-    const _orig = window.showPage;
-    window.showPage = function (page) {
-        if (_orig) _orig(page);
-        document.querySelectorAll('.nav-item[data-page]').forEach(el =>
-            el.classList.toggle('active-nav', el.dataset.page === page));
-        if (window.innerWidth < 1024)
-            document.getElementById('sidebar')?.classList.remove('mobile-open');
-    };
-
-    // Aplica sem animação ao carregar
-    apply(false);
-})();
-</script>
