@@ -210,4 +210,79 @@ window.auth = {
 window.getNivel        = () => currentUser?.nivel ?? currentUser?.nivel_acesso ?? 0;
 window.getCurrentUser  = () => currentUser;
 
+// ── INATIVIDADE — 5 minutos sem interação → logout ───────────
+
+(function initInactivityTimeout() {
+    const TIMEOUT_MS  = 5 * 60 * 1000;  // 5 minutos
+    const WARN_MS     = 60 * 1000;       // avisa 1 min antes
+    let timerLogout, timerWarn, warnShown = false;
+
+    function resetTimer() {
+        clearTimeout(timerLogout);
+        clearTimeout(timerWarn);
+        warnShown = false;
+
+        // Remove aviso se existir
+        document.getElementById('inactivity-warn')?.remove();
+
+        // Não inicia timer se não estiver autenticado ou for visitante
+        const s = (() => { try { return JSON.parse(localStorage.getItem('ordem_pro_session')||'null'); } catch{return null;} })();
+        if (!s?.user || s.user.id === 'guest') return;
+
+        // Aviso 1 minuto antes
+        timerWarn = setTimeout(() => {
+            if (warnShown) return;
+            warnShown = true;
+            const div = document.createElement('div');
+            div.id = 'inactivity-warn';
+            div.style.cssText = `
+                position:fixed;bottom:24px;right:24px;z-index:9999;
+                background:#1e293b;border:1.5px solid #f59e0b;color:#fbbf24;
+                padding:14px 18px;border-radius:14px;font-size:13px;font-weight:600;
+                box-shadow:0 8px 30px rgba(0,0,0,.6);display:flex;align-items:center;gap:10px;
+                animation:slideInRight .4s cubic-bezier(.16,1,.3,1);
+            `;
+            div.innerHTML = `
+                <span class="material-symbols-rounded" style="font-size:20px;color:#f59e0b;font-variation-settings:'FILL' 1">timer</span>
+                <div>
+                    <p style="margin:0">Sessão expirando em <strong>1 minuto</strong></p>
+                    <p style="margin:0;font-size:11px;opacity:.7">Mova o mouse para continuar</p>
+                </div>
+                <button onclick="document.getElementById('inactivity-warn')?.remove()" 
+                    style="background:none;border:none;color:#94a3b8;cursor:pointer;padding:2px;margin-left:6px;">✕</button>
+            `;
+            document.body.appendChild(div);
+        }, TIMEOUT_MS - WARN_MS);
+
+        // Logout automático
+        timerLogout = setTimeout(async () => {
+            document.getElementById('inactivity-warn')?.remove();
+            // Aviso final antes de deslogar
+            const div = document.createElement('div');
+            div.style.cssText = `
+                position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.7);
+                display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);
+            `;
+            div.innerHTML = `
+                <div style="background:#1e293b;border:1.5px solid #ef4444;border-radius:16px;padding:24px 32px;text-align:center;color:#f1f5f9;">
+                    <span class="material-symbols-rounded" style="font-size:40px;color:#f87171;display:block;margin-bottom:8px;font-variation-settings:'FILL' 1">lock</span>
+                    <p style="font-weight:700;font-size:16px;margin:0 0 4px;">Sessão encerrada</p>
+                    <p style="font-size:13px;opacity:.6;margin:0">Inatividade de 5 minutos detectada</p>
+                </div>`;
+            document.body.appendChild(div);
+            await new Promise(r => setTimeout(r, 2000));
+            clearSession();
+            window.location.reload();
+        }, TIMEOUT_MS);
+    }
+
+    // Escuta qualquer interação do usuário
+    const eventos = ['mousemove','mousedown','keydown','touchstart','click','scroll'];
+    eventos.forEach(ev => document.addEventListener(ev, resetTimer, { passive: true }));
+
+    // Inicia timer ao carregar (após auth estar pronto)
+    setTimeout(resetTimer, 3000);
+    console.log('⏱️ Timeout de inatividade: 5 minutos');
+})();
+
 console.log('✅ auth.js carregado — domínio @vetore.com');
