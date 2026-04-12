@@ -196,6 +196,7 @@ window.auth = {
     logout:          logout,
     isAuthenticated: () => currentUser !== null,
     getUser:         () => currentUser,
+    getCurrentUser:  () => currentUser,   // alias para compatibilidade
     getNivel:        () => currentUser?.nivel ?? currentUser?.nivel_acesso ?? 0,
     updateUserCache: (updates) => {
         if (!currentUser) return;
@@ -205,7 +206,8 @@ window.auth = {
     }
 };
 
-// Também expõe getNivel globalmente para permissions.js
-window.getNivel = () => currentUser?.nivel ?? currentUser?.nivel_acesso ?? 0;
+// Expõe globalmente
+window.getNivel        = () => currentUser?.nivel ?? currentUser?.nivel_acesso ?? 0;
+window.getCurrentUser  = () => currentUser;
 
 console.log('✅ auth.js carregado — domínio @vetore.com');
