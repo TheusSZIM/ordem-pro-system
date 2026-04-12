@@ -1,56 +1,51 @@
-<!-- ============================================
-     CONTROLE DE ORDENS PRO - DASHBOARD PAGE
-     ============================================ -->
-
+<!-- DASHBOARD PAGE -->
 <style>
-/* ── Skeleton shimmer ── */
 @keyframes dash-shimmer {
     0%   { background-position: -400px 0; }
     100% { background-position:  400px 0; }
 }
 .skeleton {
-    background: linear-gradient(90deg,
-        rgba(148,163,184,.12) 25%,
-        rgba(148,163,184,.22) 50%,
-        rgba(148,163,184,.12) 75%);
+    background: linear-gradient(90deg,rgba(148,163,184,.12) 25%,rgba(148,163,184,.22) 50%,rgba(148,163,184,.12) 75%);
     background-size: 400px 100%;
     animation: dash-shimmer 1.4s ease-in-out infinite;
     border-radius: 8px;
 }
-
-/* ── Card reveal ── */
 @keyframes card-in {
-    from { opacity: 0; transform: translateY(18px) scale(.97); }
-    to   { opacity: 1; transform: translateY(0)  scale(1);    }
+    from { opacity:0; transform:translateY(18px) scale(.97); }
+    to   { opacity:1; transform:translateY(0) scale(1); }
 }
-.card-reveal {
-    opacity: 0;
-    animation: card-in .5s cubic-bezier(.16,1,.3,1) forwards;
-}
-.card-reveal:nth-child(1) { animation-delay: .05s; }
-.card-reveal:nth-child(2) { animation-delay: .15s; }
-.card-reveal:nth-child(3) { animation-delay: .25s; }
-.card-reveal:nth-child(4) { animation-delay: .35s; }
-
-/* ── Number count-up ── */
+.card-reveal { opacity:0; animation: card-in .5s cubic-bezier(.16,1,.3,1) forwards; }
+.card-reveal:nth-child(1) { animation-delay:.05s; }
+.card-reveal:nth-child(2) { animation-delay:.15s; }
+.card-reveal:nth-child(3) { animation-delay:.25s; }
+.card-reveal:nth-child(4) { animation-delay:.35s; }
 @keyframes num-pop {
-    0%   { transform: scale(.6);  opacity: 0; }
-    70%  { transform: scale(1.1); opacity: 1; }
-    100% { transform: scale(1);   opacity: 1; }
+    0%   { transform:scale(.6); opacity:0; }
+    70%  { transform:scale(1.1); opacity:1; }
+    100% { transform:scale(1); opacity:1; }
 }
-.num-pop {
-    display: inline-block;
-    animation: num-pop .45s cubic-bezier(.34,1.56,.64,1) forwards;
-}
+.num-pop { display:inline-block; animation: num-pop .45s cubic-bezier(.34,1.56,.64,1) forwards; }
+.skel-num  { height:36px; width:48px; }
+.skel-circ { width:72px; height:72px; border-radius:50%; }
 
-/* ── Skeleton card state ── */
-.stat-card { transition: background .3s; }
-.skel-num  { height: 36px; width: 48px; }
-.skel-circ { width: 72px; height: 72px; border-radius: 50%; }
-.skel-line { height: 14px; width: 80px; margin-top: 6px; }
+/* Botões do gráfico */
+.chart-mode-btn {
+    padding:5px 14px; border-radius:8px; font-size:12px; font-weight:600;
+    border:1.5px solid rgba(148,163,184,.25); color:#64748b;
+    cursor:pointer; transition:all .2s; background:transparent;
+}
+.chart-mode-btn:hover   { border-color:#3b82f6; color:#60a5fa; }
+.active-chart-btn       { background:#3b82f6 !important; border-color:#3b82f6 !important; color:#fff !important; }
+
+/* Dot LIVE */
+@keyframes pulse-dot {
+    0%,90%,100% { transform:scale(1); opacity:.6; }
+    93%          { transform:scale(2.4); opacity:1; background:#60a5fa; }
+    96%          { transform:scale(1); opacity:.6; }
+}
+#chart-live-dot { animation: pulse-dot 15s ease-in-out infinite; }
 </style>
 
-<!-- DASHBOARD PAGE -->
 <div id="dashboard" class="page active p-6 max-w-[1600px] mx-auto space-y-6">
 
     <!-- HEADER -->
@@ -68,12 +63,12 @@
         </div>
         <div class="flex gap-3">
             <button onclick="showModal('new-order')"
-                class="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50 hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 group">
+                class="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold shadow-lg shadow-primary-500/30 hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 group">
                 <span class="material-symbols-rounded group-hover:rotate-90 transition-transform duration-300">add</span>
                 Nova Ordem
             </button>
             <button onclick="refreshDashboard()"
-                class="px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-300" id="refresh-btn">
+                class="px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all" id="refresh-btn">
                 <span class="material-symbols-rounded">refresh</span>
             </button>
         </div>
@@ -81,17 +76,12 @@
 
     <!-- STAT CARDS -->
     <div id="stat-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-
-        <!-- CARD 1: A SEPARAR -->
         <div class="stat-card card-reveal bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-soft hover-lift cursor-pointer"
-             onclick="showPage('ordens'); setOrdensTab('pending');">
+             onclick="showPage('ordens'); setOrdensTab&&setOrdensTab('pending');">
             <div class="flex items-start justify-between mb-4">
                 <div>
                     <p class="text-sm font-medium text-slate-500 dark:text-slate-400">A Separar</p>
-                    <!-- número: começa como skeleton, revelado pelo JS -->
-                    <div id="stat-a-separar-wrap" class="mt-1">
-                        <div class="skeleton skel-num"></div>
-                    </div>
+                    <div id="stat-a-separar-wrap" class="mt-1"><div class="skeleton skel-num"></div></div>
                 </div>
                 <div id="progress-a-separar" class="skeleton skel-circ"></div>
             </div>
@@ -103,15 +93,12 @@
             </div>
         </div>
 
-        <!-- CARD 2: EM SEPARAÇÃO -->
         <div class="stat-card card-reveal bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-soft hover-lift cursor-pointer"
-             onclick="showPage('ordens'); setOrdensTab('progress');">
+             onclick="showPage('ordens'); setOrdensTab&&setOrdensTab('progress');">
             <div class="flex items-start justify-between mb-4">
                 <div>
                     <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Em Separação</p>
-                    <div id="stat-em-separacao-wrap" class="mt-1">
-                        <div class="skeleton skel-num"></div>
-                    </div>
+                    <div id="stat-em-separacao-wrap" class="mt-1"><div class="skeleton skel-num"></div></div>
                 </div>
                 <div id="progress-em-separacao" class="skeleton skel-circ"></div>
             </div>
@@ -126,15 +113,12 @@
             </div>
         </div>
 
-        <!-- CARD 3: CONCLUÍDAS HOJE -->
         <div class="stat-card card-reveal bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-soft hover-lift cursor-pointer"
-             onclick="showPage('ordens'); setOrdensTab('completed');">
+             onclick="showPage('ordens'); setOrdensTab&&setOrdensTab('completed');">
             <div class="flex items-start justify-between mb-4">
                 <div>
                     <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Concluídas Hoje</p>
-                    <div id="stat-concluidas-hoje-wrap" class="mt-1">
-                        <div class="skeleton skel-num"></div>
-                    </div>
+                    <div id="stat-concluidas-hoje-wrap" class="mt-1"><div class="skeleton skel-num"></div></div>
                 </div>
                 <div id="progress-concluidas" class="skeleton skel-circ"></div>
             </div>
@@ -145,9 +129,8 @@
             </div>
         </div>
 
-        <!-- CARD 4: TOTAL -->
         <div class="stat-card card-reveal bg-gradient-to-br from-primary-600 to-primary-800 rounded-2xl p-6 text-white shadow-glow hover-lift cursor-pointer"
-             onclick="showPage('ordens'); setOrdensTab('all');">
+             onclick="showPage('ordens'); setOrdensTab&&setOrdensTab('all');">
             <div class="flex items-start justify-between mb-4">
                 <div>
                     <p class="text-sm font-medium text-white/70">Total de Ordens</p>
@@ -170,32 +153,40 @@
 
     <!-- CHARTS ROW -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- GRÁFICO DE LINHA -->
         <div class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-soft animate-slide-up" style="animation-delay:.2s">
             <div class="flex items-center justify-between mb-6">
                 <div>
                     <h3 class="text-lg font-bold text-slate-900 dark:text-white">Desempenho da Semana</h3>
                     <p class="text-sm text-slate-500 dark:text-slate-400">Comparativo de ordens processadas</p>
                 </div>
-                <div class="flex gap-2">
-                    <button class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Semana</button>
-                    <button class="px-3 py-1.5 text-xs font-medium rounded-lg text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Mês</button>
+
+                <!-- Botões modo + indicador LIVE -->
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1.5 mr-1">
+                        <div id="chart-live-dot"
+                             style="width:7px;height:7px;border-radius:50%;background:#3b82f6;flex-shrink:0;"></div>
+                        <span style="font-size:10px;font-weight:600;color:#64748b;">LIVE 15s</span>
+                    </div>
+                    <button class="chart-mode-btn active-chart-btn" data-mode="semana" onclick="toggleChartMode('semana')">Semana</button>
+                    <button class="chart-mode-btn"                  data-mode="mes"    onclick="toggleChartMode('mes')">Mês</button>
                 </div>
             </div>
             <div class="h-80"><canvas id="performanceChart"></canvas></div>
         </div>
 
+        <!-- COLUNA DIREITA -->
         <div class="space-y-6">
+            <!-- PIZZA -->
             <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-soft animate-slide-up" style="animation-delay:.3s">
                 <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">Distribuição</h3>
                 <div class="h-48 relative">
                     <canvas id="distributionChart"></canvas>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span class="text-2xl font-bold text-slate-900 dark:text-white" id="distribution-total">—</span>
-                        <span class="text-xs text-slate-500">Total</span>
-                    </div>
                 </div>
             </div>
 
+            <!-- AÇÕES RÁPIDAS -->
             <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-soft animate-slide-up" style="animation-delay:.4s">
                 <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">Ações Rápidas</h3>
                 <div class="space-y-2">
@@ -215,7 +206,17 @@
                         </div>
                         <div class="text-left">
                             <p class="text-sm font-semibold text-slate-900 dark:text-white">Ver Kanban</p>
-                            <p class="text-xs text-slate-500">Visualização em colunas</p>
+                            <p class="text-xs text-slate-500">Visualização da prateleira</p>
+                        </div>
+                        <span class="material-symbols-rounded ml-auto text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+                    </button>
+                    <button onclick="showPage('estoque')" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <span class="material-symbols-rounded">inventory_2</span>
+                        </div>
+                        <div class="text-left">
+                            <p class="text-sm font-semibold text-slate-900 dark:text-white">Estoque</p>
+                            <p class="text-xs text-slate-500">Regularização de posições</p>
                         </div>
                         <span class="material-symbols-rounded ml-auto text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
                     </button>
