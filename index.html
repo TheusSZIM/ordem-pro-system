@@ -5,24 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Ordens Pro | Sistema Enterprise + Etiquetas ZLP</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- JsBarcode for ZLP labels -->
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Material Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:wght@300;400;500;600&display=swap" rel="stylesheet">
-
-    <!-- Custom Styles -->
     <link rel="stylesheet" href="css/style.css">
 
     <script>
@@ -36,122 +26,92 @@
                     },
                     colors: {
                         primary: {
-                            50: '#eef2ff',
-                            100: '#e0e7ff',
-                            200: '#c7d2fe',
-                            300: '#a5b4fc',
-                            400: '#818cf8',
-                            500: '#6366f1',
-                            600: '#4f46e5',
-                            700: '#4338ca',
-                            800: '#3730a3',
-                            900: '#312e81',
-                            950: '#1e1b4b',
+                            50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 300: '#a5b4fc',
+                            400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca',
+                            800: '#3730a3', 900: '#312e81', 950: '#1e1b4b',
                         },
-                        slate: {
-                            850: '#1e293b',
-                            900: '#0f172a',
-                            950: '#020617',
-                        }
+                        slate: { 850: '#1e293b', 900: '#0f172a', 950: '#020617' }
                     },
                     boxShadow: {
-                        'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
-                        'soft-lg': '0 10px 40px -10px rgba(0, 0, 0, 0.1)',
-                        'glow': '0 0 20px rgba(99, 102, 241, 0.15)',
-                        'glow-lg': '0 0 40px rgba(99, 102, 241, 0.2)',
+                        'soft': '0 2px 15px -3px rgba(0,0,0,.07), 0 10px 20px -2px rgba(0,0,0,.04)',
+                        'soft-lg': '0 10px 40px -10px rgba(0,0,0,.1)',
+                        'glow': '0 0 20px rgba(99,102,241,.15)',
+                        'glow-lg': '0 0 40px rgba(99,102,241,.2)',
                     },
                     animation: {
                         'fade-in': 'fadeIn 0.4s ease-out',
-                        'slide-up': 'slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-                        'slide-down': 'slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-                        'scale-in': 'scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                        'slide-in-right': 'slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                        'slide-up': 'slideUp 0.5s cubic-bezier(0.16,1,0.3,1)',
+                        'slide-down': 'slideDown 0.4s cubic-bezier(0.16,1,0.3,1)',
+                        'scale-in': 'scaleIn 0.3s cubic-bezier(0.16,1,0.3,1)',
+                        'slide-in-right': 'slideInRight 0.4s cubic-bezier(0.16,1,0.3,1)',
                         'bounce-soft': 'bounceSoft 2s infinite',
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4,0,0.6,1) infinite',
                         'spin-slow': 'spin 12s linear infinite',
                         'float': 'float 6s ease-in-out infinite',
                     },
                     keyframes: {
-                        fadeIn: {
-                            '0%': { opacity: '0' },
-                            '100%': { opacity: '1' },
-                        },
-                        slideUp: {
-                            '0%': { opacity: '0', transform: 'translateY(30px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' },
-                        },
-                        slideDown: {
-                            '0%': { opacity: '0', transform: 'translateY(-20px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' },
-                        },
-                        scaleIn: {
-                            '0%': { opacity: '0', transform: 'scale(0.9)' },
-                            '100%': { opacity: '1', transform: 'scale(1)' },
-                        },
-                        slideInRight: {
-                            '0%': { opacity: '0', transform: 'translateX(20px)' },
-                            '100%': { opacity: '1', transform: 'translateX(0)' },
-                        },
-                        bounceSoft: {
-                            '0%, 100%': { transform: 'translateY(-5%)' },
-                            '50%': { transform: 'translateY(0)' },
-                        },
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0px)' },
-                            '50%': { transform: 'translateY(-10px)' },
-                        }
+                        fadeIn:      { '0%': {opacity:'0'}, '100%': {opacity:'1'} },
+                        slideUp:     { '0%': {opacity:'0',transform:'translateY(30px)'}, '100%': {opacity:'1',transform:'translateY(0)'} },
+                        slideDown:   { '0%': {opacity:'0',transform:'translateY(-20px)'}, '100%': {opacity:'1',transform:'translateY(0)'} },
+                        scaleIn:     { '0%': {opacity:'0',transform:'scale(0.9)'}, '100%': {opacity:'1',transform:'scale(1)'} },
+                        slideInRight:{ '0%': {opacity:'0',transform:'translateX(20px)'}, '100%': {opacity:'1',transform:'translateX(0)'} },
+                        bounceSoft:  { '0%,100%': {transform:'translateY(-5%)'}, '50%': {transform:'translateY(0)'} },
+                        float:       { '0%,100%': {transform:'translateY(0px)'}, '50%': {transform:'translateY(-10px)'} },
                     }
                 }
             }
         }
     </script>
-    
-    <!-- Supabase Client -->
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- ── Layout da sidebar — controlado pelo sidebar.js via JS ── -->
+    <style>
+        /* Desktop padrão: sidebar aberta = 280px */
+        @media (min-width: 1024px) {
+            #main-content {
+                margin-left: 280px;
+                transition: margin-left 380ms cubic-bezier(.65,0,.35,1);
+            }
+            #main-content.sb-mini {
+                margin-left: 76px;
+            }
+        }
+        /* Mobile: sem margem */
+        @media (max-width: 1023px) {
+            #main-content {
+                margin-left: 0 !important;
+            }
+        }
+    </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased overflow-x-hidden selection:bg-primary-500 selection:text-white">
 
     <!-- Background Grid -->
     <div class="fixed inset-0 bg-grid opacity-[0.4] dark:opacity-[0.2] pointer-events-none"></div>
 
-    <!-- Header Component -->
+    <!-- Header -->
     <div id="header-container"></div>
 
-    <!-- Sidebar Component -->
+    <!-- Sidebar -->
     <div id="sidebar-container"></div>
 
-    <!-- Main Content -->
-    <main class="pt-16 min-h-screen" id="main-content" style="margin-left:280px;transition:margin-left 380ms cubic-bezier(.65,0,.35,1);">
-        
-        <!-- Dashboard Page -->
+    <!-- ── Main Content — margem controlada pelo CSS acima ── -->
+    <main id="main-content" class="pt-16 min-h-screen">
         <div id="dashboard-container"></div>
-        
-        <!-- Kanban Page -->
         <div id="kanban-container"></div>
-        
-        <!-- Ordens Page -->
         <div id="ordens-container"></div>
-        
-        <!-- Entrega Page -->
         <div id="entrega-container"></div>
-        
-        <!-- Equipe Page -->
         <div id="equipe-container"></div>
-        
-        <!-- Estoque Page -->
         <div id="estoque-container"></div>
-        
     </main>
 
-    <!-- Modals Component -->
+    <!-- Modals -->
     <div id="modals-container"></div>
 
-    <!-- ============================================
-         MODAL DE LOGIN
-         ============================================ -->
+    <!-- Modal Login -->
     <div id="login-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md p-8 m-4 animate-slide-up" onclick="event.stopPropagation()">
-            <!-- Logo e Título -->
             <div class="text-center mb-8">
                 <div class="w-16 h-16 bg-gradient-to-br from-primary-600 to-primary-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <span class="material-symbols-rounded text-3xl text-white">inventory</span>
@@ -160,77 +120,39 @@
                 <p class="text-slate-500 dark:text-slate-400 mt-2">Faça login para acessar o sistema</p>
             </div>
 
-            <!-- Formulário de Login -->
             <form id="login-form" onsubmit="handleLogin(event)" class="space-y-6">
-                <!-- Email -->
                 <div>
-                    <label for="login-email" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Email
-                    </label>
+                    <label for="login-email" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Email</label>
                     <div class="relative">
-                        <span class="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                            mail
-                        </span>
-                        <input
-                            type="email"
-                            id="login-email"
-                            name="email"
-                            required
-                            autocomplete="email"
+                        <span class="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">mail</span>
+                        <input type="email" id="login-email" name="email" required autocomplete="email"
                             class="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                            placeholder="seu@email.com"
-                        >
+                            placeholder="seu@email.com">
                     </div>
                 </div>
 
-                <!-- Senha -->
                 <div>
-                    <label for="login-password" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Senha
-                    </label>
+                    <label for="login-password" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Senha</label>
                     <div class="relative">
-                        <span class="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                            lock
-                        </span>
-                        <input
-                            type="password"
-                            id="login-password"
-                            name="password"
-                            required
-                            autocomplete="current-password"
+                        <span class="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">lock</span>
+                        <input type="password" id="login-password" name="password" required autocomplete="current-password"
                             class="w-full pl-11 pr-12 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                            placeholder="••••••••"
-                        >
-                        <button
-                            type="button"
-                            onclick="togglePasswordVisibility()"
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                        >
+                            placeholder="••••••••">
+                        <button type="button" onclick="togglePasswordVisibility()"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
                             <span class="material-symbols-rounded" id="password-toggle-icon">visibility</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- Lembrar-me -->
                 <div class="flex items-center justify-between">
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            id="remember-me"
-                            class="w-4 h-4 text-primary-600 bg-slate-50 dark:bg-slate-800 border-slate-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-primary-500"
-                        >
+                        <input type="checkbox" id="remember-me" class="w-4 h-4 text-primary-600 bg-slate-50 dark:bg-slate-800 border-slate-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-primary-500">
                         <span class="text-sm text-slate-600 dark:text-slate-400">Lembrar-me</span>
                     </label>
-                    <button
-                        type="button"
-                        onclick="showForgotPassword()"
-                        class="text-sm text-primary-600 hover:text-primary-700 font-medium"
-                    >
-                        Esqueceu a senha?
-                    </button>
+                    <button type="button" onclick="showForgotPassword()" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Esqueceu a senha?</button>
                 </div>
 
-                <!-- Mensagem de Erro -->
                 <div id="login-error" class="hidden p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                     <div class="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
                         <span class="material-symbols-rounded text-lg">error</span>
@@ -238,18 +160,13 @@
                     </div>
                 </div>
 
-                <!-- Botão de Login -->
-                <button
-                    type="submit"
-                    id="login-submit-btn"
-                    class="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-semibold shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50 transition-all duration-300 hover:-translate-y-0.5 flex items-center justify-center gap-2"
-                >
+                <button type="submit" id="login-submit-btn"
+                    class="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-semibold shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50 transition-all duration-300 hover:-translate-y-0.5 flex items-center justify-center gap-2">
                     <span id="login-btn-text">Entrar</span>
                     <span class="material-symbols-rounded" id="login-btn-icon">login</span>
                 </button>
             </form>
 
-            <!-- Credenciais de Teste (REMOVER EM PRODUÇÃO!) -->
             <div class="mt-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
                 <p class="text-xs font-semibold text-amber-800 dark:text-amber-400 mb-2">🔑 Credenciais de Teste:</p>
                 <div class="text-xs text-amber-700 dark:text-amber-500 space-y-1">
@@ -260,9 +177,9 @@
         </div>
     </div>
 
-    <!-- JavaScript Modules - ORDEM CORRETA COM AUTENTICAÇÃO! -->
+    <!-- Scripts -->
     <script src="js/supabase-config.js"></script>
-    <script src="js/auth.js"></script>                    <!-- ✅ NOVO: Antes do app.js -->
+    <script src="js/auth.js"></script>
     <script src="js/data.js"></script>
     <script src="js/create-order-handler.js"></script>
     <script src="js/populate-operators.js"></script>
@@ -279,43 +196,33 @@
     <script src="js/kanban-sheets.js"></script>
     <script src="js/sheets-sync.js"></script>
 
-    <!-- Scripts do Modal de Login -->
     <script>
         async function handleLogin(event) {
             event.preventDefault();
-            
-            const email = document.getElementById('login-email').value;
+            const email    = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
-            
             const submitBtn = document.getElementById('login-submit-btn');
-            const btnText = document.getElementById('login-btn-text');
-            const btnIcon = document.getElementById('login-btn-icon');
-            const errorDiv = document.getElementById('login-error');
-            
+            const btnText   = document.getElementById('login-btn-text');
+            const btnIcon   = document.getElementById('login-btn-icon');
+            const errorDiv  = document.getElementById('login-error');
+
             submitBtn.disabled = true;
             btnText.textContent = 'Entrando...';
             btnIcon.textContent = 'hourglass_empty';
             btnIcon.classList.add('animate-spin');
             errorDiv.classList.add('hidden');
-            
+
             try {
                 const result = await auth.login(email, password);
-                
                 if (result.success) {
                     hideLoginModal();
-                    
-                    // Recarregar página para carregar componentes
                     window.location.reload();
                 } else {
                     throw new Error(result.message || 'Credenciais inválidas');
                 }
             } catch (error) {
-                console.error('❌ Erro no login:', error);
-                
-                const errorMessage = document.getElementById('login-error-message');
-                errorMessage.textContent = error.message || 'Email ou senha incorretos';
+                document.getElementById('login-error-message').textContent = error.message || 'Email ou senha incorretos';
                 errorDiv.classList.remove('hidden');
-                
                 const form = document.getElementById('login-form');
                 form.classList.add('animate-shake');
                 setTimeout(() => form.classList.remove('animate-shake'), 500);
@@ -328,16 +235,10 @@
         }
 
         function togglePasswordVisibility() {
-            const passwordInput = document.getElementById('login-password');
-            const toggleIcon = document.getElementById('password-toggle-icon');
-            
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                toggleIcon.textContent = 'visibility_off';
-            } else {
-                passwordInput.type = 'password';
-                toggleIcon.textContent = 'visibility';
-            }
+            const input = document.getElementById('login-password');
+            const icon  = document.getElementById('password-toggle-icon');
+            if (input.type === 'password') { input.type = 'text';     icon.textContent = 'visibility_off'; }
+            else                           { input.type = 'password'; icon.textContent = 'visibility';     }
         }
 
         function showForgotPassword() {
@@ -345,101 +246,68 @@
         }
 
         function hideLoginModal() {
-            const loginModal = document.getElementById('login-modal');
-            if (loginModal) {
-                loginModal.classList.remove('active');
-                loginModal.classList.add('hidden');
-            }
+            const m = document.getElementById('login-modal');
+            if (m) { m.classList.remove('active'); m.classList.add('hidden'); }
         }
     </script>
 
-    <!-- CSS para Modal -->
     <style>
-        #login-modal.active {
-            display: flex !important;
-        }
-
+        #login-modal.active { display: flex !important; }
         @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
+            0%,100% { transform: translateX(0); }
+            25%     { transform: translateX(-10px); }
+            75%     { transform: translateX(10px); }
         }
-
-        .animate-shake {
-            animation: shake 0.5s ease-in-out;
-        }
+        .animate-shake { animation: shake 0.5s ease-in-out; }
     </style>
 
-    <!-- Load Components -->
     <script>
-        // Função para carregar componentes HTML
         async function loadComponent(url, containerId) {
             try {
-                const response = await fetch(url);
-                const html = await response.text();
-                document.getElementById(containerId).innerHTML = html;
-            } catch (error) {
-                console.error(`Erro ao carregar componente ${url}:`, error);
+                const r = await fetch(url);
+                document.getElementById(containerId).innerHTML = await r.text();
+            } catch (e) {
+                console.error(`Erro ao carregar ${url}:`, e);
             }
         }
 
-        // Carregar todos os componentes
-document.addEventListener('DOMContentLoaded', async () => {
-    // ✅ PASSO 1: Iniciar autenticação PRIMEIRO
-    console.log('🚀 Inicializando aplicação...');
-    
-    if (typeof auth !== 'undefined') {
-        await auth.init();  // ✅ AGUARDAR completar
-        
-        // Se não autenticado, parar aqui e mostrar login
-        if (!auth.isAuthenticated()) {
-            console.log('⚠️ Usuário não autenticado, aguardando login...');
-            return; // Não carregar componentes até fazer login
-        }
-    }
-    
-    // ✅ PASSO 2: Carregar componentes (apenas se autenticado)
-    console.log('✅ Usuário autenticado, carregando componentes...');
-    
-    await Promise.all([
-        loadComponent('components/header.html', 'header-container'),
-        loadComponent('components/sidebar.html', 'sidebar-container'),
-        loadComponent('components/modals.html', 'modals-container'),
-        loadComponent('pages/dashboard.html', 'dashboard-container'),
-        loadComponent('pages/kanban.html', 'kanban-container'),
-        loadComponent('pages/ordens.html', 'ordens-container'),
-        loadComponent('pages/entrega.html', 'entrega-container'),
-        loadComponent('pages/equipe.html', 'equipe-container'),
-        loadComponent('pages/estoque.html', 'estoque-container')
-    ]);
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 Inicializando aplicação...');
 
-    // ✅ PASSO 3: Inicializar aplicação após carregar componentes
-    setTimeout(() => {
-        if (typeof initTheme === 'function') initTheme();
-        if (typeof renderRecentOrders === 'function') renderRecentOrders();
-        if (typeof initCharts === 'function') initCharts();
-        if (typeof animateCounters === 'function') animateCounters();
-        if (typeof updateTime === 'function') {
-            setInterval(updateTime, 1000);
-            updateTime();
-        }
-        
-        // Atualizar dashboard
-        if (typeof updateDashboard === 'function') {
-            updateDashboard();
-            setInterval(updateDashboard, 30000);
-        }
-        
-        // ✅ PASSO 4: Configurar UI autenticada
-        if (typeof setupAuthenticatedUI === 'function') {
-            setupAuthenticatedUI();
-        }
-    }, 100);
-    
+            if (typeof auth !== 'undefined') {
+                await auth.init();
+                if (!auth.isAuthenticated()) {
+                    console.log('⚠️ Aguardando login...');
+                    return;
+                }
+            }
+
+            console.log('✅ Autenticado — carregando componentes...');
+
+            await Promise.all([
+                loadComponent('components/header.html',  'header-container'),
+                loadComponent('components/sidebar.html', 'sidebar-container'),
+                loadComponent('components/modals.html',  'modals-container'),
+                loadComponent('pages/dashboard.html',    'dashboard-container'),
+                loadComponent('pages/kanban.html',       'kanban-container'),
+                loadComponent('pages/ordens.html',       'ordens-container'),
+                loadComponent('pages/entrega.html',      'entrega-container'),
+                loadComponent('pages/equipe.html',       'equipe-container'),
+                loadComponent('pages/estoque.html',      'estoque-container'),
+            ]);
+
+            setTimeout(() => {
+                if (typeof initTheme          === 'function') initTheme();
+                if (typeof renderRecentOrders === 'function') renderRecentOrders();
+                if (typeof initCharts         === 'function') initCharts();
+                if (typeof animateCounters    === 'function') animateCounters();
+                if (typeof updateTime         === 'function') { updateTime(); setInterval(updateTime, 1000); }
+                if (typeof updateDashboard    === 'function') { updateDashboard(); setInterval(updateDashboard, 30000); }
+                if (typeof setupAuthenticatedUI === 'function') setupAuthenticatedUI();
+            }, 100);
         });
     </script>
-    
-<script src="js/user-profile.js"></script>
 
+    <script src="js/user-profile.js"></script>
 </body>
 </html>
