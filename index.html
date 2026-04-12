@@ -88,6 +88,7 @@
         <div id="entrega-container"></div>
         <div id="equipe-container"></div>
         <div id="estoque-container"></div>
+        <div id="configuracoes-container"></div>
     </main>
 
     <div id="modals-container"></div>
@@ -163,6 +164,8 @@
     <script src="js/kanban-sheets.js"></script>
     <script src="js/entrega.js"></script>          <!-- funções da aba entrega -->
     <script src="js/estoque.js"></script>          <!-- flags manuais kanban -->
+    <script src="js/user-management.js"></script>  <!-- gestão de usuários -->
+    <script src="js/configuracoes.js"></script>    <!-- configurações da conta -->
     <script src="js/sheets-sync.js"></script>
     <script src="js/user-profile.js"></script>
 
@@ -271,6 +274,7 @@
                 loadComponent('pages/entrega.html',      'entrega-container'),
                 loadComponent('pages/equipe.html',       'equipe-container'),
                 loadComponent('pages/estoque.html',      'estoque-container'),
+                loadComponent('pages/configuracoes.html','configuracoes-container'),
             ]);
 
             // Sidebar precisa rodar após HTML injetado
