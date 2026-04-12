@@ -40,44 +40,47 @@ function setupAuthenticatedUI() {
 
     console.log('👤 setupAuthenticatedUI →', nome, '(nível', nivel, ')');
 
-    // 3. Atualiza por ID (os mais comuns no header.html)
+    // 3. IDs exatos do header.html
     const setTxt = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
-    setTxt('user-display-name',   nome);
-    setTxt('user-display-email',  email);
-    setTxt('user-display-cargo',  cargo);
-    setTxt('user-nivel-label',    getNivelNome(nivel));
-    setTxt('user-avatar-initials',iniciais);
-    setTxt('header-user-name',    nome);
-    setTxt('header-user-email',   email);
-    setTxt('header-user-cargo',   cargo);
 
-    // 4. Atualiza por classe (fallback)
-    document.querySelectorAll('.user-nome, .user-name')
-        .forEach(el => el.textContent = nome);
-    document.querySelectorAll('.user-email')
-        .forEach(el => el.textContent = email);
-    document.querySelectorAll('.user-initials, .user-avatar-initials')
-        .forEach(el => el.textContent = iniciais);
-    document.querySelectorAll('.user-cargo, .user-role')
-        .forEach(el => el.textContent = cargo);
-    document.querySelectorAll('.user-nivel')
-        .forEach(el => el.textContent = getNivelNome(nivel));
+    // Header (barra superior)
+    setTxt('header-user-name',  nome);
+    setTxt('header-user-role',  cargo);
 
-    // 5. Substitui "Carregando..." onde aparecer
-    document.querySelectorAll('[data-user-field]').forEach(el => {
-        const field = el.dataset.userField;
-        if (field === 'nome')    el.textContent = nome;
-        if (field === 'email')   el.textContent = email;
-        if (field === 'cargo')   el.textContent = cargo;
-        if (field === 'iniciais') el.textContent = iniciais;
-    });
+    // Avatar header
+    const avatarEl = document.getElementById('header-avatar');
+    if (avatarEl) avatarEl.textContent = iniciais;
 
-    // 6. Força substituição de texto "Carregando..." no header
-    document.querySelectorAll('header *, #header-container *').forEach(el => {
-        if (el.children.length === 0 && el.textContent.trim() === 'Carregando...') {
-            el.textContent = nome;
+    // Menu dropdown
+    setTxt('menu-user-name',  nome);
+    setTxt('menu-user-email', email);
+    setTxt('menu-user-badge', getNivelNome(nivel));
+
+    const menuAvatarEl = document.getElementById('menu-avatar');
+    if (menuAvatarEl) menuAvatarEl.textContent = iniciais;
+
+    // Modal de perfil
+    setTxt('profile-name',  nome);
+    setTxt('profile-email', email);
+    setTxt('profile-cargo', cargo);
+    setTxt('profile-nivel', getNivelNome(nivel));
+    setTxt('profile-badge', getNivelNome(nivel));
+
+    const profileAvatarEl = document.getElementById('profile-avatar-big');
+    if (profileAvatarEl) profileAvatarEl.textContent = iniciais;
+
+    // Sessão (horário de login)
+    try {
+        const s = JSON.parse(localStorage.getItem('ordem_pro_session')||'{}');
+        if (s.loginTime) {
+            const dt = new Date(s.loginTime);
+            setTxt('profile-sessao', dt.toLocaleString('pt-BR'));
         }
-    });
+    } catch(_) {}
+
+    // Garante que o search bar está limpo e sem autocomplete
+    const gs = document.getElementById('global-search');
+    if (gs) { gs.value = ''; gs.setAttribute('autocomplete','off'); }
 
     console.log('✅ UI atualizada para:', nome);
 }
