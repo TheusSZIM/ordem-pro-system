@@ -1,193 +1,300 @@
-/* ============================================
-   CONTROLE DE ORDENS PRO - GRÁFICOS
-   ============================================ */
+// ============================================
+// CHARTS.JS — Dashboard Gráficos
+// Linha Amarela: ordens registradas por dia
+// Linha Azul:    ordens concluídas por dia
+// Atualização dinâmica a cada 15s
+// ============================================
 
-let performanceChart, distributionChart;
+let weekChart   = null;
+let pieChart    = null;
+let chartMode   = 'semana'; // 'semana' | 'mes'
+let chartTimer  = null;
 
-// Inicializar Gráficos
+// ── Gera dados dos últimos N dias agrupando por data ─────────
+
+function getChartData(days) {
+    const orders = window.state?.orders || [];
+    const labels  = [];
+    const criadas  = [];   // amarelo: criadas no dia
+    const concluidas = []; // azul: concluídas no dia
+
+    const today = new Date();
+    today.setHours(23,59,59,999);
+
+    for (let i = days - 1; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - i);
+        const dStr = d.toISOString().slice(0,10); // yyyy-mm-dd
+
+        labels.push(
+            days <= 7
+                ? d.toLocaleDateString('pt-BR', { weekday:'short' }).replace('.','')
+                : d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' })
+        );
+
+        // Criadas: qualquer ordem criada nesse dia
+        criadas.push(orders.filter(o => {
+            const dt = o.created_at || o.data_prevista || '';
+            return dt.slice(0,10) === dStr;
+        }).length);
+
+        // Concluídas: ordens com status completed ou delivered finalizadas nesse dia
+        concluidas.push(orders.filter(o => {
+            if (!['completed','delivered'].includes(o.status)) return false;
+            const dt = o.fim_separacao || o.data_entrega || o.updated_at || '';
+            return dt.slice(0,10) === dStr;
+        }).length);
+    }
+
+    return { labels, criadas, concluidas };
+}
+
+// ── Inicializa / atualiza o gráfico de linha ─────────────────
+
 function initCharts() {
-    console.log('🎨 Inicializando gráficos...');
-    
-    // Performance Chart (Desempenho da Semana)
-    const perfCtx = document.getElementById('performanceChart');
-    if (perfCtx) {
-        performanceChart = new Chart(perfCtx, {
-            type: 'line',
-            data: {
-                labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
-                datasets: [{
-                    label: 'Concluídas',
-                    data: [12, 19, 15, 25, 22, 30, 28],
-                    borderColor: '#10b981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    tension: 0.4,
-                    fill: true,
-                    borderWidth: 2
-                }, {
-                    label: 'Pendentes',
-                    data: [8, 12, 10, 15, 12, 8, 5],
-                    borderColor: '#f59e0b',
-                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                    tension: 0.4,
-                    fill: true,
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 20,
-                            color: '#64748b'
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                        padding: 12,
-                        titleColor: '#fff',
-                        bodyColor: '#cbd5e1',
-                        borderColor: '#334155',
-                        borderWidth: 1
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(148, 163, 184, 0.1)'
-                        },
-                        ticks: {
-                            color: '#64748b'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            color: '#64748b'
-                        }
-                    }
-                }
-            }
-        });
-        console.log('✅ Performance chart criado');
-    }
-    
-    // Distribution Chart (Gráfico de Rosca)
-    updateDistributionChart();
+    buildWeekChart();
+    buildPieChart();
+    startChartTimer();
 }
 
-// Atualizar Gráfico de Distribuição
-function updateDistributionChart() {
-    const distCtx = document.getElementById('distributionChart');
-    
-    if (!distCtx) {
-        console.warn('⚠️ Canvas distributionChart não encontrado');
-        return;
-    }
-    
-    // Verificar se state.orders existe
-    if (typeof state === 'undefined' || !state.orders) {
-        console.warn('⚠️ state.orders não disponível, tentando novamente em 2s...');
-        setTimeout(updateDistributionChart, 2000);
-        return;
-    }
-    
-    // Contar ordens por status
-    const counts = {
-        pending: state.orders.filter(o => o.status === 'pending').length,
-        progress: state.orders.filter(o => o.status === 'progress' || o.status === 'in_progress').length,
-        completed: state.orders.filter(o => o.status === 'completed').length,
-        delivered: state.orders.filter(o => o.status === 'delivered').length
+function buildWeekChart() {
+    const ctx = document.getElementById('weekChart');
+    if (!ctx) return;
+
+    const days = chartMode === 'semana' ? 7 : 30;
+    const { labels, criadas, concluidas } = getChartData(days);
+
+    const cfg = {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: 'Ordens Registradas',
+                    data: criadas,
+                    borderColor: '#eab308',
+                    backgroundColor: 'rgba(234,179,8,.08)',
+                    borderWidth: 2.5,
+                    pointBackgroundColor: '#eab308',
+                    pointBorderColor: '#0f172a',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    tension: 0.45,
+                    fill: true,
+                },
+                {
+                    label: 'Ordens Concluídas',
+                    data: concluidas,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59,130,246,.08)',
+                    borderWidth: 2.5,
+                    pointBackgroundColor: '#3b82f6',
+                    pointBorderColor: '#0f172a',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    tension: 0.45,
+                    fill: true,
+                },
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            animation: {
+                duration: 900,
+                easing: 'easeInOutQuart',
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    align: 'end',
+                    labels: {
+                        color: '#94a3b8',
+                        font: { size: 12, family: "'Plus Jakarta Sans', sans-serif", weight: '600' },
+                        usePointStyle: true,
+                        pointStyleWidth: 10,
+                        boxHeight: 6,
+                        padding: 20,
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#1e293b',
+                    borderColor: 'rgba(148,163,184,.2)',
+                    borderWidth: 1,
+                    titleColor: '#f1f5f9',
+                    bodyColor: '#94a3b8',
+                    padding: 12,
+                    cornerRadius: 10,
+                    callbacks: {
+                        title: items => items[0].label,
+                        label: item => ` ${item.dataset.label}: ${item.parsed.y} ordens`,
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(148,163,184,.07)', drawBorder: false },
+                    ticks: { color: '#64748b', font: { size: 11, family: "'Plus Jakarta Sans', sans-serif" } },
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(148,163,184,.07)', drawBorder: false },
+                    ticks: {
+                        color: '#64748b',
+                        font: { size: 11 },
+                        stepSize: 1,
+                        callback: v => Number.isInteger(v) ? v : null,
+                    },
+                }
+            }
+        }
     };
-    
-    const total = counts.pending + counts.progress + counts.completed + counts.delivered;
-    
-    console.log('📊 Distribuição:', counts, 'Total:', total);
-    
-    // Atualizar número no centro
-    const centerNumber = document.querySelector('#distributionChart + div span.text-2xl');
-    if (centerNumber) {
-        centerNumber.textContent = total;
-    }
-    
-    // Criar ou atualizar gráfico
-    if (distributionChart) {
-        // Atualizar dados existentes
-        distributionChart.data.datasets[0].data = [
-            counts.pending, 
-            counts.progress, 
-            counts.completed, 
-            counts.delivered
-        ];
-        distributionChart.update();
-        console.log('✅ Gráfico de distribuição atualizado');
+
+    if (weekChart) {
+        // Atualização suave dos dados
+        weekChart.data.labels              = labels;
+        weekChart.data.datasets[0].data    = criadas;
+        weekChart.data.datasets[1].data    = concluidas;
+        weekChart.update('active');
     } else {
-        // Criar novo gráfico
-        distributionChart = new Chart(distCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['A Separar', 'Em Separação', 'Concluídas', 'Entregues'],
-                datasets: [{
-                    data: [counts.pending, counts.progress, counts.completed, counts.delivered],
-                    backgroundColor: [
-                        '#f59e0b', // Amarelo - Pendente
-                        '#3b82f6', // Azul - Em separação
-                        '#10b981', // Verde - Concluídas
-                        '#8b5cf6'  // Roxo - Entregues
-                    ],
-                    borderWidth: 0,
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '70%', // Tamanho do buraco no meio (70% = rosca grossa)
-                plugins: {
-                    legend: {
-                        display: false // Esconder legenda (já temos o número no centro)
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                        padding: 12,
-                        titleColor: '#fff',
-                        bodyColor: '#cbd5e1',
-                        borderColor: '#334155',
-                        borderWidth: 1,
-                        callbacks: {
-                            label: function(context) {
-                                const label = context.label || '';
-                                const value = context.parsed;
-                                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                                return `${label}: ${value} (${percentage}%)`;
-                            }
-                        }
+        weekChart = new Chart(ctx, cfg);
+    }
+}
+
+// ── Gráfico de pizza (distribuição) ──────────────────────────
+
+function buildPieChart() {
+    const ctx = document.getElementById('pieChart');
+    if (!ctx) return;
+
+    const orders = window.state?.orders || [];
+    const pending   = orders.filter(o=>o.status==='pending').length;
+    const progress  = orders.filter(o=>['progress','in_progress'].includes(o.status)).length;
+    const completed = orders.filter(o=>o.status==='completed').length;
+    const delivered = orders.filter(o=>o.status==='delivered').length;
+    const total = pending + progress + completed + delivered || 1;
+
+    const cfg = {
+        type: 'doughnut',
+        data: {
+            labels: ['A Separar', 'Em Separação', 'Concluídas', 'Entregues'],
+            datasets: [{
+                data: [pending, progress, completed, delivered],
+                backgroundColor: [
+                    'rgba(99,102,241,.8)',
+                    'rgba(59,130,246,.8)',
+                    'rgba(16,185,129,.8)',
+                    'rgba(234,179,8,.8)',
+                ],
+                borderColor: '#0f172a',
+                borderWidth: 3,
+                hoverOffset: 8,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            animation: { duration: 900, easing: 'easeInOutQuart' },
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#94a3b8',
+                        font: { size: 11, family: "'Plus Jakarta Sans', sans-serif", weight: '600' },
+                        usePointStyle: true, padding: 16,
                     }
                 },
-                animation: {
-                    animateRotate: true,
-                    animateScale: true
+                tooltip: {
+                    backgroundColor: '#1e293b',
+                    borderColor: 'rgba(148,163,184,.2)',
+                    borderWidth: 1,
+                    titleColor: '#f1f5f9',
+                    bodyColor: '#94a3b8',
+                    padding: 12,
+                    cornerRadius: 10,
+                    callbacks: {
+                        label: item => ` ${item.label}: ${item.parsed} (${Math.round(item.parsed/total*100)}%)`,
+                    }
                 }
             }
-        });
-        console.log('✅ Gráfico de distribuição criado');
+        },
+        plugins: [{
+            // Texto central
+            id: 'centerText',
+            beforeDraw(chart) {
+                const { width, height, ctx: c } = chart;
+                c.save();
+                const cx = width / 2, cy = height / 2 - 10;
+                c.font = `bold 28px 'Plus Jakarta Sans', sans-serif`;
+                c.fillStyle = '#f1f5f9';
+                c.textAlign = 'center'; c.textBaseline = 'middle';
+                c.fillText(total, cx, cy);
+                c.font = `12px 'Plus Jakarta Sans', sans-serif`;
+                c.fillStyle = '#64748b';
+                c.fillText('Total', cx, cy + 22);
+                c.restore();
+            }
+        }]
+    };
+
+    if (pieChart) {
+        pieChart.data.datasets[0].data = [pending, progress, completed, delivered];
+        pieChart.update('active');
+    } else {
+        pieChart = new Chart(ctx, cfg);
     }
 }
 
-// Atualizar todos os gráficos
+// ── Auto-refresh a cada 15s com animação suave ────────────────
+
+function startChartTimer() {
+    if (chartTimer) clearInterval(chartTimer);
+    chartTimer = setInterval(() => {
+        // Busca dados atualizados
+        if (typeof loadOrders === 'function') {
+            loadOrders().then(() => {
+                buildWeekChart();
+                buildPieChart();
+                // Pulsa o indicador de atualização
+                const dot = document.getElementById('chart-live-dot');
+                if (dot) {
+                    dot.style.transform = 'scale(2)';
+                    dot.style.opacity   = '1';
+                    setTimeout(() => { dot.style.transform = 'scale(1)'; dot.style.opacity = '.7'; }, 400);
+                }
+            });
+        } else {
+            buildWeekChart();
+            buildPieChart();
+        }
+    }, 15000);
+}
+
+// ── Toggle Semana / Mês ───────────────────────────────────────
+
+function toggleChartMode(mode) {
+    chartMode = mode;
+    document.querySelectorAll('.chart-mode-btn').forEach(b =>
+        b.classList.toggle('active-chart-btn', b.dataset.mode === mode));
+    buildWeekChart();
+}
+
+// ── Chamado quando dados são atualizados externamente ─────────
+
 function updateCharts() {
-    updateDistributionChart();
+    buildWeekChart();
+    buildPieChart();
 }
 
-// Exportar
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { initCharts, updateCharts, updateDistributionChart, performanceChart, distributionChart };
-}
+window.initCharts    = initCharts;
+window.updateCharts  = updateCharts;
+window.toggleChartMode = toggleChartMode;
+window.buildWeekChart  = buildWeekChart;
+window.buildPieChart   = buildPieChart;
 
-console.log('✅ charts.js carregado!');
+console.log('✅ charts.js carregado — atualização dinâmica a cada 15s');
