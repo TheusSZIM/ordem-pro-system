@@ -24,19 +24,9 @@
 
 .modelo-bar { position:absolute; top:0; left:0; right:0; height:4px; border-radius:10px 10px 0 0; }
 
-/* Animações pulsar */
-@keyframes pulse-border-yel {
-    0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,.4); }
-    50%      { box-shadow: 0 0 0 6px rgba(245,158,11,.0); }
-}
-@keyframes pulse-border-blue {
-    0%,100% { box-shadow: 0 0 0 0 rgba(96,165,250,.5); }
-    50%      { box-shadow: 0 0 0 8px rgba(96,165,250,.0); }
-}
-@keyframes pulse-border-org {
-    0%,100% { box-shadow: 0 0 0 0 rgba(249,115,22,.4); }
-    50%      { box-shadow: 0 0 0 6px rgba(249,115,22,.0); }
-}
+@keyframes pulse-border-yel  { 0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.4)} 50%{box-shadow:0 0 0 6px rgba(245,158,11,.0)} }
+@keyframes pulse-border-blue { 0%,100%{box-shadow:0 0 0 0 rgba(96,165,250,.5)} 50%{box-shadow:0 0 0 8px rgba(96,165,250,.0)} }
+@keyframes pulse-border-org  { 0%,100%{box-shadow:0 0 0 0 rgba(249,115,22,.4)} 50%{box-shadow:0 0 0 6px rgba(249,115,22,.0)} }
 .vaga-inc.pulse-anim      { animation: pulse-border-yel  1.8s ease-in-out infinite; }
 .vaga-dup.pulse-anim-blue { animation: pulse-border-blue 1.4s ease-in-out infinite; }
 .vaga-est.pulse-anim      { animation: pulse-border-org  1.8s ease-in-out infinite; }
@@ -46,8 +36,8 @@
 
 .kf-btn {
     padding: 5px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
-    border: 1.5px solid rgba(148,163,184,.3);
-    color: #94a3b8; cursor: pointer; transition: all .15s; background: transparent;
+    border: 1.5px solid rgba(148,163,184,.3); color: #94a3b8;
+    cursor: pointer; transition: all .15s; background: transparent;
 }
 .kf-btn:hover  { border-color: #6366f1; color: #818cf8; }
 .kf-btn.active { background: #4f46e5; border-color: #4f46e5; color: #fff; }
@@ -71,7 +61,9 @@
                 Visualização por estrutura · 12 níveis · 11 posições · Depósito ALM
             </p>
         </div>
-        <div class="flex flex-wrap gap-2">
+
+        <!-- CONTROLES — visíveis só para Admin (nível 3) -->
+        <div class="flex flex-wrap gap-2" id="kanban-controls">
             <div class="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2">
                 <span class="material-symbols-rounded text-emerald-500 text-lg">table_chart</span>
                 <input id="sheets-url" type="text" placeholder="URL Google Sheets (CSV)…"
@@ -79,26 +71,31 @@
                     onkeydown="if(event.key==='Enter') syncSheets()">
                 <button onclick="syncSheets()" class="text-xs font-semibold text-primary-600 hover:text-primary-700">Sync</button>
             </div>
-            <button onclick="syncSheets()"
+            <button id="kanban-sync-btn" onclick="syncSheets()"
                 class="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold transition-colors">
                 <span class="material-symbols-rounded text-lg" id="sync-icon">sync</span>
                 Atualizar
             </button>
-            <!-- ⚙ Configurar quantidades base -->
-            <button onclick="openQtdConfig()"
+            <button id="kanban-qtd-btn" onclick="openQtdConfig()"
                 title="Configurar quantidade base por modelo"
                 class="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                 <span class="material-symbols-rounded text-lg">tune</span>
                 <span class="hidden sm:inline text-xs">Qtd. Kanban</span>
             </button>
-            <button onclick="openSheetsConfig()"
+            <button id="kanban-consumo-btn" onclick="openConsumoConfig()"
+                title="Configurar consumo por hora por modelo"
+                class="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                <span class="material-symbols-rounded text-lg">speed</span>
+                <span class="hidden sm:inline text-xs">Consumo/h</span>
+            </button>
+            <button id="kanban-cfg-btn" onclick="openSheetsConfig()"
                 class="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                 <span class="material-symbols-rounded text-lg">settings</span>
             </button>
         </div>
     </div>
 
-    <!-- LEGENDA MODELOS + STATUS SYNC -->
+    <!-- STATUS SYNC + LEGENDA MODELOS -->
     <div class="flex flex-wrap items-center gap-2">
         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Modelos:</span>
         <span class="leg-pill" style="background:rgba(147,197,253,.2);color:#60a5fa;border:1px solid rgba(147,197,253,.35)">FIREFLY</span>
@@ -113,7 +110,7 @@
         <span class="text-slate-400 text-xs" id="last-sync"></span>
     </div>
 
-    <!-- FILTROS + LEGENDA STATUS -->
+    <!-- FILTROS -->
     <div class="flex flex-wrap items-center gap-2">
         <button class="kf-btn active" data-filter="all"        onclick="filterKanban('all')">Todos</button>
         <button class="kf-btn"        data-filter="ok"         onclick="filterKanban('ok')">
@@ -135,7 +132,6 @@
             oninput="filterKanban('search')"
             class="ml-1 px-3 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 outline-none focus:border-primary-500 w-32">
 
-        <!-- Legenda visual -->
         <div class="ml-auto flex items-center gap-3 text-[10px] text-slate-400 flex-wrap">
             <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-sm inline-block" style="background:rgba(34,197,94,.3);border:1px solid rgba(34,197,94,.6)"></span>OK</span>
             <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-sm inline-block" style="background:rgba(245,158,11,.3);border:1px solid rgba(245,158,11,.6)"></span>Incompleto</span>
@@ -177,7 +173,7 @@
     </div>
 </div>
 
-<!-- Modal Config Google Sheets -->
+<!-- Modal Config Sheets -->
 <div id="sheets-config-modal" class="fixed inset-0 z-[90] hidden">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeSheetsConfig()"></div>
     <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
@@ -196,19 +192,19 @@
                 <p class="text-xs text-slate-400 mt-1">Planilha → Arquivo → Publicar na web → Aba BASE → CSV</p>
             </div>
             <div class="flex gap-3 pt-2">
-                <button onclick="closeSheetsConfig()" class="flex-1 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-colors">Cancelar</button>
-                <button onclick="saveSheetsConfig()" class="flex-1 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold transition-colors">Salvar e Sincronizar</button>
+                <button onclick="closeSheetsConfig()" class="flex-1 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300">Cancelar</button>
+                <button onclick="saveSheetsConfig()" class="flex-1 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold">Salvar e Sincronizar</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal Detalhe da Posição -->
+<!-- Modal Detalhe -->
 <div id="kanban-detail-modal" class="fixed inset-0 z-[90] hidden">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeKanbanDetail()"></div>
     <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
         <div id="kanban-detail-content"
-             class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg pointer-events-auto p-6 space-y-3"
+             class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl pointer-events-auto p-6 space-y-3"
              style="transform:scale(.95);opacity:0;transition:all .25s;">
             <div class="flex items-start justify-between gap-3">
                 <div>
