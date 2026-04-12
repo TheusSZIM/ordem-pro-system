@@ -1,4 +1,4 @@
-<!-- KANBAN — PRATELEIRA F · Lógica por estrutura -->
+<!-- KANBAN — PRATELEIRA F · Lógica por estrutura + duplicidade -->
 <style>
 .shelf-wrap  { overflow-x: auto; width: 100%; }
 .shelf-table { border-collapse: separate; border-spacing: 4px; width: 100%; table-layout: fixed; }
@@ -11,47 +11,35 @@
 }
 
 .vaga {
-    height: 84px;
-    border-radius: 10px;
+    height: 84px; border-radius: 10px;
     border: 1.5px solid transparent;
-    position: relative;
-    vertical-align: top;
+    position: relative; vertical-align: top; overflow: hidden;
     transition: transform .15s, box-shadow .15s, opacity .2s;
-    overflow: hidden;
 }
+.vaga-ok    { background: rgba(34,197,94,.08);  border-color: rgba(34,197,94,.35)  !important; }
+.vaga-inc   { background: rgba(245,158,11,.08); border-color: rgba(245,158,11,.5)  !important; }
+.vaga-dup   { background: rgba(96,165,250,.08); border-color: rgba(96,165,250,.5)  !important; }
+.vaga-est   { background: rgba(249,115,22,.08); border-color: rgba(249,115,22,.5)  !important; }
+.vaga-vazio { background: rgba(148,163,184,.04); border-color: rgba(148,163,184,.1); }
 
-/* Estados */
-.vaga-ok     { background: rgba(34,197,94,.08);  border-color: rgba(34,197,94,.35)  !important; }
-.vaga-inc    { background: rgba(245,158,11,.08); border-color: rgba(245,158,11,.5) !important; }
-.vaga-est    { background: rgba(249,115,22,.08); border-color: rgba(249,115,22,.5) !important; }
-.vaga-vazio  { background: rgba(148,163,184,.04); border-color: rgba(148,163,184,.1); }
+.modelo-bar { position:absolute; top:0; left:0; right:0; height:4px; border-radius:10px 10px 0 0; }
 
-/* Cores de modelo */
-.m-firefly    { --mb: #3b82f6; }
-.m-gmasp      { --mb: #22c55e; }
-.m-gmturbo    { --mb: #14b8a6; }
-.m-frontcover { --mb: #06b6d4; }
-.m-renault    { --mb: #6366f1; }
-.m-hyundai    { --mb: #eab308; }
-.m-prime      { --mb: #ef4444; }
-.m-man        { --mb: #2563eb; }
-
-.modelo-bar {
-    position: absolute; top: 0; left: 0; right: 0; height: 4px;
-    border-radius: 10px 10px 0 0;
-}
-
-/* Animação pulsar para incompleto e estranho */
-@keyframes pulse-border {
+/* Animações pulsar */
+@keyframes pulse-border-yel {
     0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,.4); }
     50%      { box-shadow: 0 0 0 6px rgba(245,158,11,.0); }
+}
+@keyframes pulse-border-blue {
+    0%,100% { box-shadow: 0 0 0 0 rgba(96,165,250,.5); }
+    50%      { box-shadow: 0 0 0 8px rgba(96,165,250,.0); }
 }
 @keyframes pulse-border-org {
     0%,100% { box-shadow: 0 0 0 0 rgba(249,115,22,.4); }
     50%      { box-shadow: 0 0 0 6px rgba(249,115,22,.0); }
 }
-.vaga-inc.pulse-anim { animation: pulse-border 1.8s ease-in-out infinite; }
-.vaga-est.pulse-anim { animation: pulse-border-org 1.8s ease-in-out infinite; }
+.vaga-inc.pulse-anim      { animation: pulse-border-yel  1.8s ease-in-out infinite; }
+.vaga-dup.pulse-anim-blue { animation: pulse-border-blue 1.4s ease-in-out infinite; }
+.vaga-est.pulse-anim      { animation: pulse-border-org  1.8s ease-in-out infinite; }
 
 .vaga.ocupada { cursor: pointer; }
 .vaga.ocupada:hover { transform: scale(1.06); z-index: 20; box-shadow: 0 10px 28px rgba(0,0,0,.5); }
@@ -63,6 +51,8 @@
 }
 .kf-btn:hover  { border-color: #6366f1; color: #818cf8; }
 .kf-btn.active { background: #4f46e5; border-color: #4f46e5; color: #fff; }
+
+.leg-pill { padding:3px 10px; border-radius:20px; font-size:10px; font-weight:700; }
 
 @keyframes pulse-skel { 0%,100%{opacity:.35} 50%{opacity:.6} }
 .skel { animation: pulse-skel 1.3s ease-in-out infinite; }
@@ -84,15 +74,22 @@
         <div class="flex flex-wrap gap-2">
             <div class="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2">
                 <span class="material-symbols-rounded text-emerald-500 text-lg">table_chart</span>
-                <input id="sheets-url" type="text" placeholder="URL do Google Sheets (CSV)…"
+                <input id="sheets-url" type="text" placeholder="URL Google Sheets (CSV)…"
                     class="text-xs bg-transparent outline-none text-slate-600 dark:text-slate-300 w-52 placeholder:text-slate-400"
                     onkeydown="if(event.key==='Enter') syncSheets()">
-                <button onclick="syncSheets()" class="text-xs font-semibold text-primary-600 hover:text-primary-700 whitespace-nowrap">Sync</button>
+                <button onclick="syncSheets()" class="text-xs font-semibold text-primary-600 hover:text-primary-700">Sync</button>
             </div>
             <button onclick="syncSheets()"
                 class="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold transition-colors">
                 <span class="material-symbols-rounded text-lg" id="sync-icon">sync</span>
                 Atualizar
+            </button>
+            <!-- ⚙ Configurar quantidades base -->
+            <button onclick="openQtdConfig()"
+                title="Configurar quantidade base por modelo"
+                class="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                <span class="material-symbols-rounded text-lg">tune</span>
+                <span class="hidden sm:inline text-xs">Qtd. Kanban</span>
             </button>
             <button onclick="openSheetsConfig()"
                 class="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
@@ -101,8 +98,8 @@
         </div>
     </div>
 
-    <!-- LEGENDA MODELOS -->
-    <div class="flex flex-wrap items-center gap-3">
+    <!-- LEGENDA MODELOS + STATUS SYNC -->
+    <div class="flex flex-wrap items-center gap-2">
         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Modelos:</span>
         <span class="leg-pill" style="background:rgba(147,197,253,.2);color:#60a5fa;border:1px solid rgba(147,197,253,.35)">FIREFLY</span>
         <span class="leg-pill" style="background:rgba(134,239,172,.2);color:#4ade80;border:1px solid rgba(134,239,172,.35)">GM ASP</span>
@@ -115,33 +112,36 @@
         <span class="ml-auto font-medium text-sm" id="sync-status">—</span>
         <span class="text-slate-400 text-xs" id="last-sync"></span>
     </div>
-    <style>.leg-pill{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;}</style>
 
-    <!-- FILTROS -->
+    <!-- FILTROS + LEGENDA STATUS -->
     <div class="flex flex-wrap items-center gap-2">
         <button class="kf-btn active" data-filter="all"        onclick="filterKanban('all')">Todos</button>
         <button class="kf-btn"        data-filter="ok"         onclick="filterKanban('ok')">
-            <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1"></span>Kanban OK
+            <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1.5"></span>Kanban OK
         </button>
         <button class="kf-btn"        data-filter="incompleto" onclick="filterKanban('incompleto')">
-            <span class="inline-block w-2 h-2 rounded-full bg-amber-500 mr-1"></span>Incompleto
+            <span class="inline-block w-2 h-2 rounded-full bg-amber-500 mr-1.5"></span>Incompleto
+        </button>
+        <button class="kf-btn"        data-filter="duplicado"  onclick="filterKanban('duplicado')">
+            <span class="inline-block w-2 h-2 rounded-full bg-blue-400 mr-1.5"></span>Duplicado
         </button>
         <button class="kf-btn"        data-filter="estranho"   onclick="filterKanban('estranho')">
-            <span class="inline-block w-2 h-2 rounded-full bg-orange-500 mr-1"></span>Mat. Extra
+            <span class="inline-block w-2 h-2 rounded-full bg-orange-500 mr-1.5"></span>Mat. Extra
         </button>
         <button class="kf-btn"        data-filter="vazio"      onclick="filterKanban('vazio')">
-            <span class="inline-block w-2 h-2 rounded-full bg-slate-400 mr-1"></span>Vazio
+            <span class="inline-block w-2 h-2 rounded-full bg-slate-400 mr-1.5"></span>Vazio
         </button>
         <input id="kanban-search" type="text" placeholder="Buscar posição…"
             oninput="filterKanban('search')"
-            class="ml-2 px-3 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 outline-none focus:border-primary-500 w-36">
+            class="ml-1 px-3 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 outline-none focus:border-primary-500 w-32">
 
-        <!-- Legenda de status -->
-        <div class="ml-auto flex items-center gap-4 text-[11px] text-slate-400">
-            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-emerald-500/40 border border-emerald-500/70 inline-block"></span>OK</span>
-            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-amber-500/40 border border-amber-500/70 inline-block"></span>Incompleto</span>
-            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-orange-500/40 border border-orange-500/70 inline-block"></span>Mat. extra</span>
-            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-slate-400/30 border border-slate-400/40 inline-block"></span>Vazio</span>
+        <!-- Legenda visual -->
+        <div class="ml-auto flex items-center gap-3 text-[10px] text-slate-400 flex-wrap">
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-sm inline-block" style="background:rgba(34,197,94,.3);border:1px solid rgba(34,197,94,.6)"></span>OK</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-sm inline-block" style="background:rgba(245,158,11,.3);border:1px solid rgba(245,158,11,.6)"></span>Incompleto</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-sm inline-block" style="background:rgba(96,165,250,.3);border:1px solid rgba(96,165,250,.6)"></span>Duplicado</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-sm inline-block" style="background:rgba(249,115,22,.3);border:1px solid rgba(249,115,22,.6)"></span>Mat. extra</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-sm inline-block" style="background:rgba(148,163,184,.2);border:1px solid rgba(148,163,184,.3)"></span>Vazio</span>
         </div>
     </div>
 
@@ -153,7 +153,7 @@
     </div>
 
     <!-- STATS -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <div class="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
             <p class="text-xs text-slate-400">Com material</p>
             <p class="text-2xl font-bold text-slate-900 dark:text-white mt-1" id="ks-total">—</p>
@@ -166,6 +166,10 @@
             <p class="text-xs text-amber-500">⚠️ Incompletos</p>
             <p class="text-2xl font-bold text-amber-500 mt-1" id="ks-low">—</p>
         </div>
+        <div class="bg-white dark:bg-slate-900 rounded-xl p-4 border border-blue-200 dark:border-blue-900/40">
+            <p class="text-xs text-blue-400">🔵 Duplicados</p>
+            <p class="text-2xl font-bold text-blue-400 mt-1" id="ks-dup">—</p>
+        </div>
         <div class="bg-white dark:bg-slate-900 rounded-xl p-4 border border-orange-200 dark:border-orange-900/40">
             <p class="text-xs text-orange-500">🟠 Mat. Extra</p>
             <p class="text-2xl font-bold text-orange-500 mt-1" id="ks-empty">—</p>
@@ -173,7 +177,7 @@
     </div>
 </div>
 
-<!-- Modal Configuração -->
+<!-- Modal Config Google Sheets -->
 <div id="sheets-config-modal" class="fixed inset-0 z-[90] hidden">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeSheetsConfig()"></div>
     <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
@@ -199,23 +203,23 @@
     </div>
 </div>
 
-<!-- Modal Detalhe -->
+<!-- Modal Detalhe da Posição -->
 <div id="kanban-detail-modal" class="fixed inset-0 z-[90] hidden">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeKanbanDetail()"></div>
     <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
         <div id="kanban-detail-content"
-             class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md pointer-events-auto p-6 space-y-3"
+             class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg pointer-events-auto p-6 space-y-3"
              style="transform:scale(.95);opacity:0;transition:all .25s;">
             <div class="flex items-start justify-between gap-3">
                 <div>
-                    <h3 class="font-bold text-lg text-slate-900 dark:text-white leading-tight" id="kd-pn">—</h3>
+                    <h3 class="font-bold text-lg text-slate-900 dark:text-white" id="kd-pn">—</h3>
                     <p class="text-xs mt-0.5" id="kd-modelo"></p>
                 </div>
                 <button onclick="closeKanbanDetail()" class="text-slate-400 hover:text-slate-600 flex-shrink-0 mt-1">
                     <span class="material-symbols-rounded">close</span>
                 </button>
             </div>
-            <div id="kd-body" class="space-y-1"></div>
+            <div id="kd-body"></div>
         </div>
     </div>
 </div>
