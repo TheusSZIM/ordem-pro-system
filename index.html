@@ -188,8 +188,10 @@
             try {
                 const result = await auth.login(email, password);
                 if (result.success) {
-                    document.getElementById('login-modal')?.classList.add('hidden');
-                    window.location.reload();
+                    const lm = document.getElementById('login-modal');
+                    if (lm) { lm.classList.add('hidden'); lm.classList.remove('active'); }
+                    // Pequeno delay para garantir que a sessão foi salva
+                    setTimeout(() => window.location.reload(), 150);
                 } else {
                     throw new Error(result.message || 'Credenciais inválidas');
                 }
@@ -276,6 +278,10 @@
                 loadComponent('pages/estoque.html',      'estoque-container'),
                 loadComponent('pages/configuracoes.html','configuracoes-container'),
             ]);
+
+            // Esconde o modal de login após carregar tudo
+            const lm = document.getElementById('login-modal');
+            if (lm) { lm.classList.add('hidden'); lm.classList.remove('active'); }
 
             // Sidebar precisa rodar após HTML injetado
             initSidebar();
