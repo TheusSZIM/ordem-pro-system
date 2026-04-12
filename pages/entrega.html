@@ -1,4 +1,4 @@
-<!-- ENTREGA DE ORDEM PAGE -->
+<!-- ENTREGA DE ORDEM — apenas HTML + CSS (JS em js/entrega.js) -->
 <div id="entrega" class="page hidden p-6 space-y-6">
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 animate-fade-in">
         <div>
@@ -15,7 +15,6 @@
 
             <form id="entrega-form" class="space-y-4" onsubmit="handleEntrega(event)">
 
-                <!-- Número da ordem -->
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                         Número da Ordem *
@@ -31,7 +30,6 @@
                     <p class="text-xs text-slate-400 mt-1">Ou clique em uma ordem à direita para preencher automaticamente</p>
                 </div>
 
-                <!-- Responsável -->
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                         Responsável pela Entrega *
@@ -46,7 +44,6 @@
                     </div>
                 </div>
 
-                <!-- Observações -->
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Observações</label>
                     <textarea id="entrega-obs"
@@ -55,7 +52,6 @@
                               class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:text-white transition-all resize-none"></textarea>
                 </div>
 
-                <!-- Confirmação -->
                 <div class="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-xl">
                     <input type="checkbox" id="entrega-confirm"
                            class="mt-0.5 w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500" required>
@@ -64,10 +60,9 @@
                     </label>
                 </div>
 
-                <!-- Botão submit -->
                 <div class="pt-2">
                     <button type="submit"
-                            class="w-full px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50 transition-all duration-300 flex items-center justify-center gap-2">
+                            class="w-full px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold shadow-lg transition-all duration-300 flex items-center justify-center gap-2">
                         <span class="material-symbols-rounded">local_shipping</span>
                         Registrar Saída
                     </button>
@@ -87,9 +82,7 @@
 
             <p class="text-xs text-slate-400 mb-3">Clique para selecionar a ordem</p>
 
-            <!-- Lista -->
-            <div class="flex-1 overflow-y-auto space-y-2 max-h-[480px] pr-1 scrollbar-thin" id="ordens-concluidas-lista">
-                <!-- Preenchido pelo JS -->
+            <div class="flex-1 overflow-y-auto space-y-2 max-h-[480px] pr-1" id="ordens-concluidas-lista">
                 <div class="text-center py-8 text-slate-400 text-sm">
                     <span class="material-symbols-rounded text-3xl mb-2 block opacity-50">hourglass_empty</span>
                     Carregando...
@@ -100,176 +93,24 @@
 </div>
 
 <style>
-/* Card de ordem concluída */
 .ordem-concluida-card {
     padding: 12px 14px;
     border-radius: 12px;
-    border: 1.5px solid rgba(148,163,184,.15);
+    border: 1.5px solid rgba(148,163,184,.12);
     cursor: pointer;
     transition: all .15s;
     background: rgba(148,163,184,.04);
 }
 .ordem-concluida-card:hover {
     border-color: rgba(99,102,241,.4);
-    background: rgba(99,102,241,.06);
-    transform: translateX(2px);
+    background: rgba(99,102,241,.07);
+    transform: translateX(3px);
 }
 .ordem-concluida-card.selected {
     border-color: rgba(99,102,241,.7) !important;
-    background: rgba(99,102,241,.12) !important;
+    background: rgba(99,102,241,.13) !important;
 }
-.scrollbar-thin { scrollbar-width: thin; }
-.scrollbar-thin::-webkit-scrollbar { width: 4px; }
-.scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(148,163,184,.3); border-radius: 4px; }
+#ordens-concluidas-lista::-webkit-scrollbar { width: 4px; }
+#ordens-concluidas-lista::-webkit-scrollbar-thumb { background: rgba(148,163,184,.3); border-radius: 4px; }
+#ordens-concluidas-lista { scrollbar-width: thin; }
 </style>
-
-<script>
-/* ── Renderiza a lista de ordens concluídas ── */
-function renderOrdensEntrega() {
-    const lista  = document.getElementById('ordens-concluidas-lista');
-    const badge  = document.getElementById('badge-concluidas');
-    if (!lista) return;
-
-    const concluidas = (window.state?.orders || []).filter(o => o.status === 'completed');
-
-    if (badge) badge.textContent = concluidas.length;
-
-    if (concluidas.length === 0) {
-        lista.innerHTML = `
-            <div class="text-center py-10 text-slate-400">
-                <span class="material-symbols-rounded text-4xl mb-2 block opacity-40">check_circle</span>
-                <p class="text-sm">Nenhuma ordem concluída<br>aguardando entrega</p>
-            </div>`;
-        return;
-    }
-
-    lista.innerHTML = concluidas.map(o => `
-        <div class="ordem-concluida-card" data-id="${o.id}" onclick="selecionarOrdemEntrega('${o.id}')">
-            <div class="flex items-start justify-between gap-2">
-                <div class="min-w-0">
-                    <p class="text-sm font-bold text-slate-900 dark:text-white truncate">#${o.id}</p>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">${o.product || '—'}</p>
-                </div>
-                <span class="flex-shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
-                    Pronta
-                </span>
-            </div>
-            <div class="flex items-center gap-3 mt-2 text-[11px] text-slate-400">
-                <span class="flex items-center gap-1">
-                    <span class="material-symbols-rounded" style="font-size:13px">inventory_2</span>
-                    ${o.quantity || 0} un
-                </span>
-                ${o.station ? `<span class="flex items-center gap-1">
-                    <span class="material-symbols-rounded" style="font-size:13px">location_on</span>
-                    ${o.station}
-                </span>` : ''}
-                ${o.fim_separacao ? `<span class="flex items-center gap-1 ml-auto">
-                    <span class="material-symbols-rounded" style="font-size:13px">schedule</span>
-                    ${new Date(o.fim_separacao).toLocaleDateString('pt-BR')}
-                </span>` : ''}
-            </div>
-        </div>
-    `).join('');
-}
-
-/* ── Seleciona uma ordem e preenche o formulário ── */
-function selecionarOrdemEntrega(orderId) {
-    // Preenche o campo
-    const campo = document.getElementById('entrega-ordem');
-    if (campo) {
-        campo.value = orderId;
-        campo.classList.add('ring-2', 'ring-primary-500');
-        setTimeout(() => campo.classList.remove('ring-2', 'ring-primary-500'), 1500);
-    }
-
-    // Destaca o card selecionado
-    document.querySelectorAll('.ordem-concluida-card').forEach(el => {
-        el.classList.toggle('selected', el.dataset.id === orderId);
-    });
-
-    // Foca no próximo campo
-    document.getElementById('entrega-responsavel')?.focus();
-}
-
-/* ── Submit do formulário ── */
-async function handleEntrega(event) {
-    event.preventDefault();
-
-    const ordemId    = document.getElementById('entrega-ordem')?.value?.trim();
-    const responsavel = document.getElementById('entrega-responsavel')?.value?.trim();
-    const obs        = document.getElementById('entrega-obs')?.value?.trim();
-    const confirmado = document.getElementById('entrega-confirm')?.checked;
-
-    if (!ordemId)     { showToast('Informe o número da ordem', 'warning'); return; }
-    if (!responsavel) { showToast('Informe o responsável pela entrega', 'warning'); return; }
-    if (!confirmado)  { showToast('Confirme que a ordem está pronta', 'warning'); return; }
-
-    // Verifica se a ordem existe e está concluída
-    const ordem = window.state?.orders?.find(o => o.id === ordemId);
-    if (!ordem) { showToast('Ordem não encontrada', 'error'); return; }
-    if (ordem.status !== 'completed') {
-        showToast('Esta ordem não está com status "Concluída"', 'warning');
-        return;
-    }
-
-    const btn = event.target.querySelector('button[type="submit"]');
-    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="material-symbols-rounded animate-spin">progress_activity</span> Registrando...'; }
-
-    try {
-        const agora = new Date().toISOString();
-
-        const { error } = await supabaseClient
-            .from('orders')
-            .update({
-                status:               'delivered',
-                data_entrega:         agora,
-                responsavel_entrega:  responsavel,
-                observacoes_entrega:  obs || null,
-            })
-            .eq('id', ordemId);
-
-        if (error) throw error;
-
-        // Sincroniza Sheets se configurado
-        if (typeof syncOrdemParaSheets === 'function') {
-            syncOrdemParaSheets({ id: ordemId, status: 'delivered',
-                responsavel_entrega: responsavel, data_entrega: agora }, 'atualizar');
-        }
-
-        // Recarrega dados e atualiza UI
-        await loadOrders();
-        renderOrdensEntrega();
-        if (typeof renderRecentOrders === 'function') renderRecentOrders();
-        if (typeof renderOrdensTable  === 'function') renderOrdensTable();
-        if (typeof updateCharts       === 'function') updateCharts();
-        if (typeof renderDashboardStats === 'function') renderDashboardStats();
-
-        // Limpa formulário
-        document.getElementById('entrega-form')?.reset();
-
-        showToast(`✅ Entrega da ordem #${ordemId} registrada!`, 'success');
-
-    } catch (err) {
-        console.error('Erro ao registrar entrega:', err);
-        showToast('Erro ao registrar entrega: ' + err.message, 'error');
-    } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = '<span class="material-symbols-rounded">local_shipping</span> Registrar Saída';
-        }
-    }
-}
-
-/* ── Inicializa quando a aba é aberta ── */
-document.addEventListener('pageChanged', e => {
-    if (e.detail === 'entrega') renderOrdensEntrega();
-});
-
-/* Também atualiza se a página já estiver ativa */
-if (document.getElementById('entrega')?.classList.contains('active')) {
-    setTimeout(renderOrdensEntrega, 200);
-}
-
-window.renderOrdensEntrega    = renderOrdensEntrega;
-window.selecionarOrdemEntrega = selecionarOrdemEntrega;
-</script>
