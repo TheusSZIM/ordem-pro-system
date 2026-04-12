@@ -380,6 +380,10 @@ function buildModeloHeader() {
 // ── MODAL DETALHE ─────────────────────────────────────────────
 
 function openKanbanDetail(avalia, modelo, posKey) {
+    // Verifica se posição já tem flag
+    const flags    = (typeof getFlags === 'function') ? getFlags() : {};
+    const flagAtual = flags[posKey];
+
     setText('kd-pn', posKey);
     document.getElementById('kd-modelo').innerHTML=
         `<span style="color:${modelo?.barColor||'#6366f1'};font-weight:700;">${modelo?.nome||'—'}</span>
@@ -392,42 +396,76 @@ function openKanbanDetail(avalia, modelo, posKey) {
         estranho:  '<span style="background:rgba(249,115,22,.2);color:#f97316;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;">🟠 MATERIAL EXTRA</span>',
     }[avalia.status]||'';
 
-    const corEstado={ok:'#22c55e',duplicado:'#60a5fa',falta:'#f59e0b'};
+    let body=`<div class="mb-3 flex items-center gap-2 flex-wrap">${statusBadge}`;
 
-    let body=`<div class="mb-3">${statusBadge}</div>`;
+    // Badge de flag manual
+    if (flagAtual && flagAtual.status === 'pendente') {
+        body += `<span style="background:rgba(239,68,68,.2);color:#f87171;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;">🚩 Marcado vazio por ${flagAtual.operador}</span>`;
+    }
+    body += `</div>`;
 
     // Tabela de componentes
-    body+=`<div class="overflow-y-auto max-h-64">
-        <table style="width:100%;border-collapse:collapse;font-size:11px;">
-            <thead><tr style="border-bottom:1px solid rgba(148,163,184,.2);">
-                <th style="text-align:left;padding:4px 6px;color:#94a3b8;font-weight:600;">PN</th>
-                <th style="text-align:left;padding:4px 6px;color:#94a3b8;font-weight:600;">Descrição</th>
-                <th style="text-align:right;padding:4px 6px;color:#94a3b8;font-weight:600;">Saldo</th>
-                <th style="text-align:right;padding:4px 6px;color:#94a3b8;font-weight:600;">Esperado</th>
-                <th style="text-align:center;padding:4px 6px;color:#94a3b8;font-weight:600;">Status</th>
+    body+=`<div class="overflow-y-auto" style="max-height:340px;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead style="position:sticky;top:0;background:#0f172a;z-index:1;">
+                <tr style="border-bottom:1px solid rgba(148,163,184,.2);">
+                <th style="text-align:left;padding:6px 8px;color:#94a3b8;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.05em;">PN</th>
+                <th style="text-align:left;padding:6px 8px;color:#94a3b8;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.05em;">Descrição</th>
+                <th style="text-align:right;padding:6px 8px;color:#94a3b8;font-weight:600;font-size:10px;text-transform:uppercase;">Saldo</th>
+                <th style="text-align:right;padding:6px 8px;color:#94a3b8;font-weight:600;font-size:10px;text-transform:uppercase;">Esperado</th>
+                <th style="text-align:center;padding:6px 8px;color:#94a3b8;font-weight:600;font-size:10px;text-transform:uppercase;">St.</th>
             </tr></thead><tbody>`;
 
     avalia.itens.forEach(comp => {
         const icon = comp.estado==='ok' ? '✅' : comp.estado==='duplicado' ? '🔵' : '⚠️';
         const cor  = comp.estado==='ok' ? '#22c55e' : comp.estado==='duplicado' ? '#60a5fa' : '#f59e0b';
-        body+=`<tr style="border-bottom:1px solid rgba(148,163,184,.08);">
-            <td style="padding:5px 6px;font-family:monospace;color:#cbd5e1;">${comp.pn}</td>
-            <td style="padding:5px 6px;color:#94a3b8;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${comp.desc}</td>
-            <td style="padding:5px 6px;text-align:right;font-weight:700;color:${cor};">${comp.qtdReal}</td>
-            <td style="padding:5px 6px;text-align:right;color:#64748b;">${comp.qtdEsperada}</td>
-            <td style="padding:5px 6px;text-align:center;">${icon}</td>
+        const bgRow= comp.estado==='falta' ? 'background:rgba(245,158,11,.04);' : comp.estado==='duplicado' ? 'background:rgba(96,165,250,.04);' : '';
+        body+=`<tr style="border-bottom:1px solid rgba(148,163,184,.07);${bgRow}">
+            <td style="padding:7px 8px;font-family:monospace;font-size:11px;color:#cbd5e1;white-space:nowrap;">${comp.pn}</td>
+            <td style="padding:7px 8px;color:#94a3b8;font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${comp.desc}</td>
+            <td style="padding:7px 8px;text-align:right;font-weight:700;color:${cor};font-size:12px;">${comp.qtdReal.toLocaleString('pt-BR')}</td>
+            <td style="padding:7px 8px;text-align:right;color:#64748b;font-size:11px;">${comp.qtdEsperada.toLocaleString('pt-BR')}</td>
+            <td style="padding:7px 8px;text-align:center;font-size:14px;">${icon}</td>
         </tr>`;
     });
     body+='</tbody></table></div>';
 
     if (avalia.estranhos.length>0) {
-        body+=`<p class="text-xs font-bold text-orange-500 mt-3 mb-1">🟠 Fora da estrutura</p>`;
+        body+=`<div style="margin-top:12px;padding:10px;background:rgba(249,115,22,.08);border-radius:10px;border:1px solid rgba(249,115,22,.2);">
+            <p style="font-size:10px;font-weight:800;color:#f97316;margin-bottom:6px;text-transform:uppercase;">🟠 Fora da estrutura</p>`;
         avalia.estranhos.forEach(e=>{
-            body+=`<div style="display:flex;justify-content:space-between;padding:4px 6px;font-size:11px;border-bottom:1px solid rgba(148,163,184,.08);">
+            body+=`<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;border-bottom:1px solid rgba(249,115,22,.1);">
                 <span style="font-family:monospace;color:#cbd5e1;">${e.pn}</span>
                 <span style="color:#f97316;font-weight:700;">${e.qtd}</span></div>`;
         });
+        body+='</div>';
     }
+
+    // Botão marcar como vazio
+    const jaMarcado = flagAtual && flagAtual.status === 'pendente';
+    body += `
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(148,163,184,.12);">
+            <p style="font-size:10px;color:#64748b;margin-bottom:8px;text-transform:uppercase;font-weight:600;letter-spacing:.05em;">Ação do operador</p>
+            <div style="display:flex;gap:8px;">
+                ${jaMarcado
+                    ? `<button onclick="removerFlag('${posKey}');closeKanbanDetail();"
+                        style="flex:1;padding:9px;background:rgba(34,197,94,.15);color:#4ade80;border:1.5px solid rgba(34,197,94,.3);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+                        <span class="material-symbols-rounded" style="font-size:16px;">check_circle</span>
+                        Remover flag (regularizado)
+                      </button>`
+                    : `<button onclick="abrirMarcarVazio('${posKey}','${modelo?.nome||''}');closeKanbanDetail();"
+                        style="flex:1;padding:9px;background:rgba(239,68,68,.12);color:#f87171;border:1.5px solid rgba(239,68,68,.3);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+                        <span class="material-symbols-rounded" style="font-size:16px;">report</span>
+                        Marcar como Vazio
+                      </button>`
+                }
+                <button onclick="if(typeof showPage==='function')showPage('estoque')"
+                    style="padding:9px 14px;background:rgba(99,102,241,.12);color:#818cf8;border:1.5px solid rgba(99,102,241,.3);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;"
+                    title="Ver regularizações">
+                    <span class="material-symbols-rounded" style="font-size:16px;">inventory_2</span>
+                </button>
+            </div>
+        </div>`;
 
     document.getElementById('kd-body').innerHTML=body;
     const modal=document.getElementById('kanban-detail-modal');
@@ -440,6 +478,84 @@ function closeKanbanDetail() {
     const modal=document.getElementById('kanban-detail-modal'), cont=document.getElementById('kanban-detail-content');
     cont.style.transform='scale(.95)'; cont.style.opacity='0';
     setTimeout(()=>{ modal.classList.add('hidden'); cont.style.transform='scale(.95)'; },250);
+}
+
+// ── MODAL MARCAR COMO VAZIO ───────────────────────────────────
+
+function abrirMarcarVazio(posKey, modeloNome) {
+    const existing = document.getElementById('marcar-vazio-modal');
+    if (existing) existing.remove();
+
+    const html = `
+        <div id="marcar-vazio-modal" class="fixed inset-0 z-[100] hidden">
+            <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="fecharMarcarVazio()"></div>
+            <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+                <div id="marcar-vazio-content"
+                     class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm pointer-events-auto p-6 space-y-4"
+                     style="transform:scale(.9);opacity:0;transition:all .2s;">
+
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-xl flex items-center justify-center bg-red-100 dark:bg-red-900/30">
+                            <span class="material-symbols-rounded text-red-500" style="font-size:22px;font-variation-settings:'FILL' 1">report</span>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-900 dark:text-white">Marcar como Vazio</h3>
+                            <p class="text-xs text-slate-400">${posKey} · ${modeloNome}</p>
+                        </div>
+                    </div>
+
+                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                        Esta ação registra que a posição <strong class="text-slate-700 dark:text-slate-200">${posKey}</strong>
+                        está fisicamente vazia. O registro aparecerá na aba <strong>Estoque</strong> para regularização.
+                    </p>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1.5">Seu nome (operador)</label>
+                        <input id="mv-operador" type="text" placeholder="Digite seu nome..."
+                            class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:border-red-500 dark:text-white transition-colors"
+                            autofocus>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button onclick="fecharMarcarVazio()"
+                            class="flex-1 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-colors">
+                            Cancelar
+                        </button>
+                        <button onclick="confirmarMarcarVazio('${posKey}','${modeloNome}')"
+                            class="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-1.5">
+                            <span class="material-symbols-rounded text-sm">flag</span>
+                            Confirmar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
+    document.body.insertAdjacentHTML('beforeend', html);
+    const modal = document.getElementById('marcar-vazio-modal');
+    const cont  = document.getElementById('marcar-vazio-content');
+    modal.classList.remove('hidden');
+    requestAnimationFrame(()=>{ cont.style.transform='scale(1)'; cont.style.opacity='1'; });
+    setTimeout(()=>{ document.getElementById('mv-operador')?.focus(); }, 200);
+}
+
+function fecharMarcarVazio() {
+    const modal = document.getElementById('marcar-vazio-modal');
+    const cont  = document.getElementById('marcar-vazio-content');
+    if (!modal) return;
+    cont.style.transform='scale(.9)'; cont.style.opacity='0';
+    setTimeout(()=>{ modal.remove(); }, 200);
+}
+
+function confirmarMarcarVazio(posKey, modeloNome) {
+    const operador = document.getElementById('mv-operador')?.value?.trim() || 'Operador';
+    if (typeof marcarPosicaoVazia === 'function') {
+        marcarPosicaoVazia(posKey, modeloNome, operador);
+    }
+    fecharMarcarVazio();
+    if (typeof showToast === 'function')
+        showToast(`🚩 ${posKey} marcado como vazio por ${operador}`, 'warning');
+    if (typeof renderEstoque === 'function') renderEstoque();
 }
 
 // ── MODAL CONFIGURAÇÃO DE QUANTIDADES ────────────────────────
@@ -569,6 +685,7 @@ function setVal(id,v){const e=document.getElementById(id);if(e)e.value=v;}
 function animateSyncIcon(on){const i=document.getElementById('sync-icon');if(i)i.style.animation=on?'spin 1s linear infinite':'';}
 
 window.initKanban=initKanban; window.syncSheets=syncSheets; window.filterKanban=filterKanban;
+window.abrirMarcarVazio=abrirMarcarVazio; window.fecharMarcarVazio=fecharMarcarVazio; window.confirmarMarcarVazio=confirmarMarcarVazio;
 window.openSheetsConfig=openSheetsConfig; window.closeSheetsConfig=closeSheetsConfig; window.saveSheetsConfig=saveSheetsConfig;
 window.openKanbanDetail=openKanbanDetail; window.closeKanbanDetail=closeKanbanDetail;
 window.openQtdConfig=openQtdConfig; window.closeQtdConfig=closeQtdConfig; window.salvarQtdConfig=salvarQtdConfig;
