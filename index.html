@@ -299,6 +299,8 @@
                 if (typeof updateTime           === 'function') { updateTime(); setInterval(updateTime, 1000); }
                 if (typeof updateDashboard      === 'function') { updateDashboard(); setInterval(updateDashboard, 30000); }
                 if (typeof setupAuthenticatedUI === 'function') setupAuthenticatedUI();
+                if (typeof aplicarPermissoes       === 'function') aplicarPermissoes();
+                if (typeof wrapShowPageComPermissao === 'function') wrapShowPageComPermissao();
             }, 100);
         });
     </script>
