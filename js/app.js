@@ -1,100 +1,66 @@
 /* ============================================
    CONTROLE DE ORDENS PRO - APLICAÇÃO PRINCIPAL
+   app.js — sem DOMContentLoaded duplicado
+   (a inicialização fica no index.html)
    ============================================ */
 
-// ── Verifica se auth está disponível ─────────────────────────
+// ── Helpers ───────────────────────────────────────────────────
+
 function isAuthSystemAvailable() {
     return typeof window.auth !== 'undefined' && window.auth !== null;
 }
 
-// ── Inicialização ─────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('🚀 Inicializando aplicação...');
-
-    if (isAuthSystemAvailable()) {
-        console.log('🔐 Sistema de autenticação disponível');
-        await auth.init();
-
-        if (!auth.isAuthenticated()) {
-            console.log('⚠️ Usuário não autenticado, aguardando login...');
-            return;
-        }
-    } else {
-        console.warn('⚠️ Sistema de autenticação não carregado - continuando sem auth');
-    }
-
-    // Carregar dados do Supabase
-    if (typeof loadOrders === 'function') await loadOrders();
-
-    // Renderizar o que já está no DOM (partes não-async)
-    if (typeof initTheme        === 'function') initTheme();
-    if (typeof updateTime       === 'function') { updateTime(); setInterval(updateTime, 1000); }
-    if (typeof animateCounters  === 'function') animateCounters();
-
-    // Configurar UI do usuário
-    if (typeof setupAuthenticatedUI === 'function') setupAuthenticatedUI();
-    if (typeof setupUserHeader      === 'function') setupUserHeader();
-});
-
-// ── Após componentes HTML carregarem (chamado pelo index.html) ─
-
-window.onComponentsLoaded = async function() {
-    console.log('✅ Componentes carregados — inicializando interface...');
-
-    if (isAuthSystemAvailable()) {
-        await auth.init();
-        if (!auth.isAuthenticated()) return;
-    }
-
-    // Garante que os dados estão prontos
-    if (typeof loadOrders === 'function') await loadOrders();
-
-    // Inicializa gráficos (canvas já existe no DOM)
-    if (typeof initCharts           === 'function') initCharts();
-
-    // Renderiza ordens recentes (tabela já existe no DOM)
-    if (typeof renderRecentOrders   === 'function') renderRecentOrders();
-
-    // Estatísticas do dashboard
-    if (typeof renderDashboardStats === 'function') {
-        renderDashboardStats();
-        setInterval(renderDashboardStats, 30000);
-    }
-
-    // UI autenticada
-    if (typeof setupAuthenticatedUI === 'function') setupAuthenticatedUI();
-    if (typeof setupUserHeader      === 'function') setupUserHeader();
-
-    console.log('✅ Interface inicializada');
-};
+function getNivelNome(nivel) {
+    const niveis = { 0:'Visualizador', 1:'Stage', 2:'Separador', 3:'Admin' };
+    return niveis[nivel] || 'Usuário';
+}
 
 // ── setupAuthenticatedUI ──────────────────────────────────────
+// Chamado pelo index.html após carregar tudo.
+// A versão do auth.js já esconde o modal e atualiza o header.
+// Esta versão complementa com dados da sessão no header.
 
 function setupAuthenticatedUI() {
-    if (!isAuthSystemAvailable()) {
-        console.warn('⚠️ auth não disponível para configurar UI');
-        return;
-    }
-    console.log('🎨 Configurando UI autenticada...');
-    const user = auth.getCurrentUser();
+    // Garante modal fechado
+    const lm = document.getElementById('login-modal');
+    if (lm) { lm.classList.add('hidden'); lm.classList.remove('active'); }
+
+    if (!isAuthSystemAvailable()) return;
+
+    const user = auth.getCurrentUser?.() || auth.getUser?.();
     if (!user) return;
-    console.log('👤 Usuário atual:', user.nome);
+
+    console.log('👤 Configurando UI para:', user.nome, '· nível', user.nivel ?? user.nivel_acesso);
+
+    // Nome e email no header
+    const nome  = user.nome  || 'Usuário';
+    const email = user.email || '';
+    const nivel = user.nivel ?? user.nivel_acesso ?? 0;
+
+    document.querySelectorAll('#user-display-name,  .user-nome')
+        .forEach(el => el && (el.textContent = nome));
+    document.querySelectorAll('#user-display-email, .user-email')
+        .forEach(el => el && (el.textContent = email));
+    document.querySelectorAll('#user-nivel-label,   .user-nivel')
+        .forEach(el => el && (el.textContent = getNivelNome(nivel)));
+
+    // Avatar com iniciais
+    const iniciais = nome.split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();
+    document.querySelectorAll('#user-avatar-initials, .user-initials')
+        .forEach(el => el && (el.textContent = iniciais));
+
     console.log('✅ UI autenticada configurada');
 }
 
-// ── Nível de acesso ───────────────────────────────────────────
+// ── setupUserHeader (alias) ───────────────────────────────────
 
-function getNivelNome(nivel) {
-    const niveis = { 1:'Operador', 2:'Coordenador', 3:'Gestor', 4:'Administrador' };
-    return niveis[nivel] || 'Usuário';
-}
+function setupUserHeader() { setupAuthenticatedUI(); }
 
 // ── Refresh Dashboard ─────────────────────────────────────────
 
 function refreshDashboard() {
     const btn = document.getElementById('refresh-btn');
     if (btn) btn.classList.add('animate-spin');
-
     setTimeout(async () => {
         if (btn) btn.classList.remove('animate-spin');
         if (typeof loadOrders           === 'function') await loadOrders();
@@ -105,5 +71,12 @@ function refreshDashboard() {
     }, 800);
 }
 
-window.refreshDashboard = refreshDashboard;
-console.log('✅ app.js carregado');
+// ── Expõe globalmente ─────────────────────────────────────────
+
+window.setupAuthenticatedUI = setupAuthenticatedUI;
+window.setupUserHeader      = setupUserHeader;
+window.refreshDashboard     = refreshDashboard;
+window.getNivelNome         = getNivelNome;
+window.isAuthSystemAvailable = isAuthSystemAvailable;
+
+console.log('✅ app.js carregado (sem DOMContentLoaded duplicado)');
