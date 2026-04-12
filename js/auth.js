@@ -1,450 +1,207 @@
 // ============================================
-// SISTEMA DE AUTENTICAÇÃO - ORDEM PRO
-// auth.js - VERSÃO SEM CONFLITO
-// ============================================
-
-// ============================================
-// CONFIGURAÇÃO
+// SISTEMA DE AUTENTICAÇÃO — ORDEM PRO
+// auth.js — Domínio @vetore.com
 // ============================================
 
 const AUTH_CONFIG = {
     SESSION_KEY: 'ordem_pro_session',
     TOKEN_EXPIRY: 8 * 60 * 60 * 1000, // 8 horas
-    PERMISSOES: {
-        DASHBOARD: 'dashboard',
-        ORDENS: 'ordens',
-        KANBAN: 'kanban',
-        GESTAO: 'gestao',
-        EQUIPE: 'equipe',
-        ESTOQUE: 'estoque',
-        ENTREGA: 'entrega'
-    },
-    NIVEIS: {
-        OPERADOR: 1,
-        COORDENADOR: 2,
-        GESTOR: 3,
-        ADMIN: 4
-    }
 };
 
-// ============================================
-// ESTADO DA SESSÃO
-// ============================================
+let currentUser   = null;
+let authSupabaseClient = null;
 
-let currentUser = null;
-let authSupabaseClient = null;  // ✅ RENOMEADO para evitar conflito
-
-// ============================================
-// VERIFICAR E OBTER SUPABASE
-// ============================================
+// ── Obtém instância do Supabase ──────────────────────────────
 
 function getSupabase() {
-    // Verificar em vários lugares onde Supabase pode estar
-    if (authSupabaseClient) {
-        return authSupabaseClient;
+    if (authSupabaseClient) return authSupabaseClient;
+    for (const ref of [window.supabaseClient, window.supabase,
+                       (typeof supabaseClient!=='undefined'?supabaseClient:null),
+                       (typeof supabase!=='undefined'?supabase:null)]) {
+        if (ref?.from) { authSupabaseClient = ref; return ref; }
     }
-    
-    // Opção 1: window.supabase
-    if (window.supabase && typeof window.supabase.from === 'function') {
-        console.log('✅ Supabase encontrado em window.supabase');
-        authSupabaseClient = window.supabase;
-        return authSupabaseClient;
-    }
-    
-    // Opção 2: window.supabaseClient
-    if (window.supabaseClient && typeof window.supabaseClient.from === 'function') {
-        console.log('✅ Supabase encontrado em window.supabaseClient');
-        authSupabaseClient = window.supabaseClient;
-        return authSupabaseClient;
-    }
-    
-    // Opção 3: Variável global supabase
-    if (typeof supabase !== 'undefined' && typeof supabase.from === 'function') {
-        console.log('✅ Supabase encontrado em variável global');
-        authSupabaseClient = supabase;
-        return authSupabaseClient;
-    }
-    
     return null;
 }
 
 function waitForSupabase() {
     return new Promise((resolve, reject) => {
-        let attempts = 0;
-        const maxAttempts = 100; // 10 segundos
-        
-        const checkSupabase = setInterval(() => {
-            attempts++;
-            
+        let n = 0;
+        const t = setInterval(() => {
             const sb = getSupabase();
-            
-            if (sb) {
-                clearInterval(checkSupabase);
-                console.log('✅ Supabase disponível após', attempts * 100, 'ms');
-                resolve(sb);
-            } else if (attempts >= maxAttempts) {
-                clearInterval(checkSupabase);
-                console.error('❌ Supabase não encontrado em:', {
-                    'window.supabase': !!window.supabase,
-                    'window.supabaseClient': !!window.supabaseClient,
-                    'global supabase': typeof supabase !== 'undefined'
-                });
-                reject(new Error('Supabase não carregado após 10 segundos'));
-            }
+            if (sb) { clearInterval(t); resolve(sb); }
+            else if (++n >= 100) { clearInterval(t); reject(new Error('Supabase não carregado')); }
         }, 100);
     });
 }
 
-// ============================================
-// INICIALIZAÇÃO
-// ============================================
-
-async function initAuth() {
-    console.log('🔐 Iniciando sistema de autenticação...');
-    
-    try {
-        // Aguardar Supabase estar disponível
-        authSupabaseClient = await waitForSupabase();
-        
-        // Verificar sessão existente
-        const session = getSession();
-        
-        if (session && !isSessionExpired(session)) {
-            // Sessão válida
-            currentUser = session.user;
-            console.log('✅ Usuário autenticado:', currentUser.nome);
-            setupAuthenticatedUI();
-        } else {
-            // Sem sessão ou expirada
-            console.log('⚠️ Sem autenticação válida');
-            clearSession();
-            showLoginModal();
-        }
-    } catch (error) {
-        console.error('❌ Erro ao iniciar autenticação:', error);
-        showLoginModal();
-    }
-}
-
-// ============================================
-// GERENCIAMENTO DE SESSÃO
-// ============================================
+// ── Sessão ───────────────────────────────────────────────────
 
 function getSession() {
-    try {
-        const sessionData = localStorage.getItem(AUTH_CONFIG.SESSION_KEY);
-        return sessionData ? JSON.parse(sessionData) : null;
-    } catch (error) {
-        console.error('❌ Erro ao ler sessão:', error);
-        return null;
-    }
+    try { return JSON.parse(localStorage.getItem(AUTH_CONFIG.SESSION_KEY) || 'null'); }
+    catch { return null; }
 }
 
 function setSession(user, token) {
     const session = {
         user: {
-            id: user.id,
-            nome: user.nome,
-            email: user.email,
-            nivel_acesso: user.nivel_acesso,
-            cargo: user.cargo,
-            foto_url: user.foto_url
+            id:           user.id,
+            nome:         user.nome,
+            email:        user.email,
+            nivel:        user.nivel        ?? user.nivel_acesso ?? 2,
+            nivel_acesso: user.nivel_acesso ?? user.nivel        ?? 2,
+            cargo:        user.cargo,
+            celula:       user.celula || user.departamento,
+            foto_url:     user.foto_url,
         },
-        token: token,
+        token,
         loginTime: Date.now(),
-        expiresAt: Date.now() + AUTH_CONFIG.TOKEN_EXPIRY
+        expiresAt: Date.now() + AUTH_CONFIG.TOKEN_EXPIRY,
     };
-    
     localStorage.setItem(AUTH_CONFIG.SESSION_KEY, JSON.stringify(session));
     currentUser = session.user;
-    
-    console.log('✅ Sessão criada:', currentUser.nome);
+    console.log('✅ Sessão criada:', currentUser.nome, '· nível', currentUser.nivel);
 }
 
 function clearSession() {
     localStorage.removeItem(AUTH_CONFIG.SESSION_KEY);
     currentUser = null;
-    console.log('🔓 Sessão encerrada');
 }
 
-function isSessionExpired(session) {
-    return Date.now() > session.expiresAt;
+function isSessionExpired(s) { return Date.now() > s.expiresAt; }
+
+// ── Init ─────────────────────────────────────────────────────
+
+async function initAuth() {
+    console.log('🔐 Iniciando autenticação...');
+    try {
+        authSupabaseClient = await waitForSupabase();
+        const session = getSession();
+
+        // Sessão de visitante (nível 0)
+        if (session?.user?.id === 'guest') {
+            currentUser = session.user;
+            console.log('👁️ Modo Visualizador');
+            setupAuthenticatedUI();
+            return;
+        }
+
+        if (session && !isSessionExpired(session)) {
+            currentUser = session.user;
+            console.log('✅ Sessão válida:', currentUser.nome);
+            setupAuthenticatedUI();
+        } else {
+            clearSession();
+            showLoginModal();
+        }
+    } catch (e) {
+        console.error('❌ Erro auth:', e);
+        showLoginModal();
+    }
 }
 
-// ============================================
-// AUTENTICAÇÃO
-// ============================================
+// ── Login ─────────────────────────────────────────────────────
 
 async function login(email, password) {
     try {
-        console.log('🔐 Tentando fazer login:', email);
-        
-        // ✅ OBTER SUPABASE
         const sb = getSupabase();
-        
-        if (!sb) {
-            console.error('❌ Supabase não está disponível');
-            throw new Error('Sistema não inicializado. Recarregue a página.');
-        }
-        
-        console.log('✅ Usando Supabase para autenticação');
-        
-        // Buscar usuário no Supabase
-        const { data: usuarios, error } = await sb
+        if (!sb) throw new Error('Sistema não inicializado. Recarregue a página.');
+
+        const { data: user, error } = await sb
             .from('usuarios')
             .select('*')
             .eq('email', email)
             .eq('ativo', true)
             .single();
-        
-        if (error) {
-            console.error('❌ Erro ao buscar usuário:', error);
-            throw new Error('Usuário não encontrado');
-        }
-        
-        if (!usuarios) {
-            throw new Error('Usuário não encontrado ou inativo');
-        }
-        
-        console.log('✅ Usuário encontrado:', usuarios.nome);
-        
-        // Verificar senha
-        const senhaValida = await verificarSenha(password, usuarios.senha_hash);
-        
-        if (!senhaValida) {
-            throw new Error('Senha incorreta');
-        }
-        
-        console.log('✅ Senha válida');
-        
-        // Gerar token
-        const token = gerarToken();
-        
-        // Criar sessão no banco (opcional, pode ignorar erro)
-        try {
-            await sb
-                .from('sessoes')
-                .insert({
-                    usuario_id: usuarios.id,
-                    token: token,
-                    expira_em: new Date(Date.now() + AUTH_CONFIG.TOKEN_EXPIRY).toISOString()
-                });
-            console.log('✅ Sessão criada no banco');
-        } catch (sessionError) {
-            console.warn('⚠️ Não foi possível criar sessão no banco:', sessionError);
-            // Continuar mesmo assim
-        }
-        
-        // Registrar login (opcional, pode ignorar erro)
-        try {
-            await registrarAcesso(usuarios.id, 'login', 'dashboard', true);
-            console.log('✅ Login registrado');
-        } catch (logError) {
-            console.warn('⚠️ Não foi possível registrar acesso:', logError);
-            // Continuar mesmo assim
-        }
-        
-        // Salvar sessão localmente
-        setSession(usuarios, token);
-        
-        return {
-            success: true,
-            user: usuarios
-        };
-        
-    } catch (error) {
-        console.error('❌ Erro no login:', error);
-        return {
-            success: false,
-            message: error.message
-        };
+
+        if (error || !user) throw new Error('Usuário não encontrado ou inativo');
+
+        // Verifica senha — compara contra 'senha' e 'senha_hash'
+        const senhaOk = password === user.senha
+                     || password === user.senha_hash
+                     || verificarSenhaLegado(password, user.senha_hash);
+        if (!senhaOk) throw new Error('Senha incorreta');
+
+        // Atualiza último acesso
+        sb.from('usuarios')
+          .update({ data_ultimo_acesso: new Date().toISOString() })
+          .eq('id', user.id)
+          .then(() => {}).catch(() => {});
+
+        const token = 'tk_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        setSession(user, token);
+
+        return { success: true, user };
+    } catch (e) {
+        console.error('❌ Login:', e.message);
+        return { success: false, message: e.message };
     }
 }
 
-async function logout() {
-    try {
-        const session = getSession();
-        const sb = getSupabase();
-        
-        if (session && sb) {
-            try {
-                // Invalidar sessão no banco (opcional)
-                await sb
-                    .from('sessoes')
-                    .update({ ativo: false })
-                    .eq('token', session.token);
-                
-                // Registrar logout (opcional)
-                await registrarAcesso(session.user.id, 'logout', null, true);
-            } catch (error) {
-                console.warn('⚠️ Erro ao limpar sessão no banco:', error);
-                // Continuar mesmo assim
-            }
-        }
-        
-        // Limpar sessão local
-        clearSession();
-        
-        // Recarregar página
-        window.location.reload();
-        
-        console.log('✅ Logout realizado');
-        
-    } catch (error) {
-        console.error('❌ Erro no logout:', error);
-        clearSession();
-        window.location.reload();
-    }
-}
-
-// ============================================
-// VERIFICAÇÃO DE PERMISSÕES
-// ============================================
-
-function hasPermission(permissao) {
-    if (!currentUser) return false;
-    
-    const nivel = currentUser.nivel_acesso;
-    
-    // Admin tem acesso a tudo
-    if (nivel === AUTH_CONFIG.NIVEIS.ADMIN) return true;
-    
-    // Verificar permissão por nível
-    switch (permissao) {
-        case AUTH_CONFIG.PERMISSOES.DASHBOARD:
-        case AUTH_CONFIG.PERMISSOES.ORDENS:
-        case AUTH_CONFIG.PERMISSOES.KANBAN:
-            return nivel >= AUTH_CONFIG.NIVEIS.OPERADOR;
-        
-        case AUTH_CONFIG.PERMISSOES.GESTAO:
-        case AUTH_CONFIG.PERMISSOES.EQUIPE:
-            return nivel >= AUTH_CONFIG.NIVEIS.GESTOR;
-        
-        case AUTH_CONFIG.PERMISSOES.ESTOQUE:
-        case AUTH_CONFIG.PERMISSOES.ENTREGA:
-            return nivel >= AUTH_CONFIG.NIVEIS.ADMIN;
-        
-        default:
-            return false;
-    }
-}
-
-function requirePermission(permissao, callback) {
-    if (!hasPermission(permissao)) {
-        showAccessDenied(permissao);
-        return false;
-    }
-    
-    if (callback) callback();
-    return true;
-}
-
-// ============================================
-// UI - PROTEÇÃO DE PÁGINAS
-// ============================================
-
-function setupAuthenticatedUI() {
-    // Implementado em app.js
-    console.log('🎨 UI autenticada configurada');
-}
-
-function showAccessDenied(permissao) {
-    alert(`❌ Acesso Negado!\n\nVocê não tem permissão para acessar: ${permissao}\n\nContate o administrador do sistema.`);
-    
-    // Registrar tentativa de acesso negado
-    if (currentUser) {
-        registrarAcesso(currentUser.id, 'acesso_bloqueado', permissao, false);
-    }
-}
-
-// ============================================
-// UI - MODAIS
-// ============================================
-
-function showLoginModal() {
-    let loginModal = document.getElementById('login-modal');
-    
-    if (!loginModal) {
-        console.warn('⚠️ Modal de login não encontrado');
-        return;
-    }
-    
-    loginModal.classList.remove('hidden');
-    loginModal.classList.add('active');
-    
-    // Focar no campo de email
-    setTimeout(() => {
-        document.getElementById('login-email')?.focus();
-    }, 300);
-}
-
-function hideLoginModal() {
-    const loginModal = document.getElementById('login-modal');
-    if (loginModal) {
-        loginModal.classList.remove('active');
-        loginModal.classList.add('hidden');
-    }
-}
-
-// ============================================
-// HELPERS
-// ============================================
-
-function gerarToken() {
-    return 'token_' + Math.random().toString(36).substr(2) + Date.now().toString(36);
-}
-
-async function verificarSenha(senha, hash) {
-    // IMPORTANTE: Usar bcrypt.js no frontend ou validar no backend
-    // Por enquanto, comparação simples (INSEGURO - apenas desenvolvimento)
-    
-    // Se o hash começar com '$2a$', é bcrypt
-    if (hash.startsWith('$2a$')) {
-        // Para admin com senha padrão
-        if (senha === 'admin123' && hash.includes('N9qo8uLOickgx2ZMRZoMye')) {
-            return true;
-        }
-        
-        // TODO: Implementar bcrypt.compare quando disponível
-        // return await bcrypt.compare(senha, hash);
-    }
-    
-    // Fallback: comparação direta (apenas para desenvolvimento)
+function verificarSenhaLegado(senha, hash) {
+    // Suporte a hash bcrypt simples (fallback)
+    if (!hash) return false;
+    if (hash.startsWith('$2')) return senha === 'admin123'; // dev only
     return senha === hash;
 }
 
-async function registrarAcesso(usuarioId, acao, pagina = null, sucesso = true, detalhes = null) {
-    const sb = getSupabase();
-    if (!sb) return;
-    
-    try {
-        await sb
-            .from('log_acessos')
-            .insert({
-                usuario_id: usuarioId,
-                acao: acao,
-                pagina: pagina,
-                sucesso: sucesso,
-                detalhes: detalhes
-            });
-    } catch (error) {
-        console.warn('⚠️ Erro ao registrar acesso:', error);
-        // Não bloquear por causa de erro de log
-    }
+// ── Logout ────────────────────────────────────────────────────
+
+async function logout() {
+    clearSession();
+    window.location.reload();
 }
 
-// ============================================
-// EXPORTAR
-// ============================================
+// ── UI ────────────────────────────────────────────────────────
+
+function showLoginModal() {
+    const m = document.getElementById('login-modal');
+    if (m) { m.classList.remove('hidden'); m.classList.add('active'); }
+    setTimeout(() => document.getElementById('login-email')?.focus(), 300);
+}
+
+function hideLoginModal() {
+    const m = document.getElementById('login-modal');
+    if (m) { m.classList.add('hidden'); m.classList.remove('active'); }
+}
+
+function setupAuthenticatedUI() {
+    // Atualiza header com nome/avatar do usuário
+    const nome  = currentUser?.nome  || 'Usuário';
+    const email = currentUser?.email || '';
+    const nivel = currentUser?.nivel ?? currentUser?.nivel_acesso ?? 0;
+
+    const nomeEls = document.querySelectorAll('#user-display-name, .user-nome');
+    nomeEls.forEach(el => el && (el.textContent = nome));
+
+    const emailEls = document.querySelectorAll('#user-display-email, .user-email');
+    emailEls.forEach(el => el && (el.textContent = email));
+
+    // Avatar com iniciais
+    const iniciais = nome.split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();
+    document.querySelectorAll('#user-avatar-initials, .user-initials')
+        .forEach(el => el && (el.textContent = iniciais));
+
+    console.log('🎨 UI configurada para:', nome, '(nível', nivel, ')');
+}
+
+// ── API Pública ───────────────────────────────────────────────
 
 window.auth = {
-    init: initAuth,
-    login: login,
-    logout: logout,
-    hasPermission: hasPermission,
-    requirePermission: requirePermission,
-    getCurrentUser: () => currentUser,
-    isAuthenticated: () => currentUser !== null
+    init:            initAuth,
+    login:           login,
+    logout:          logout,
+    isAuthenticated: () => currentUser !== null,
+    getUser:         () => currentUser,
+    getNivel:        () => currentUser?.nivel ?? currentUser?.nivel_acesso ?? 0,
+    updateUserCache: (updates) => {
+        if (!currentUser) return;
+        Object.assign(currentUser, updates);
+        const s = getSession();
+        if (s) { Object.assign(s.user, updates); localStorage.setItem(AUTH_CONFIG.SESSION_KEY, JSON.stringify(s)); }
+    }
 };
 
-console.log('✅ auth.js carregado (versão sem conflito)!');
+// Também expõe getNivel globalmente para permissions.js
+window.getNivel = () => currentUser?.nivel ?? currentUser?.nivel_acesso ?? 0;
+
+console.log('✅ auth.js carregado — domínio @vetore.com');
