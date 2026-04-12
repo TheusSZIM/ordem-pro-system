@@ -58,7 +58,7 @@ function initCharts() {
 }
 
 function buildWeekChart() {
-    const ctx = document.getElementById('weekChart');
+    const ctx = document.getElementById('performanceChart');
     if (!ctx) return;
 
     const days = chartMode === 'semana' ? 7 : 30;
@@ -168,7 +168,7 @@ function buildWeekChart() {
 // ── Gráfico de pizza (distribuição) ──────────────────────────
 
 function buildPieChart() {
-    const ctx = document.getElementById('pieChart');
+    const ctx = document.getElementById('distributionChart');
     if (!ctx) return;
 
     const orders = window.state?.orders || [];
