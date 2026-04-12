@@ -249,7 +249,6 @@ async function initKanban() {
     renderShelfSkeleton();
     setSyncStatus('Carregando…', 'loading');
     await carregarConfigDoSupabase();
-    setVal('sheets-url', KS.sheetsUrl);
     setVal('cfg-sheets-url', KS.sheetsUrl);
     if (typeof aplicarPermissoes === 'function') aplicarPermissoes();
     if (KS.sheetsUrl) await syncSheets();
@@ -259,7 +258,7 @@ async function initKanban() {
 // ── SYNC ─────────────────────────────────────────────────────
 
 async function syncSheets() {
-    const url = (getVal('cfg-sheets-url')||getVal('sheets-url')||'').trim() || KS.sheetsUrl;
+    const url = (getVal('cfg-sheets-url')||'').trim() || KS.sheetsUrl;
     if (!url) { openSheetsConfig(); return; }
     setSyncStatus('Sincronizando…', 'loading');
     animateSyncIcon(true);
@@ -270,7 +269,6 @@ async function syncSheets() {
         const now = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
         setSyncStatus('✓ Sincronizado', 'ok');
         setText('last-sync', `às ${now}`);
-        localStorage.setItem('ks_url_estoque', url);
     } catch(e) {
         setSyncStatus(`Erro: ${e.message}`, 'error');
     }
