@@ -249,7 +249,6 @@ async function initKanban() {
     renderShelfSkeleton();
     setSyncStatus('Carregando…', 'loading');
     await carregarConfigDoSupabase();
-    setVal('cfg-sheets-url', KS.sheetsUrl);
     if (typeof aplicarPermissoes === 'function') aplicarPermissoes();
     if (KS.sheetsUrl) await syncSheets();
     else setSyncStatus('Configure o Google Sheets (Admin)', 'neutral');
@@ -607,7 +606,7 @@ window.openSheetsConfig=openSheetsConfig; window.closeSheetsConfig=closeSheetsCo
 window.openKanbanDetail=openKanbanDetail; window.closeKanbanDetail=closeKanbanDetail;
 window.openQtdConfig=openQtdConfig; window.closeQtdConfig=closeQtdConfig; window.salvarQtdConfig=salvarQtdConfig;
 window.openConsumoConfig=openConsumoConfig; window.fecharConsumoConfig=fecharConsumoConfig; window.salvarConsumoConfig=salvarConsumoConfig;
-window.abrirMarcarVazio=abrirMarcarVazio; window.fecharMarcarVazio=fecharMarcarVazio; window.confirmarMarcarVazio=confirmarMarcarVazio;
+// abrirMarcarVazio, fecharMarcarVazio, confirmarMarcarVazio → definidas em estoque.js
 
 document.addEventListener('pageChanged',e=>{if(e.detail==='kanban')initKanban();});
 console.log('✅ kanban-sheets.js — com gauge de horas');
