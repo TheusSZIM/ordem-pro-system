@@ -252,7 +252,14 @@ async function handleCreateOrder(event) {
             observacoes: observacoes || null,
             numero_volumes: 1,
             created_at: new Date().toISOString()
-        };
+            // Nome do usuário que está criando
+    const createdBy = (() => {
+        try {
+            const s = JSON.parse(localStorage.getItem('ordem_pro_session')||'{}');
+            return s?.user?.nome || s?.user?.email || 'Sistema';
+        } catch(_) { return 'Sistema'; }
+    })();
+        
         
         console.log('📦 Ordem a ser criada:', ordemData);
         
