@@ -1,4 +1,11 @@
-<!-- SIDEBAR RETRÁTIL -->
+<!-- SIDEBAR RETRÁTIL — versão definitiva -->
+<!--
+    O CSS de layout fica APENAS no index.html (já está lá):
+        @media (min-width:1024px) { #main-content { margin-left:280px } }
+        #main-content.sb-mini    { margin-left:76px }
+        @media (max-width:1023px) { #main-content { margin-left:0 !important } }
+    Este arquivo só cuida do visual da sidebar + toggle.
+-->
 <style>
 #sidebar, #sidebar * { box-sizing: border-box; }
 
@@ -15,7 +22,19 @@
 }
 #sidebar.sb-mini { width: 76px !important; }
 
-/* ── Botão toggle ── */
+/* Mobile: sidebar vira overlay */
+@media (max-width: 1023px) {
+    #sidebar {
+        width: 280px !important;
+        transform: translateX(-100%) !important;
+        transition: transform 380ms cubic-bezier(.65,0,.35,1) !important;
+    }
+    #sidebar.sb-mini { width: 280px !important; transform: translateX(-100%) !important; }
+    #sidebar.mobile-open { transform: translateX(0) !important; }
+    #sb-tab { display: none !important; }
+}
+
+/* Botão recolher — fixo na borda direita da sidebar */
 #sb-tab {
     position: fixed; top: 50%; left: 280px;
     transform: translateY(-50%);
@@ -147,39 +166,22 @@
     const W_OPEN = 280, W_MINI = 76;
     let mini = localStorage.getItem(LS) === 'true';
 
-    /* Injeta CSS de layout baseado em classes — mais confiável que inline */
-    const styleTag = document.createElement('style');
-    styleTag.id = 'sb-css';
-    document.head.appendChild(styleTag);
-    styleTag.textContent = `
-        /* Desktop: margem controlada por classe */
-        @media (min-width: 1024px) {
-            #main-content           { margin-left: ${W_OPEN}px; transition: margin-left 380ms cubic-bezier(.65,0,.35,1); }
-            #main-content.sb-mini   { margin-left: ${W_MINI}px; }
-        }
-        /* Mobile: sem margem, sidebar é overlay */
-        @media (max-width: 1023px) {
-            #main-content, #main-content.sb-mini { margin-left: 0 !important; }
-            #sidebar { transform: translateX(-100%) !important; transition: transform 380ms cubic-bezier(.65,0,.35,1) !important; width: 280px !important; }
-            #sidebar.mobile-open { transform: translateX(0) !important; }
-            #sb-tab { display: none !important; }
-        }
-    `;
-
-    function applyAll(animate) {
+    function apply(animate) {
         const sb  = document.getElementById('sidebar');
         const tab = document.getElementById('sb-tab');
         const mc  = document.getElementById('main-content');
         if (!sb) return;
 
-        /* Desativa transição se for carga inicial */
         if (!animate) {
-            [sb, tab, mc].forEach(el => el && (el.style.transition = 'none'));
+            sb.style.transition = 'none';
+            if (tab) tab.style.transition = 'none';
         }
 
+        // Aplica classe em sidebar e main-content
         sb.classList.toggle('sb-mini', mini);
         mc?.classList.toggle('sb-mini', mini);
 
+        // Move o botão tab
         if (tab) {
             tab.style.left = (mini ? W_MINI : W_OPEN) + 'px';
             tab.classList.toggle('mini-tab', mini);
@@ -187,7 +189,8 @@
 
         if (!animate) {
             requestAnimationFrame(() => {
-                [sb, tab, mc].forEach(el => el && (el.style.transition = ''));
+                sb.style.transition = '';
+                if (tab) tab.style.transition = '';
             });
         }
     }
@@ -199,7 +202,7 @@
         }
         mini = !mini;
         localStorage.setItem(LS, mini);
-        applyAll(true);
+        apply(true);
     };
 
     const _orig = window.showPage;
@@ -211,6 +214,7 @@
             document.getElementById('sidebar')?.classList.remove('mobile-open');
     };
 
-    applyAll(false);
+    // Aplica sem animação ao carregar
+    apply(false);
 })();
 </script>
