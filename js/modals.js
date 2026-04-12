@@ -28,10 +28,13 @@ function showPage(pageName) {
         if (pageName === 'entrega' && typeof renderOrdensEntrega === 'function') renderOrdensEntrega();
     }
     
-    if (window.innerWidth < 1024) {
+   if (window.innerWidth < 1024) {
         const sidebar = document.getElementById('sidebar');
         if (sidebar) sidebar.classList.add('-translate-x-full');
     }
+ 
+    // ← ADICIONAR ESTA LINHA:
+    document.dispatchEvent(new CustomEvent('pageChanged', { detail: pageName }));
 }
 
 // Toggle Sidebar
