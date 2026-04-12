@@ -1,4 +1,4 @@
-<!-- SIDEBAR RETRÁTIL — apenas HTML + CSS (JS está no index.html) -->
+<!-- SIDEBAR RETRÁTIL — HTML + CSS responsivo ao dark/light mode -->
 <style>
 #sidebar, #sidebar * { box-sizing: border-box; }
 
@@ -6,13 +6,24 @@
     position: fixed !important;
     left: 0 !important; top: 64px !important; bottom: 0 !important;
     width: 280px !important;
-    background: #0c1628 !important;
-    border-right: 1px solid rgba(148,163,184,.08) !important;
+    border-right: 1px solid rgba(148,163,184,.12) !important;
     display: flex !important; flex-direction: column !important;
     overflow: hidden !important; z-index: 40 !important;
     transition: width 380ms cubic-bezier(.65,0,.35,1) !important;
     will-change: width;
+
+    /* Light mode */
+    background: #ffffff !important;
+    border-right-color: rgba(148,163,184,.18) !important;
 }
+
+/* Dark mode */
+:root.dark #sidebar,
+html.dark #sidebar {
+    background: #0c1628 !important;
+    border-right-color: rgba(148,163,184,.08) !important;
+}
+
 #sidebar.sb-mini { width: 76px !important; }
 
 @media (max-width: 1023px) {
@@ -21,11 +32,12 @@
         transform: translateX(-100%) !important;
         transition: transform 380ms cubic-bezier(.65,0,.35,1) !important;
     }
-    #sidebar.sb-mini { width: 280px !important; transform: translateX(-100%) !important; }
+    #sidebar.sb-mini  { width: 280px !important; transform: translateX(-100%) !important; }
     #sidebar.mobile-open { transform: translateX(0) !important; }
     #sb-tab { display: none !important; }
 }
 
+/* Botão tab */
 #sb-tab {
     position: fixed; top: 50%; left: 280px;
     transform: translateY(-50%);
@@ -35,52 +47,81 @@
 }
 #sb-pill {
     width: 20px; height: 52px;
-    background: #151f35;
-    border: 1.5px solid rgba(99,102,241,.3); border-left: none;
+    border-left: none;
     border-radius: 0 14px 14px 0;
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 4px 0 14px rgba(0,0,0,.5);
     transition: background 200ms, border-color 200ms, width 200ms;
+
+    /* Light */
+    background: #f1f5f9;
+    border: 1.5px solid rgba(100,116,139,.25);
+    box-shadow: 4px 0 14px rgba(0,0,0,.1);
 }
-#sb-tab:hover #sb-pill { background: rgba(99,102,241,.2); border-color: rgba(99,102,241,.65); width: 26px; }
+html.dark #sb-pill {
+    background: #151f35;
+    border-color: rgba(99,102,241,.3);
+    box-shadow: 4px 0 14px rgba(0,0,0,.5);
+}
+#sb-tab:hover #sb-pill { width: 26px; }
+html.dark #sb-tab:hover #sb-pill { background: rgba(99,102,241,.2); border-color: rgba(99,102,241,.65); }
+:not(.dark) #sb-tab:hover #sb-pill { background: #e2e8f0; border-color: rgba(100,116,139,.5); }
+
 #sb-pill .material-symbols-rounded {
-    font-size: 16px; color: #818cf8;
+    font-size: 16px;
     font-variation-settings: 'wght' 700;
     transition: transform 380ms cubic-bezier(.65,0,.35,1), color 200ms;
     flex-shrink: 0;
+    color: #64748b;
 }
-#sb-tab:hover #sb-pill .material-symbols-rounded { color: #c7d2fe; }
+html.dark #sb-pill .material-symbols-rounded { color: #818cf8; }
 #sb-tab.mini-tab #sb-pill .material-symbols-rounded { transform: rotate(180deg); }
 
+/* Nav */
 #sidebar nav { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 16px 12px 24px; scrollbar-width: none; }
 #sidebar nav::-webkit-scrollbar { display: none; }
 
+/* Labels de seção */
 .sb-label {
     font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
-    color: #3d5270; padding: 20px 10px 6px;
+    padding: 20px 10px 6px;
     white-space: nowrap; overflow: hidden; opacity: 1; max-height: 52px;
     transition: opacity 280ms, max-height 380ms cubic-bezier(.65,0,.35,1),
                 padding-top 380ms, padding-bottom 380ms;
+    color: #94a3b8;
 }
+html.dark .sb-label { color: #3d5270; }
 #sidebar.sb-mini .sb-label { opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; }
 
+/* Nav items */
 .nav-item {
     display: flex; align-items: center; gap: 14px; padding: 12px 14px;
-    border-radius: 14px; cursor: pointer; color: #64748b; white-space: nowrap;
+    border-radius: 14px; cursor: pointer; white-space: nowrap;
     transition: background 180ms, color 180ms,
                 padding 380ms cubic-bezier(.65,0,.35,1), gap 380ms cubic-bezier(.65,0,.35,1);
     position: relative; margin-bottom: 4px;
     border: none; background: transparent; width: 100%; text-align: left; font-family: inherit;
+    color: #64748b;
 }
-.nav-item:hover { background: rgba(99,102,241,.1); color: #a5b4fc; }
+html.dark .nav-item { color: #64748b; }
+
+.nav-item:hover { background: rgba(99,102,241,.08); color: #6366f1; }
+html.dark .nav-item:hover { background: rgba(99,102,241,.1); color: #a5b4fc; }
+
 .nav-item.active-nav {
-    background: linear-gradient(135deg,rgba(99,102,241,.22),rgba(99,102,241,.06)); color: #818cf8;
+    color: #4f46e5;
+    background: linear-gradient(135deg, rgba(99,102,241,.12), rgba(99,102,241,.04));
+}
+html.dark .nav-item.active-nav {
+    color: #818cf8;
+    background: linear-gradient(135deg, rgba(99,102,241,.22), rgba(99,102,241,.06));
 }
 .nav-item.active-nav::before {
     content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
-    width: 3px; height: 26px; background: linear-gradient(180deg,#a5b4fc,#6366f1);
+    width: 3px; height: 26px;
+    background: linear-gradient(180deg, #818cf8, #4f46e5);
     border-radius: 0 4px 4px 0;
 }
+
 .nav-item .material-symbols-rounded {
     font-size: 23px; flex-shrink: 0;
     font-variation-settings: 'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24;
@@ -95,26 +136,44 @@
     transition: opacity 260ms, transform 380ms cubic-bezier(.65,0,.35,1);
 }
 #sidebar.sb-mini .nav-txt { opacity: 0; transform: translateX(-14px); pointer-events: none; }
+
 .nav-name { font-size: 14.5px; font-weight: 500; overflow: hidden; white-space: nowrap; }
 .nav-item.active-nav .nav-name { font-weight: 600; }
+
 .nav-badge {
     font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 20px;
-    background: rgba(99,102,241,.25); color: #818cf8; flex-shrink: 0; transition: opacity 260ms;
+    background: rgba(99,102,241,.15); color: #6366f1; flex-shrink: 0; transition: opacity 260ms;
 }
+html.dark .nav-badge { background: rgba(99,102,241,.25); color: #818cf8; }
 #sidebar.sb-mini .nav-badge { opacity: 0; }
+
+/* Mini mode */
 #sidebar.sb-mini .nav-item { justify-content: center; padding: 12px 0; gap: 0; }
 #sidebar.sb-mini .nav-item.active-nav::before { height: 20px; }
+
+/* Tooltip mini */
 #sidebar.sb-mini .nav-item::after {
     content: attr(data-label); position: absolute; left: 82px; top: 50%;
     transform: translateY(-50%) translateX(-6px);
-    background: #1e293b; color: #e2e8f0; font-size: 13px; font-weight: 600;
-    padding: 8px 14px; border-radius: 10px; border: 1px solid rgba(148,163,184,.12);
-    box-shadow: 0 6px 22px rgba(0,0,0,.55); opacity: 0; pointer-events: none;
+    font-size: 13px; font-weight: 600;
+    padding: 8px 14px; border-radius: 10px;
+    opacity: 0; pointer-events: none;
     transition: opacity 160ms, transform 160ms; z-index: 100; white-space: nowrap;
+
+    /* Light */
+    background: #f8fafc; color: #1e293b;
+    border: 1px solid rgba(148,163,184,.2);
+    box-shadow: 0 6px 22px rgba(0,0,0,.12);
+}
+html.dark #sidebar.sb-mini .nav-item::after {
+    background: #1e293b; color: #e2e8f0;
+    border-color: rgba(148,163,184,.12);
+    box-shadow: 0 6px 22px rgba(0,0,0,.55);
 }
 #sidebar.sb-mini .nav-item:hover::after { opacity: 1; transform: translateY(-50%) translateX(0); }
 </style>
 
+<!-- Botão recolher (fora da sidebar) -->
 <div id="sb-tab" onclick="toggleSidebar()" title="Recolher / Expandir">
     <div id="sb-pill"><span class="material-symbols-rounded">chevron_left</span></div>
 </div>
