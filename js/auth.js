@@ -165,6 +165,10 @@ function hideLoginModal() {
 }
 
 function setupAuthenticatedUI() {
+    // Garante que o modal de login está fechado
+    const m = document.getElementById('login-modal');
+    if (m) { m.classList.add('hidden'); m.classList.remove('active'); }
+
     // Atualiza header com nome/avatar do usuário
     const nome  = currentUser?.nome  || 'Usuário';
     const email = currentUser?.email || '';
