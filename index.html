@@ -50,13 +50,13 @@
                         'float': 'float 6s ease-in-out infinite',
                     },
                     keyframes: {
-                        fadeIn:      { '0%': {opacity:'0'}, '100%': {opacity:'1'} },
-                        slideUp:     { '0%': {opacity:'0',transform:'translateY(30px)'}, '100%': {opacity:'1',transform:'translateY(0)'} },
-                        slideDown:   { '0%': {opacity:'0',transform:'translateY(-20px)'}, '100%': {opacity:'1',transform:'translateY(0)'} },
-                        scaleIn:     { '0%': {opacity:'0',transform:'scale(0.9)'}, '100%': {opacity:'1',transform:'scale(1)'} },
-                        slideInRight:{ '0%': {opacity:'0',transform:'translateX(20px)'}, '100%': {opacity:'1',transform:'translateX(0)'} },
-                        bounceSoft:  { '0%,100%': {transform:'translateY(-5%)'}, '50%': {transform:'translateY(0)'} },
-                        float:       { '0%,100%': {transform:'translateY(0px)'}, '50%': {transform:'translateY(-10px)'} },
+                        fadeIn:       { '0%': {opacity:'0'}, '100%': {opacity:'1'} },
+                        slideUp:      { '0%': {opacity:'0',transform:'translateY(30px)'}, '100%': {opacity:'1',transform:'translateY(0)'} },
+                        slideDown:    { '0%': {opacity:'0',transform:'translateY(-20px)'}, '100%': {opacity:'1',transform:'translateY(0)'} },
+                        scaleIn:      { '0%': {opacity:'0',transform:'scale(0.9)'}, '100%': {opacity:'1',transform:'scale(1)'} },
+                        slideInRight: { '0%': {opacity:'0',transform:'translateX(20px)'}, '100%': {opacity:'1',transform:'translateX(0)'} },
+                        bounceSoft:   { '0%,100%': {transform:'translateY(-5%)'}, '50%': {transform:'translateY(0)'} },
+                        float:        { '0%,100%': {transform:'translateY(0px)'}, '50%': {transform:'translateY(-10px)'} },
                     }
                 }
             }
@@ -71,9 +71,7 @@
             #main-content { margin-left: 280px; transition: margin-left 380ms cubic-bezier(.65,0,.35,1); }
             #main-content.sb-mini { margin-left: 76px; }
         }
-        @media (max-width: 1023px) {
-            #main-content { margin-left: 0 !important; }
-        }
+        @media (max-width: 1023px) { #main-content { margin-left: 0 !important; } }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased overflow-x-hidden selection:bg-primary-500 selection:text-white">
@@ -133,7 +131,7 @@
                     </div>
                 </div>
                 <button type="submit" id="login-submit-btn"
-                    class="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-semibold shadow-lg transition-all duration-300 flex items-center justify-center gap-2">
+                    class="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-semibold shadow-lg transition-all flex items-center justify-center gap-2">
                     <span id="login-btn-text">Entrar</span>
                     <span class="material-symbols-rounded" id="login-btn-icon">login</span>
                 </button>
@@ -145,8 +143,8 @@
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="js/theme-colors.js"></script>  
+    <!-- ── Scripts — ORDEM IMPORTA ── -->
+    <script src="js/theme-colors.js"></script>    <!-- 1º: tema antes de tudo -->
     <script src="js/supabase-config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/data.js"></script>
@@ -163,11 +161,12 @@
     <script src="js/dashboard-stats.js"></script>
     <script src="js/app.js"></script>
     <script src="js/kanban-sheets.js"></script>
+    <script src="js/entrega.js"></script>          <!-- funções da aba entrega -->
     <script src="js/sheets-sync.js"></script>
-    <script src="js/entrega.js"></script>
+    <script src="js/user-profile.js"></script>
 
     <script>
-        /* ── Login handlers ── */
+        /* ── Login ── */
         async function handleLogin(event) {
             event.preventDefault();
             const email = document.getElementById('login-email').value;
@@ -211,7 +210,7 @@
             alert('Recuperação de senha em desenvolvimento. Contate o administrador.');
         }
 
-        /* ── loadComponent via fetch + innerHTML ── */
+        /* ── loadComponent ── */
         async function loadComponent(url, containerId) {
             try {
                 const r = await fetch(url);
@@ -221,7 +220,7 @@
             }
         }
 
-        /* ── Sidebar JS (executado AQUI após o loadComponent retornar) ── */
+        /* ── Sidebar JS (roda após HTML ser injetado) ── */
         function initSidebar() {
             const LS = 'sb_mini';
             const W_OPEN = 280, W_MINI = 76;
@@ -232,41 +231,22 @@
                 const tab = document.getElementById('sb-tab');
                 const mc  = document.getElementById('main-content');
                 if (!sb) return;
-
-                if (!animate) {
-                    sb.style.transition  = 'none';
-                    if (tab) tab.style.transition = 'none';
-                }
-
+                if (!animate) { sb.style.transition = 'none'; if (tab) tab.style.transition = 'none'; }
                 sb.classList.toggle('sb-mini', mini);
                 mc?.classList.toggle('sb-mini', mini);
-
-                if (tab) {
-                    tab.style.left = (mini ? W_MINI : W_OPEN) + 'px';
-                    tab.classList.toggle('mini-tab', mini);
-                }
-
-                if (!animate) {
-                    requestAnimationFrame(() => {
-                        sb.style.transition  = '';
-                        if (tab) tab.style.transition = '';
-                    });
-                }
+                if (tab) { tab.style.left = (mini ? W_MINI : W_OPEN) + 'px'; tab.classList.toggle('mini-tab', mini); }
+                if (!animate) requestAnimationFrame(() => { sb.style.transition = ''; if (tab) tab.style.transition = ''; });
             }
 
             window.toggleSidebar = function () {
-                if (window.innerWidth < 1024) {
-                    document.getElementById('sidebar')?.classList.toggle('mobile-open');
-                    return;
-                }
+                if (window.innerWidth < 1024) { document.getElementById('sidebar')?.classList.toggle('mobile-open'); return; }
                 mini = !mini;
                 localStorage.setItem(LS, mini);
                 apply(true);
             };
 
-            // Aplica estado inicial sem animação
             apply(false);
-            console.log('✅ Sidebar iniciada — mini:', mini);
+            console.log('✅ Sidebar iniciada');
         }
 
         /* ── Inicialização principal ── */
@@ -275,10 +255,7 @@
 
             if (typeof auth !== 'undefined') {
                 await auth.init();
-                if (!auth.isAuthenticated()) {
-                    console.log('⚠️ Aguardando login...');
-                    return;
-                }
+                if (!auth.isAuthenticated()) { console.log('⚠️ Aguardando login...'); return; }
             }
 
             console.log('✅ Autenticado — carregando componentes...');
@@ -295,7 +272,7 @@
                 loadComponent('pages/estoque.html',      'estoque-container'),
             ]);
 
-            // ✅ Inicia sidebar DEPOIS que o HTML foi injetado
+            // Sidebar precisa rodar após HTML injetado
             initSidebar();
 
             // Sobrescreve showPage para atualizar nav ativo
@@ -309,26 +286,21 @@
             };
 
             setTimeout(() => {
-                if (typeof initTheme          === 'function') initTheme();
-                if (typeof renderRecentOrders === 'function') renderRecentOrders();
-                if (typeof initCharts         === 'function') initCharts();
-                if (typeof animateCounters    === 'function') animateCounters();
-                if (typeof updateTime         === 'function') { updateTime(); setInterval(updateTime, 1000); }
-                if (typeof updateDashboard    === 'function') { updateDashboard(); setInterval(updateDashboard, 30000); }
+                if (typeof initTheme            === 'function') initTheme();
+                if (typeof loadSavedTheme       === 'function') loadSavedTheme();
+                if (typeof renderRecentOrders   === 'function') renderRecentOrders();
+                if (typeof initCharts           === 'function') initCharts();
+                if (typeof animateCounters      === 'function') animateCounters();
+                if (typeof updateTime           === 'function') { updateTime(); setInterval(updateTime, 1000); }
+                if (typeof updateDashboard      === 'function') { updateDashboard(); setInterval(updateDashboard, 30000); }
                 if (typeof setupAuthenticatedUI === 'function') setupAuthenticatedUI();
             }, 100);
         });
     </script>
 
     <style>
-        @keyframes shake {
-            0%,100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
-        }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-10px)} 75%{transform:translateX(10px)} }
         .animate-shake { animation: shake 0.5s ease-in-out; }
     </style>
-
-    <script src="js/user-profile.js"></script>
 </body>
 </html>
