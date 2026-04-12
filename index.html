@@ -65,38 +65,24 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- ── Layout da sidebar — controlado pelo sidebar.js via JS ── -->
+    <!-- Layout sidebar -->
     <style>
-        /* Desktop padrão: sidebar aberta = 280px */
         @media (min-width: 1024px) {
-            #main-content {
-                margin-left: 280px;
-                transition: margin-left 380ms cubic-bezier(.65,0,.35,1);
-            }
-            #main-content.sb-mini {
-                margin-left: 76px;
-            }
+            #main-content { margin-left: 280px; transition: margin-left 380ms cubic-bezier(.65,0,.35,1); }
+            #main-content.sb-mini { margin-left: 76px; }
         }
-        /* Mobile: sem margem */
         @media (max-width: 1023px) {
-            #main-content {
-                margin-left: 0 !important;
-            }
+            #main-content { margin-left: 0 !important; }
         }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased overflow-x-hidden selection:bg-primary-500 selection:text-white">
 
-    <!-- Background Grid -->
     <div class="fixed inset-0 bg-grid opacity-[0.4] dark:opacity-[0.2] pointer-events-none"></div>
 
-    <!-- Header -->
     <div id="header-container"></div>
-
-    <!-- Sidebar -->
     <div id="sidebar-container"></div>
 
-    <!-- ── Main Content — margem controlada pelo CSS acima ── -->
     <main id="main-content" class="pt-16 min-h-screen">
         <div id="dashboard-container"></div>
         <div id="kanban-container"></div>
@@ -106,7 +92,6 @@
         <div id="estoque-container"></div>
     </main>
 
-    <!-- Modals -->
     <div id="modals-container"></div>
 
     <!-- Modal Login -->
@@ -119,60 +104,43 @@
                 <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Bem-vindo de volta</h2>
                 <p class="text-slate-500 dark:text-slate-400 mt-2">Faça login para acessar o sistema</p>
             </div>
-
             <form id="login-form" onsubmit="handleLogin(event)" class="space-y-6">
                 <div>
-                    <label for="login-email" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Email</label>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Email</label>
                     <div class="relative">
                         <span class="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">mail</span>
-                        <input type="email" id="login-email" name="email" required autocomplete="email"
+                        <input type="email" id="login-email" required autocomplete="email"
                             class="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                             placeholder="seu@email.com">
                     </div>
                 </div>
-
                 <div>
-                    <label for="login-password" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Senha</label>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Senha</label>
                     <div class="relative">
                         <span class="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">lock</span>
-                        <input type="password" id="login-password" name="password" required autocomplete="current-password"
+                        <input type="password" id="login-password" required autocomplete="current-password"
                             class="w-full pl-11 pr-12 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                             placeholder="••••••••">
-                        <button type="button" onclick="togglePasswordVisibility()"
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+                        <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
                             <span class="material-symbols-rounded" id="password-toggle-icon">visibility</span>
                         </button>
                     </div>
                 </div>
-
-                <div class="flex items-center justify-between">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" id="remember-me" class="w-4 h-4 text-primary-600 bg-slate-50 dark:bg-slate-800 border-slate-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-primary-500">
-                        <span class="text-sm text-slate-600 dark:text-slate-400">Lembrar-me</span>
-                    </label>
-                    <button type="button" onclick="showForgotPassword()" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Esqueceu a senha?</button>
-                </div>
-
                 <div id="login-error" class="hidden p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                     <div class="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
                         <span class="material-symbols-rounded text-lg">error</span>
                         <span id="login-error-message">Erro ao fazer login</span>
                     </div>
                 </div>
-
                 <button type="submit" id="login-submit-btn"
-                    class="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-semibold shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50 transition-all duration-300 hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                    class="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-semibold shadow-lg transition-all duration-300 flex items-center justify-center gap-2">
                     <span id="login-btn-text">Entrar</span>
                     <span class="material-symbols-rounded" id="login-btn-icon">login</span>
                 </button>
             </form>
-
             <div class="mt-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                <p class="text-xs font-semibold text-amber-800 dark:text-amber-400 mb-2">🔑 Credenciais de Teste:</p>
-                <div class="text-xs text-amber-700 dark:text-amber-500 space-y-1">
-                    <p><strong>Admin:</strong> admin@ordemgro.com / admin123</p>
-                    <p class="text-[10px] text-amber-600 dark:text-amber-600">⚠️ Remover em produção!</p>
-                </div>
+                <p class="text-xs font-semibold text-amber-800 dark:text-amber-400 mb-1">🔑 Credenciais de Teste:</p>
+                <p class="text-xs text-amber-700 dark:text-amber-500"><strong>Admin:</strong> admin@ordemgro.com / admin123</p>
             </div>
         </div>
     </div>
@@ -197,71 +165,51 @@
     <script src="js/sheets-sync.js"></script>
 
     <script>
+        /* ── Login handlers ── */
         async function handleLogin(event) {
             event.preventDefault();
-            const email    = document.getElementById('login-email').value;
+            const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
             const submitBtn = document.getElementById('login-submit-btn');
-            const btnText   = document.getElementById('login-btn-text');
-            const btnIcon   = document.getElementById('login-btn-icon');
-            const errorDiv  = document.getElementById('login-error');
+            const btnText = document.getElementById('login-btn-text');
+            const btnIcon = document.getElementById('login-btn-icon');
+            const errorDiv = document.getElementById('login-error');
 
             submitBtn.disabled = true;
             btnText.textContent = 'Entrando...';
             btnIcon.textContent = 'hourglass_empty';
-            btnIcon.classList.add('animate-spin');
             errorDiv.classList.add('hidden');
 
             try {
                 const result = await auth.login(email, password);
                 if (result.success) {
-                    hideLoginModal();
+                    document.getElementById('login-modal')?.classList.add('hidden');
                     window.location.reload();
                 } else {
                     throw new Error(result.message || 'Credenciais inválidas');
                 }
             } catch (error) {
-                document.getElementById('login-error-message').textContent = error.message || 'Email ou senha incorretos';
+                document.getElementById('login-error-message').textContent = error.message;
                 errorDiv.classList.remove('hidden');
-                const form = document.getElementById('login-form');
-                form.classList.add('animate-shake');
-                setTimeout(() => form.classList.remove('animate-shake'), 500);
             } finally {
                 submitBtn.disabled = false;
                 btnText.textContent = 'Entrar';
                 btnIcon.textContent = 'login';
-                btnIcon.classList.remove('animate-spin');
             }
         }
 
         function togglePasswordVisibility() {
             const input = document.getElementById('login-password');
-            const icon  = document.getElementById('password-toggle-icon');
-            if (input.type === 'password') { input.type = 'text';     icon.textContent = 'visibility_off'; }
-            else                           { input.type = 'password'; icon.textContent = 'visibility';     }
+            const icon = document.getElementById('password-toggle-icon');
+            if (input.type === 'password') { input.type = 'text'; icon.textContent = 'visibility_off'; }
+            else { input.type = 'password'; icon.textContent = 'visibility'; }
         }
 
         function showForgotPassword() {
-            alert('Funcionalidade de recuperação de senha em desenvolvimento.\nContate o administrador do sistema.');
+            alert('Recuperação de senha em desenvolvimento. Contate o administrador.');
         }
 
-        function hideLoginModal() {
-            const m = document.getElementById('login-modal');
-            if (m) { m.classList.remove('active'); m.classList.add('hidden'); }
-        }
-    </script>
-
-    <style>
-        #login-modal.active { display: flex !important; }
-        @keyframes shake {
-            0%,100% { transform: translateX(0); }
-            25%     { transform: translateX(-10px); }
-            75%     { transform: translateX(10px); }
-        }
-        .animate-shake { animation: shake 0.5s ease-in-out; }
-    </style>
-
-    <script>
+        /* ── loadComponent via fetch + innerHTML ── */
         async function loadComponent(url, containerId) {
             try {
                 const r = await fetch(url);
@@ -271,8 +219,57 @@
             }
         }
 
+        /* ── Sidebar JS (executado AQUI após o loadComponent retornar) ── */
+        function initSidebar() {
+            const LS = 'sb_mini';
+            const W_OPEN = 280, W_MINI = 76;
+            let mini = localStorage.getItem(LS) === 'true';
+
+            function apply(animate) {
+                const sb  = document.getElementById('sidebar');
+                const tab = document.getElementById('sb-tab');
+                const mc  = document.getElementById('main-content');
+                if (!sb) return;
+
+                if (!animate) {
+                    sb.style.transition  = 'none';
+                    if (tab) tab.style.transition = 'none';
+                }
+
+                sb.classList.toggle('sb-mini', mini);
+                mc?.classList.toggle('sb-mini', mini);
+
+                if (tab) {
+                    tab.style.left = (mini ? W_MINI : W_OPEN) + 'px';
+                    tab.classList.toggle('mini-tab', mini);
+                }
+
+                if (!animate) {
+                    requestAnimationFrame(() => {
+                        sb.style.transition  = '';
+                        if (tab) tab.style.transition = '';
+                    });
+                }
+            }
+
+            window.toggleSidebar = function () {
+                if (window.innerWidth < 1024) {
+                    document.getElementById('sidebar')?.classList.toggle('mobile-open');
+                    return;
+                }
+                mini = !mini;
+                localStorage.setItem(LS, mini);
+                apply(true);
+            };
+
+            // Aplica estado inicial sem animação
+            apply(false);
+            console.log('✅ Sidebar iniciada — mini:', mini);
+        }
+
+        /* ── Inicialização principal ── */
         document.addEventListener('DOMContentLoaded', async () => {
-            console.log('🚀 Inicializando aplicação...');
+            console.log('🚀 Inicializando...');
 
             if (typeof auth !== 'undefined') {
                 await auth.init();
@@ -296,6 +293,19 @@
                 loadComponent('pages/estoque.html',      'estoque-container'),
             ]);
 
+            // ✅ Inicia sidebar DEPOIS que o HTML foi injetado
+            initSidebar();
+
+            // Sobrescreve showPage para atualizar nav ativo
+            const _origShowPage = window.showPage;
+            window.showPage = function(page) {
+                if (_origShowPage) _origShowPage(page);
+                document.querySelectorAll('.nav-item[data-page]').forEach(el =>
+                    el.classList.toggle('active-nav', el.dataset.page === page));
+                if (window.innerWidth < 1024)
+                    document.getElementById('sidebar')?.classList.remove('mobile-open');
+            };
+
             setTimeout(() => {
                 if (typeof initTheme          === 'function') initTheme();
                 if (typeof renderRecentOrders === 'function') renderRecentOrders();
@@ -307,6 +317,15 @@
             }, 100);
         });
     </script>
+
+    <style>
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        .animate-shake { animation: shake 0.5s ease-in-out; }
+    </style>
 
     <script src="js/user-profile.js"></script>
 </body>
