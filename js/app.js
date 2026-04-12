@@ -1,10 +1,7 @@
 /* ============================================
-   CONTROLE DE ORDENS PRO - APLICAÇÃO PRINCIPAL
-   app.js — sem DOMContentLoaded duplicado
-   (a inicialização fica no index.html)
+   CONTROLE DE ORDENS PRO - app.js
+   Sem DOMContentLoaded próprio (index.html gerencia)
    ============================================ */
-
-// ── Helpers ───────────────────────────────────────────────────
 
 function isAuthSystemAvailable() {
     return typeof window.auth !== 'undefined' && window.auth !== null;
@@ -15,41 +12,74 @@ function getNivelNome(nivel) {
     return niveis[nivel] || 'Usuário';
 }
 
-// ── setupAuthenticatedUI ──────────────────────────────────────
-// Chamado pelo index.html após carregar tudo.
-// A versão do auth.js já esconde o modal e atualiza o header.
-// Esta versão complementa com dados da sessão no header.
+// ── setupAuthenticatedUI — atualiza TODOS os elementos do header ──
 
 function setupAuthenticatedUI() {
-    // Garante modal fechado
+    // 1. Garante modal fechado
     const lm = document.getElementById('login-modal');
     if (lm) { lm.classList.add('hidden'); lm.classList.remove('active'); }
 
-    if (!isAuthSystemAvailable()) return;
-
-    const user = auth.getCurrentUser?.() || auth.getUser?.();
+    // 2. Obtém usuário da sessão (tenta auth e localStorage)
+    let user = null;
+    if (isAuthSystemAvailable()) {
+        user = auth.getCurrentUser?.() || auth.getUser?.();
+    }
+    if (!user) {
+        try {
+            const s = JSON.parse(localStorage.getItem('ordem_pro_session') || '{}');
+            user = s?.user || null;
+        } catch(_) {}
+    }
     if (!user) return;
 
-    console.log('👤 Configurando UI para:', user.nome, '· nível', user.nivel ?? user.nivel_acesso);
+    const nome    = user.nome  || 'Usuário';
+    const email   = user.email || '';
+    const nivel   = user.nivel ?? user.nivel_acesso ?? 0;
+    const cargo   = user.cargo || getNivelNome(nivel);
+    const iniciais = nome.split(' ').filter(Boolean).map(p=>p[0]).slice(0,2).join('').toUpperCase() || '?';
 
-    // Nome e email no header
-    const nome  = user.nome  || 'Usuário';
-    const email = user.email || '';
-    const nivel = user.nivel ?? user.nivel_acesso ?? 0;
+    console.log('👤 setupAuthenticatedUI →', nome, '(nível', nivel, ')');
 
-    document.querySelectorAll('#user-display-name,  .user-nome')
-        .forEach(el => el && (el.textContent = nome));
-    document.querySelectorAll('#user-display-email, .user-email')
-        .forEach(el => el && (el.textContent = email));
-    document.querySelectorAll('#user-nivel-label,   .user-nivel')
-        .forEach(el => el && (el.textContent = getNivelNome(nivel)));
+    // 3. Atualiza por ID (os mais comuns no header.html)
+    const setTxt = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+    setTxt('user-display-name',   nome);
+    setTxt('user-display-email',  email);
+    setTxt('user-display-cargo',  cargo);
+    setTxt('user-nivel-label',    getNivelNome(nivel));
+    setTxt('user-avatar-initials',iniciais);
+    setTxt('header-user-name',    nome);
+    setTxt('header-user-email',   email);
+    setTxt('header-user-cargo',   cargo);
 
-    // Avatar com iniciais
-    const iniciais = nome.split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();
-    document.querySelectorAll('#user-avatar-initials, .user-initials')
-        .forEach(el => el && (el.textContent = iniciais));
+    // 4. Atualiza por classe (fallback)
+    document.querySelectorAll('.user-nome, .user-name')
+        .forEach(el => el.textContent = nome);
+    document.querySelectorAll('.user-email')
+        .forEach(el => el.textContent = email);
+    document.querySelectorAll('.user-initials, .user-avatar-initials')
+        .forEach(el => el.textContent = iniciais);
+    document.querySelectorAll('.user-cargo, .user-role')
+        .forEach(el => el.textContent = cargo);
+    document.querySelectorAll('.user-nivel')
+        .forEach(el => el.textContent = getNivelNome(nivel));
 
-    console.log('✅ UI autenticada configurada');
+    // 5. Substitui "Carregando..." onde aparecer
+    document.querySelectorAll('[data-user-field]').forEach(el => {
+        const field = el.dataset.userField;
+        if (field === 'nome')    el.textContent = nome;
+        if (field === 'email')   el.textContent = email;
+        if (field === 'cargo')   el.textContent = cargo;
+        if (field === 'iniciais') el.textContent = iniciais;
+    });
+
+    // 6. Força substituição de texto "Carregando..." no header
+    document.querySelectorAll('header *, #header-container *').forEach(el => {
+        if (el.children.length === 0 && el.textContent.trim() === 'Carregando...') {
+            el.textContent = nome;
+        }
+    });
+
+    console.log('✅ UI atualizada para:', nome);
 }
 
 // ── setupUserHeader (alias) ───────────────────────────────────
@@ -71,12 +101,10 @@ function refreshDashboard() {
     }, 800);
 }
 
-// ── Expõe globalmente ─────────────────────────────────────────
-
-window.setupAuthenticatedUI = setupAuthenticatedUI;
-window.setupUserHeader      = setupUserHeader;
-window.refreshDashboard     = refreshDashboard;
-window.getNivelNome         = getNivelNome;
+window.setupAuthenticatedUI  = setupAuthenticatedUI;
+window.setupUserHeader       = setupUserHeader;
+window.refreshDashboard      = refreshDashboard;
+window.getNivelNome          = getNivelNome;
 window.isAuthSystemAvailable = isAuthSystemAvailable;
 
-console.log('✅ app.js carregado (sem DOMContentLoaded duplicado)');
+console.log('✅ app.js carregado');
