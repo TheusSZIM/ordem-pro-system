@@ -278,15 +278,34 @@ async function syncSheets() {
 
 async function fetchCSV(url) {
     const u = toCSVUrl(url.trim());
-    const r = await fetch(u);
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    return r.text();
+    console.log('[Kanban] Buscando CSV:', u);
+    let r;
+    try {
+        r = await fetch(u, { redirect: 'follow' });
+    } catch(e) {
+        throw new Error('Falha de rede — verifique se a planilha está publicada como CSV público');
+    }
+    if (!r.ok) throw new Error(`HTTP ${r.status} — verifique a URL do Sheets`);
+    const text = await r.text();
+    if (!text || text.length < 10) throw new Error('Planilha vazia ou sem dados');
+    return text;
 }
 function toCSVUrl(url) {
-    if (url.includes('output=')) return url.replace('output=tsv','output=csv').replace('output=xlsx','output=csv');
-    const mId=url.match(/\/d\/(?:e\/)?([a-zA-Z0-9_-]+)/); if(!mId) return url;
-    const id=mId[1]; const mGid=url.match(/[?&#]gid=(\d+)/); const gid=mGid?`&gid=${mGid[1]}`:'';
-    if(url.includes('/d/e/')) return `https://docs.google.com/spreadsheets/d/e/${id}/pub?single=true&output=csv${gid}`;
+    // Já é URL de publicação do Sheets — garante output=csv
+    if (url.includes('spreadsheets') && url.includes('output=')) {
+        return url
+            .replace('output=tsv', 'output=csv')
+            .replace('output=xlsx','output=csv')
+            .replace('output=pdf', 'output=csv');
+    }
+    // URL de edição — converte para URL de publicação
+    const mId = url.match(/\/d\/(?:e\/)?([a-zA-Z0-9_-]+)/);
+    if (!mId) return url;
+    const id   = mId[1];
+    const mGid = url.match(/[?&#]gid=(\d+)/);
+    const gid  = mGid ? `&gid=${mGid[1]}` : '';
+    if (url.includes('/d/e/'))
+        return `https://docs.google.com/spreadsheets/d/e/${id}/pub?single=true&output=csv${gid}`;
     return `https://docs.google.com/spreadsheets/d/${id}/pub?output=csv${gid}`;
 }
 function parseCSVRows(csv) {
