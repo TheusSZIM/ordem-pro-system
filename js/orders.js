@@ -132,9 +132,21 @@ function renderOrdensTable() {
 
         return `
             <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                <!-- LOTE (substituiu o ID) -->
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900 dark:text-white">
-                    ${ordem.lote || '—'}
+                <!-- LOTE — editável inline com clique duplo -->
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900 dark:text-white"
+                    title="Duplo clique para editar o lote">
+                    <div class="flex items-center gap-1.5 group">
+                        <span class="lote-display" id="lote-${ordem.id}">
+                            ${ordem.lote
+                                ? `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400">${ordem.lote}</span>`
+                                : '<span class="text-slate-400 font-normal text-xs">— sem lote</span>'}
+                        </span>
+                        <button onclick="abrirEdicaoLoteInline('${ordem.id}','${(ordem.lote||'').replace(/'/g,"\'")}')"
+                            class="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-indigo-500 transition-all rounded"
+                            title="Editar lote">
+                            <span class="material-symbols-rounded text-sm">edit</span>
+                        </button>
+                    </div>
                 </td>
 
                 <!-- PRODUTO -->
@@ -222,6 +234,45 @@ function filterOrdens() {
         renderOrdensTable();
     }
 }
+
+// ── Edição inline de lote na tabela ─────────────────────────
+
+function abrirEdicaoLoteInline(ordId, loteAtual) {
+    const cell = document.getElementById('lote-' + ordId);
+    if (!cell) return;
+    cell.innerHTML = `
+        <div class="flex items-center gap-1.5">
+            <input id="lote-inline-${ordId}" type="text" value="${loteAtual}"
+                placeholder="Ex: LOTE-2024-001"
+                class="w-32 px-2 py-1 text-xs rounded-lg dark:text-white outline-none"
+                style="background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.5);"
+                onkeydown="if(event.key==='Enter') salvarLoteInline('${ordId}'); if(event.key==='Escape') renderOrdensTable();"
+                onclick="event.stopPropagation()">
+            <button onclick="event.stopPropagation(); salvarLoteInline('${ordId}')"
+                class="px-2 py-1 text-xs font-bold text-white rounded-lg" style="background:#4f46e5;">OK</button>
+            <button onclick="event.stopPropagation(); renderOrdensTable()"
+                class="text-xs text-slate-400 hover:text-slate-200 px-1">✕</button>
+        </div>`;
+    setTimeout(() => document.getElementById('lote-inline-' + ordId)?.focus(), 50);
+}
+
+async function salvarLoteInline(ordId) {
+    const input = document.getElementById('lote-inline-' + ordId);
+    const val   = input?.value?.trim() || null;
+    try {
+        const { error } = await supabaseClient.from('orders').update({ lote: val }).eq('id', ordId);
+        if (error) throw error;
+        const o = window.state?.orders?.find(x => x.id === ordId);
+        if (o) o.lote = val;
+        showToast('✅ Lote ' + (val ? `"${val}"` : 'removido') + ' salvo!', 'success');
+        renderOrdensTable();
+    } catch(e) {
+        showToast('Erro: ' + e.message, 'error');
+    }
+}
+
+window.abrirEdicaoLoteInline = abrirEdicaoLoteInline;
+window.salvarLoteInline       = salvarLoteInline;
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { renderRecentOrders, renderOrdensTable, setOrdensTab, filterOrdens, statusMap };
