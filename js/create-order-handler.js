@@ -135,6 +135,17 @@ async function handleCreateOrder(event) {
     const observacoes   = document.getElementById('ordem-observacoes')?.value?.trim();
     const prioridadeAlta = document.getElementById('ordem-prioridade-alta')?.checked;
     const tipoEmbalagem = document.querySelector('input[name="tipo-embalagem"]:checked')?.value;
+    // Número da Ordem — tenta vários IDs possíveis do modals.html
+    const numeroOrdem = (
+        document.getElementById('numero-ordem')?.value ||
+        document.getElementById('ordem-numero')?.value ||
+        document.getElementById('order-number')?.value ||
+        document.getElementById('ordem-id')?.value ||
+        document.querySelector('input[name="numero_ordem"]')?.value ||
+        document.querySelector('input[placeholder*="Número"]')?.value ||
+        document.querySelector('input[placeholder*="numero"]')?.value ||
+        ''
+    ).trim();
 
     if (!produto)            { showToast('Informe o produto!', 'warning'); return; }
     if (!quantidade || quantidade <= 0) { showToast('Informe uma quantidade válida!', 'warning'); return; }
@@ -185,7 +196,7 @@ async function handleCreateOrder(event) {
             numero_volumes:       1,
             created_at:           new Date().toISOString(),
             // ── Quem criou ──────────────────────────────────────
-            lote:                 orderId,
+            lote:                 numeroOrdem || orderId,
             created_by:           createdBy,
             created_by_id:        createdById,
         };
