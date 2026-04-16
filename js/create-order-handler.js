@@ -135,15 +135,16 @@ async function handleCreateOrder(event) {
     const observacoes   = document.getElementById('ordem-observacoes')?.value?.trim();
     const prioridadeAlta = document.getElementById('ordem-prioridade-alta')?.checked;
     const tipoEmbalagem = document.querySelector('input[name="tipo-embalagem"]:checked')?.value;
-    // Número da Ordem — tenta vários IDs possíveis do modals.html
+    // Número da Ordem — tenta IDs comuns, depois pega o 1º input do form
+    const _formEl = event?.target?.closest?.('form') || event?.target;
     const numeroOrdem = (
         document.getElementById('numero-ordem')?.value ||
         document.getElementById('ordem-numero')?.value ||
         document.getElementById('order-number')?.value ||
         document.getElementById('ordem-id')?.value ||
+        document.getElementById('nova-ordem-numero')?.value ||
         document.querySelector('input[name="numero_ordem"]')?.value ||
-        document.querySelector('input[placeholder*="Número"]')?.value ||
-        document.querySelector('input[placeholder*="numero"]')?.value ||
+        (_formEl && _formEl.querySelector && _formEl.querySelector('input[type="text"]')?.value) ||
         ''
     ).trim();
 
