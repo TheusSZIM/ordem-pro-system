@@ -258,16 +258,19 @@ function abrirEdicaoLoteInline(ordId, loteAtual) {
 
 async function salvarLoteInline(ordId) {
     const input = document.getElementById('lote-inline-' + ordId);
-    const val   = input?.value?.trim() || null;
+    const val   = (input?.value || '').trim() || null;
+    const client = window.supabaseClient;
+    if (!client) { if(typeof showToast==='function') showToast('Supabase não conectado','error'); return; }
     try {
-        const { error } = await supabaseClient.from('orders').update({ lote: val }).eq('id', ordId);
+        const { error } = await client.from('orders').update({ lote: val }).eq('id', ordId);
         if (error) throw error;
         const o = window.state?.orders?.find(x => x.id === ordId);
         if (o) o.lote = val;
-        showToast('✅ Lote ' + (val ? `"${val}"` : 'removido') + ' salvo!', 'success');
+        if (typeof showToast === 'function') showToast('✅ Lote ' + (val ? '"'+val+'"' : 'removido') + ' salvo!', 'success');
         renderOrdensTable();
     } catch(e) {
-        showToast('Erro: ' + e.message, 'error');
+        if (typeof showToast === 'function') showToast('Erro: ' + e.message, 'error');
+        console.error('salvarLoteInline:', e);
     }
 }
 
