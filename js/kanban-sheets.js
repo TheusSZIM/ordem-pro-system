@@ -159,37 +159,47 @@ function getQtdBase() { return KS.qtdBase; }
 // ── CÁLCULO DE HORAS DE PRODUÇÃO ──────────────────────────────
 
 function calcularHorasModelo(nomeModelo) {
-    const modelo  = MODELOS.find(m => m.nome === nomeModelo);
-    if (!modelo) return { horas:0, totalKits:0, consumo:0 };
+    const modelo   = MODELOS.find(m => m.nome === nomeModelo);
+    if (!modelo) return { horas:0, totalKits:0, consumo:0, minPosKey:'' };
 
-    const estrutura  = ESTRUTURAS[nomeModelo] || [];
-    const consumo    = KS.consumoHora[nomeModelo] || 0;
-    const qtdBase    = KS.qtdBase[nomeModelo] || 1000;
-    const estruturaPNs = new Set(estrutura.map(e=>e.pn));
-    let totalKits = 0;
+    const estrutura = ESTRUTURAS[nomeModelo] || [];
+    const consumo   = KS.consumoHora[nomeModelo] || 0;
 
-    // Para cada posição do modelo, calcula quantos kits completos há
+    // ── Soma a quantidade de CADA PN por posição e pega o mínimo ──
+    // Cada posição física é um kanban. A hora de produção é limitada
+    // pela posição com menor estoque do componente mais escasso.
+    // Fórmula: min(PN mais escasso em cada posição) / consumo_por_hora
+
+    let minQtdGlobal = Infinity; // menor qtd de qualquer PN em qualquer posição
+    let totalQtdMinPN = 0;       // soma do PN mais escasso em cada posição (para display)
+    let posCount = 0;
+
     for (let nivel = 0; nivel <= 12; nivel++) {
         if (NIVEL_SKIP.has(nivel)) continue;
         for (const pos of modelo.pos) {
             const pnsPos = KS.grade[nivel]?.[pos] || new Map();
             if (pnsPos.size === 0) continue;
 
-            // Kit = quantidade do PN mais escasso / (qtdBase * mult)
-            let minKits = Infinity;
+            // Qtd do PN mais escasso nesta posição
+            let minQtdPos = Infinity;
             for (const comp of estrutura) {
                 const qtd = pnsPos.get(comp.pn) || 0;
-                const kits = qtd / (qtdBase * comp.mult);
-                minKits = Math.min(minKits, kits);
+                if (qtd > 0) minQtdPos = Math.min(minQtdPos, qtd);
             }
-            if (minKits !== Infinity && minKits > 0) {
-                totalKits += minKits * qtdBase; // converte kits → unidades
-            }
+            if (minQtdPos === Infinity) continue;
+            totalQtdMinPN += minQtdPos;
+            minQtdGlobal   = Math.min(minQtdGlobal, minQtdPos);
+            posCount++;
         }
     }
 
-    const horas = consumo > 0 ? totalKits / consumo : 0;
-    return { horas, totalKits: Math.round(totalKits), consumo };
+    if (posCount === 0) return { horas:0, totalKits:0, consumo, minPosKey:'' };
+
+    // Horas = total de unidades do PN mais escasso ÷ consumo por hora
+    // (representa quanto tempo de produção o estoque atual suporta)
+    const totalKits = totalQtdMinPN;
+    const horas     = consumo > 0 ? totalKits / consumo : 0;
+    return { horas, totalKits: Math.round(totalKits), consumo, minQtd: Math.round(minQtdGlobal) };
 }
 
 // ── GAUGE SVG (meia-lua) ──────────────────────────────────────
@@ -322,7 +332,7 @@ function parseEstoqueALM(csv) {
         const loc=(r[iLoc]||'').trim().toUpperCase(); const m=loc.match(/^F(\d+)-0*(\d+)$/); if(!m) return;
         const nivel=parseInt(m[1]),pos=parseInt(m[2]); if(pos>KS.POSICOES||nivel>12) return;
         const pn=(r[iPN]||'').trim(); if(!pn) return;
-        const qtd=parseFloat(String(r[iQty]||'0').replace(',','.'))||0;
+        const qtd=parseFloat(String(r[iQty]||'0').replace(/\./g,'').replace(',','.'))||0;
         if(!grade[nivel]) grade[nivel]={};
         if(!grade[nivel][pos]) grade[nivel][pos]=new Map();
         grade[nivel][pos].set(pn,(grade[nivel][pos].get(pn)||0)+qtd);
