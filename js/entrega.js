@@ -26,7 +26,12 @@ function renderOrdensEntrega() {
         <div class="ordem-concluida-card" data-id="${o.id}" onclick="selecionarOrdemEntrega('${o.id}')">
             <div class="flex items-start justify-between gap-2">
                 <div class="min-w-0">
-                    <p class="text-sm font-bold text-slate-900 dark:text-white truncate">#${o.id}</p>
+                    <p class="text-sm font-bold text-slate-900 dark:text-white truncate">
+                        ${o.lote
+                            ? `<span style="background:rgba(99,102,241,.15);color:#818cf8;padding:2px 8px;border-radius:20px;font-size:11px;">${o.lote}</span>`
+                            : `<span class="text-slate-500 font-normal text-xs">sem lote</span>`
+                        }
+                    </p>
                     <p class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">${o.product || '—'}</p>
                 </div>
                 <span class="flex-shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
@@ -116,7 +121,8 @@ async function handleEntrega(event) {
         document.getElementById('entrega-form')?.reset();
         document.querySelectorAll('.ordem-concluida-card').forEach(el => el.classList.remove('selected'));
 
-        showToast(`✅ Entrega da ordem #${ordemId} registrada!`, 'success');
+        const loteLabel = ordem.lote ? `Lote ${ordem.lote}` : `Ordem #${ordemId}`;
+        showToast(`✅ Entrega de ${loteLabel} registrada!`, 'success');
 
     } catch (err) {
         console.error('Erro ao registrar entrega:', err);
