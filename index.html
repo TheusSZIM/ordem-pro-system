@@ -338,6 +338,22 @@
         });
     </script>
 
+    <!-- Alias de segurança para funções de formulários -->
+    <script>
+    // Garante que handleNewOrder existe mesmo que create-order-handler.js não tenha carregado ainda
+    document.addEventListener('DOMContentLoaded', function() {
+        if (!window.handleNewOrder && window.handleCreateOrder) {
+            window.handleNewOrder = window.handleCreateOrder;
+        }
+        // Re-declara após 1s para garantir que scripts externos já carregaram
+        setTimeout(function() {
+            if (!window.handleNewOrder && window.handleCreateOrder) {
+                window.handleNewOrder = window.handleCreateOrder;
+            }
+        }, 1000);
+    });
+    </script>
+
     <!-- ══ Canvas animado do login — carregado por último ══ -->
     <script>
     (function() {
