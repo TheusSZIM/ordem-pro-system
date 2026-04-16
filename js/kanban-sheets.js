@@ -57,11 +57,13 @@ const ESTRUTURAS = {
         { pn:'21.008.9950', desc:'Tampão Ø14',             mult:1  },
         { pn:'20.008.1750', desc:'Tampa Respiro Ø7',       mult:1  },
     ],
-    'RENAULT': [
-        { pn:'20.001.3114', desc:'Rolamento WR1630075-3',  mult:1 },
-        { pn:'20.008.9950', desc:'Tampao Ø14',             mult:1 },
-        { pn:'20.002.0344', desc:'Selo Mecanico 94566',    mult:1 },
-        { pn:'16.400.0662', desc:'Rotor PPS Renault',      mult:1 },
+     'HYUNDAI PRIME': [
+        { pn:'16.400.7010', desc:'Rotor PPS MPI FFV',      mult:1 },
+        { pn:'20.001.7010', desc:'Rolamento WZ1630075',    mult:1 },
+        { pn:'20.002.1918', desc:'Selo Mecanico 94539',    mult:1 },
+        { pn:'20.003.7010', desc:'Junta metal JZ3020',     mult:1 },
+        { pn:'20.004.7015', desc:'Flange SMF4050',         mult:1 },
+        { pn:'20.008.7010', desc:'Tampão Ø16 MPI FFV',    mult:1 },
     ],
     'HYUNDAI VOLUTA': [
         { pn:'20.003.7011', desc:'Junta Saida Voluta',     mult:1 },
@@ -73,13 +75,11 @@ const ESTRUTURAS = {
         { pn:'20.004.7010', desc:'Polia MPI FFV',          mult:1 },
         { pn:'22.010.7010', desc:'Sensor Temperatura',     mult:1 },
     ],
-    'HYUNDAI PRIME': [
-        { pn:'16.400.7010', desc:'Rotor PPS MPI FFV',      mult:1 },
-        { pn:'20.001.7010', desc:'Rolamento WZ1630075',    mult:1 },
-        { pn:'20.002.1918', desc:'Selo Mecanico 94539',    mult:1 },
-        { pn:'20.003.7010', desc:'Junta metal JZ3020',     mult:1 },
-        { pn:'20.004.7015', desc:'Flange SMF4050',         mult:1 },
-        { pn:'20.008.7010', desc:'Tampão Ø16 MPI FFV',    mult:1 },
+      'RENAULT': [
+        { pn:'20.001.3114', desc:'Rolamento WR1630075-3',  mult:1 },
+        { pn:'20.008.9950', desc:'Tampao Ø14',             mult:1 },
+        { pn:'20.002.0344', desc:'Selo Mecanico 94566',    mult:1 },
+        { pn:'16.400.0662', desc:'Rotor PPS Renault',      mult:1 },
     ],
     'MAN D08': [
         { pn:'20.001.1787', desc:'Rolamento WR2555127-1',  mult:1 },
@@ -335,11 +335,13 @@ function parseEstoqueALM(csv) {
     const iDep = fi(['dep']);
     const iLoc = fi(['localiz']);
     const iQty = fi(['qtd liq','quantidade','qtd']);
-    // Coluna de LOTE para deduplicar (mesmo PN+lote+pos = linha duplicada do ERP)
-    const iLote= fi(['lote','ref','batch','referencia']);
 
     const grade = {};
-    const seen  = new Set(); // chave: pn|lote|nivel|pos — evita contar 2x
+    // Dedup por PN+nivel+pos+quantidade:
+    // O ERP exporta uma linha por tipo de alocação (picking + storage) para o MESMO lote.
+    // Essas linhas têm EXATAMENTE a mesma quantidade → são duplicatas.
+    // Lotes DIFERENTES do mesmo PN têm quantidades diferentes → devem ser somadas.
+    const seen = new Set(); // chave: pn|nivel|pos|qtd
 
     rows.slice(1).forEach(r => {
         if ((r[iDep]||'').trim().toUpperCase() !== 'ALM') return;
@@ -349,17 +351,17 @@ function parseEstoqueALM(csv) {
         const nivel = parseInt(m[1]), pos = parseInt(m[2]);
         if (pos > KS.POSICOES || nivel > 12) return;
 
-        const pn  = (r[iPN] ||'').trim(); if (!pn) return;
+        const pn  = (r[iPN]||'').trim(); if (!pn) return;
         const qtd = parseFloat(String(r[iQty]||'0').replace(/\./g,'').replace(',','.'))||0;
-        const lote= iLote >= 0 ? (r[iLote]||'').trim() : '';
+        if (qtd <= 0) return;
 
-        // Chave única: mesmo PN + mesmo lote + mesma posição = duplicata ERP
-        const chave = pn + '|' + lote + '|' + nivel + '|' + pos;
-        if (lote && seen.has(chave)) return; // pula linha duplicada
-        if (lote) seen.add(chave);
+        // Linha duplicada = mesmo PN, mesma posição, mesma quantidade exata
+        const chave = pn + '|' + nivel + '|' + pos + '|' + qtd;
+        if (seen.has(chave)) return;
+        seen.add(chave);
 
-        if (!grade[nivel])       grade[nivel]       = {};
-        if (!grade[nivel][pos])  grade[nivel][pos]  = new Map();
+        if (!grade[nivel])      grade[nivel]      = {};
+        if (!grade[nivel][pos]) grade[nivel][pos] = new Map();
         grade[nivel][pos].set(pn, (grade[nivel][pos].get(pn)||0) + qtd);
     });
     return grade;
