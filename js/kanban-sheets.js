@@ -325,17 +325,36 @@ function parseEstoqueALM(csv) {
     const rows=parseCSVRows(csv); if(rows.length<2) return {};
     const h=rows[0].map(c=>(c||'').toLowerCase().trim());
     const fi=names=>{for(const n of names){const i=h.findIndex(c=>c.includes(n));if(i>=0)return i;}return -1;};
-    const iPN=fi(['item']),iDep=fi(['dep']),iLoc=fi(['localiz']),iQty=fi(['qtd liq','quantidade','qtd']);
-    const grade={};
-    rows.slice(1).forEach(r=>{
-        if((r[iDep]||'').trim().toUpperCase()!=='ALM') return;
-        const loc=(r[iLoc]||'').trim().toUpperCase(); const m=loc.match(/^F(\d+)-0*(\d+)$/); if(!m) return;
-        const nivel=parseInt(m[1]),pos=parseInt(m[2]); if(pos>KS.POSICOES||nivel>12) return;
-        const pn=(r[iPN]||'').trim(); if(!pn) return;
-        const qtd=parseFloat(String(r[iQty]||'0').replace(/\./g,'').replace(',','.'))||0;
-        if(!grade[nivel]) grade[nivel]={};
-        if(!grade[nivel][pos]) grade[nivel][pos]=new Map();
-        grade[nivel][pos].set(pn,(grade[nivel][pos].get(pn)||0)+qtd);
+    const iPN  = fi(['item']);
+    const iDep = fi(['dep']);
+    const iLoc = fi(['localiz']);
+    const iQty = fi(['qtd liq','quantidade','qtd']);
+    // Coluna de LOTE para deduplicar (mesmo PN+lote+pos = linha duplicada do ERP)
+    const iLote= fi(['lote','ref','batch','referencia']);
+
+    const grade = {};
+    const seen  = new Set(); // chave: pn|lote|nivel|pos — evita contar 2x
+
+    rows.slice(1).forEach(r => {
+        if ((r[iDep]||'').trim().toUpperCase() !== 'ALM') return;
+        const loc = (r[iLoc]||'').trim().toUpperCase();
+        const m   = loc.match(/^F(\d+)-0*(\d+)$/);
+        if (!m) return;
+        const nivel = parseInt(m[1]), pos = parseInt(m[2]);
+        if (pos > KS.POSICOES || nivel > 12) return;
+
+        const pn  = (r[iPN] ||'').trim(); if (!pn) return;
+        const qtd = parseFloat(String(r[iQty]||'0').replace(/\./g,'').replace(',','.'))||0;
+        const lote= iLote >= 0 ? (r[iLote]||'').trim() : '';
+
+        // Chave única: mesmo PN + mesmo lote + mesma posição = duplicata ERP
+        const chave = pn + '|' + lote + '|' + nivel + '|' + pos;
+        if (lote && seen.has(chave)) return; // pula linha duplicada
+        if (lote) seen.add(chave);
+
+        if (!grade[nivel])       grade[nivel]       = {};
+        if (!grade[nivel][pos])  grade[nivel][pos]  = new Map();
+        grade[nivel][pos].set(pn, (grade[nivel][pos].get(pn)||0) + qtd);
     });
     return grade;
 }
@@ -351,7 +370,7 @@ function avaliarPosicao(nivel, pos) {
     const itens=estrutura.map(comp=>{
         const qtdReal=pnsPos.get(comp.pn)||0;
         const qtdEsperada=qtdBase*comp.mult;
-        const estado=qtdReal<=0?'falta':qtdReal>=qtdEsperada*2.0?'duplicado':'ok';
+        const estado=qtdReal<=0?'falta':qtdReal>=qtdEsperada*1.8?'duplicado':'ok';
         return{...comp,qtdReal,qtdEsperada,estado};
     });
     const estranhos=[];
