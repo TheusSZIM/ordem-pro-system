@@ -2,7 +2,7 @@
 // MODAL DE DETALHES DA ORDEM — timeline completa + campo LOTE
 // ============================================================
 
-const ORDEM_STATUS_MAP = {
+window.ORDEM_STATUS_MAP = window.ORDEM_STATUS_MAP || {
     pending:    { label:'A Separar',    bg:'bg-slate-100 dark:bg-slate-800',        text:'text-slate-600 dark:text-slate-300'   },
     progress:   { label:'Em Separação', bg:'bg-blue-100 dark:bg-blue-900/30',        text:'text-blue-700 dark:text-blue-400'     },
     in_progress:{ label:'Em Separação', bg:'bg-blue-100 dark:bg-blue-900/30',        text:'text-blue-700 dark:text-blue-400'     },
@@ -71,7 +71,7 @@ window.showOrdemDetail = async function(orderId) {
         if (!error && data) { ordem = data; }
     } catch(_) {}
 
-    const status = ORDEM_STATUS_MAP[ordem.status] || ORDEM_STATUS_MAP.pending;
+    const status = window.ORDEM_STATUS_MAP[ordem.status] || window.ORDEM_STATUS_MAP.pending;
     const nivel  = typeof getNivel === 'function' ? getNivel() : 0;
 
     // ── Timeline ──────────────────────────────────────────────
