@@ -208,55 +208,115 @@ function calcularHorasModelo(nomeModelo) {
     return { horas, totalKits: Math.round(somaMinPN), consumo, posCount };
 }
 
-// ── GAUGE SVG (meia-lua) ──────────────────────────────────────
+// ── FLIP CARD — HORAS / DIAS ─────────────────────────────────
 
-function buildGaugeSVG(horas, barColor, maxHoras = 24) {
-    const pct   = Math.min(horas / maxHoras, 1);
+function buildFlipCard(horas, barColor, nomeModelo) {
+    const maxHoras = 24;
+    const pct      = Math.min(horas / maxHoras, 1);
     const W = 110, H = 62, R = 46, CX = 55, CY = 58;
+    const angle    = Math.PI - pct * Math.PI;
+    const px       = CX + R * Math.cos(angle);
+    const py       = CY - R * Math.sin(angle);
+    const bgX1     = CX - R, bgX2 = CX + R;
 
-    // Converte porcentagem para ângulo (180° = arco completo)
-    const startAngle = Math.PI;  // 180° (esquerda)
-    const endAngle   = 0;        // 0° (direita)
-    const angle      = Math.PI - pct * Math.PI;
+    let cor = '#475569';
+    if (horas > 0) cor = horas < 4 ? '#ef4444' : horas < 8 ? '#f59e0b' : '#22c55e';
 
-    const px = CX + R * Math.cos(angle);
-    const py = CY + R * Math.sin(angle) * -1; // flip Y
+    const horasStr = horas > 0 ? horas.toFixed(1) : '—';
+    const dias     = horas > 0 ? (horas / 24) : 0;
+    const diasStr  = dias >= 1
+        ? (Number.isInteger(Math.round(dias * 10) / 10)
+            ? Math.round(dias).toString()
+            : dias.toFixed(1))
+        : (horas > 0 ? '<1' : '—');
 
-    // Arco de fundo cinza
-    const bgX1 = CX - R, bgY1 = CY;
-    const bgX2 = CX + R, bgY2 = CY;
+    const arcFill = pct > 0
+        ? `<path d="M ${bgX1} ${CY} A ${R} ${R} 0 0 1 ${px.toFixed(2)} ${py.toFixed(2)}"
+                  fill="none" stroke="${cor}" stroke-width="7" stroke-linecap="round" opacity="0.9"/>`
+        : '';
 
-    // Cor dinâmica por horas
-    let cor = barColor;
-    if (horas <= 0)  cor = '#475569';  // cinza (sem dados)
-    else if (horas < 4)  cor = '#ef4444'; // vermelho < 4h
-    else if (horas < 8)  cor = '#f59e0b'; // amarelo < 8h
-    else cor = '#22c55e';                 // verde >= 8h
+    const cardId = 'gauge-' + nomeModelo.replace(/\s+/g,'_');
 
-    const horasStr = horas > 0 ? (horas >= 10 ? horas.toFixed(1) : horas.toFixed(1)) : '—';
-
-    const arcFill = pct > 0 ? `
-        <path d="M ${bgX1} ${CY} A ${R} ${R} 0 0 1 ${px.toFixed(2)} ${py.toFixed(2)}"
-              fill="none" stroke="${cor}" stroke-width="7" stroke-linecap="round"
-              opacity="0.9"/>` : '';
-
-    return `
-        <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:110px;overflow:visible;">
-            <!-- Fundo cinza -->
+    // Frente: gauge meia-lua + horas
+    const front = `
+        <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"
+             style="width:100%;max-width:110px;overflow:visible;">
             <path d="M ${bgX1} ${CY} A ${R} ${R} 0 0 1 ${bgX2} ${CY}"
                   fill="none" stroke="rgba(148,163,184,0.15)" stroke-width="7" stroke-linecap="round"/>
-            <!-- Arco preenchido -->
             ${arcFill}
-            <!-- Texto horas -->
             <text x="${CX}" y="${CY - 4}" text-anchor="middle"
-                  fill="${cor}" font-size="15" font-weight="800" font-family="'Plus Jakarta Sans',sans-serif">
-                ${horasStr}
-            </text>
+                  fill="${cor}" font-size="15" font-weight="800"
+                  font-family="'Plus Jakarta Sans',sans-serif">${horasStr}</text>
             <text x="${CX}" y="${CY + 10}" text-anchor="middle"
-                  fill="rgba(148,163,184,0.7)" font-size="7.5" font-weight="600" font-family="'Plus Jakarta Sans',sans-serif">
-                ${horas > 0 ? 'horas' : 'sem dados'}
-            </text>
+                  fill="rgba(148,163,184,0.7)" font-size="7.5" font-weight="600"
+                  font-family="'Plus Jakarta Sans',sans-serif">${horas > 0 ? 'horas' : 'sem dados'}</text>
         </svg>`;
+
+    // Verso: dias em destaque
+    const back = `
+        <div style="
+            display:flex;flex-direction:column;align-items:center;justify-content:center;
+            height:62px;width:110px;gap:2px;">
+            <span style="
+                font-size:26px;font-weight:900;line-height:1;
+                color:${cor};font-family:'Plus Jakarta Sans',sans-serif;
+                text-shadow:0 0 20px ${cor}66;">
+                ${diasStr}
+            </span>
+            <span style="font-size:9px;font-weight:700;color:rgba(148,163,184,0.7);
+                         text-transform:uppercase;letter-spacing:.08em;">
+                ${horas > 0 ? (dias >= 1 ? 'dias' : 'menos de 1 dia') : 'sem dados'}
+            </span>
+            ${horas > 0 ? `<span style="font-size:8px;color:rgba(148,163,184,0.4);">${horasStr}h total</span>` : ''}
+        </div>`;
+
+    return `
+        <div id="${cardId}" class="kanban-flip-card"
+             style="perspective:600px;width:110px;height:62px;cursor:pointer;"
+             onclick="flipGaugeCard('${cardId}')">
+            <div class="kanban-flip-inner" style="
+                position:relative;width:100%;height:100%;
+                transform-style:preserve-3d;
+                transition:transform 0.6s cubic-bezier(0.4,0.2,0.2,1);">
+                <!-- FRENTE: horas -->
+                <div class="kanban-flip-front" style="
+                    position:absolute;inset:0;
+                    backface-visibility:hidden;-webkit-backface-visibility:hidden;
+                    display:flex;align-items:center;justify-content:center;">
+                    ${front}
+                </div>
+                <!-- VERSO: dias -->
+                <div class="kanban-flip-back" style="
+                    position:absolute;inset:0;
+                    backface-visibility:hidden;-webkit-backface-visibility:hidden;
+                    transform:rotateY(180deg);
+                    display:flex;align-items:center;justify-content:center;">
+                    ${back}
+                </div>
+            </div>
+        </div>`;
+}
+
+// Flip manual por clique
+window.flipGaugeCard = function(cardId) {
+    const card = document.getElementById(cardId);
+    if (!card) return;
+    const inner = card.querySelector('.kanban-flip-inner');
+    if (!inner) return;
+    const isFlipped = inner.style.transform === 'rotateY(180deg)';
+    inner.style.transform = isFlipped ? '' : 'rotateY(180deg)';
+};
+
+// Flip automático de todos os cards a cada 10s
+function startGaugeAutoFlip() {
+    if (window._gaugeFlipInterval) clearInterval(window._gaugeFlipInterval);
+    let flipped = false;
+    window._gaugeFlipInterval = setInterval(() => {
+        flipped = !flipped;
+        document.querySelectorAll('.kanban-flip-card .kanban-flip-inner').forEach(inner => {
+            inner.style.transform = flipped ? 'rotateY(180deg)' : '';
+        });
+    }, 10000);
 }
 
 // ── INIT ─────────────────────────────────────────────────────
@@ -437,6 +497,8 @@ function renderShelf() {
     setText('ks-total',cntOk+cntInc+cntEst+cntDup);
     setText('ks-ok',cntOk); setText('ks-low',cntInc); setText('ks-empty',cntEst); setText('ks-dup',cntDup);
     applyFilter(KS.currentFilter);
+    // Inicia o flip automático horas ↔ dias a cada 10s
+    startGaugeAutoFlip();
 }
 
 function buildCardHTML(avalia,modelo){
@@ -467,28 +529,24 @@ function buildModeloHeader() {
 
         const { horas, totalKits, consumo } = calcularHorasModelo(m.nome);
 
-        // Cor da hora
-        let corHora = '#475569';
-        if (horas > 0) corHora = horas < 4 ? '#ef4444' : horas < 8 ? '#f59e0b' : '#22c55e';
-
         const consumoStr = consumo > 0
             ? `<span style="font-size:9px;color:#64748b;">${consumo} pç/h</span>`
             : `<span style="font-size:9px;color:#475569;">sem taxa</span>`;
 
         th.innerHTML = `
             <div style="background:${m.cor||'#6366f1'}11;border:1.5px solid ${m.barColor}44;
-                        border-radius:12px;padding:10px 6px 6px;text-align:center;min-width:90px;">
-                <!-- Nome do modelo -->
+                        border-radius:12px;padding:8px 6px 6px;text-align:center;min-width:110px;">
                 <div style="font-size:10px;font-weight:900;color:${m.barColor};
-                            text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">
+                            text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">
                     ${m.nome}
                 </div>
-                <!-- Gauge meia-lua -->
-                <div style="display:flex;justify-content:center;margin:-4px 0 0;">
-                    ${buildGaugeSVG(horas, m.barColor)}
+                <div style="display:flex;justify-content:center;margin:0 0 2px;">
+                    ${buildFlipCard(horas, m.barColor, m.nome)}
                 </div>
-                <!-- Consumo por hora -->
                 <div style="margin-top:2px;">${consumoStr}</div>
+                <div style="font-size:8px;color:rgba(148,163,184,0.35);margin-top:1px;">
+                    clique para alternar
+                </div>
             </div>`;
         tr.appendChild(th);
     });
