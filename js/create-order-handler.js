@@ -1,356 +1,232 @@
-// ============================================================
-// MODAL DE DETALHES DA ORDEM — timeline completa + campo LOTE
-// ============================================================
+// ============================================
+// CREATE ORDER HANDLER — com created_by
+// ============================================
 
-window.ORDEM_STATUS_MAP = window.ORDEM_STATUS_MAP || {
-    pending:    { label:'A Separar',    bg:'bg-slate-100 dark:bg-slate-800',        text:'text-slate-600 dark:text-slate-300'   },
-    progress:   { label:'Em Separação', bg:'bg-blue-100 dark:bg-blue-900/30',        text:'text-blue-700 dark:text-blue-400'     },
-    in_progress:{ label:'Em Separação', bg:'bg-blue-100 dark:bg-blue-900/30',        text:'text-blue-700 dark:text-blue-400'     },
-    completed:  { label:'Concluída',    bg:'bg-emerald-100 dark:bg-emerald-900/30',  text:'text-emerald-700 dark:text-emerald-400'},
-    delivered:  { label:'Entregue',     bg:'bg-violet-100 dark:bg-violet-900/30',    text:'text-violet-700 dark:text-violet-400' },
+let isSubmitting = false;
+
+// ── Alias imediato — garante disponibilidade antes do DOMContentLoaded ──
+window.handleNewOrder = function(event) {
+    if (event) event.preventDefault();
+    return handleCreateOrder(event);
 };
 
-function fmtDT(iso) {
-    if (!iso) return '—';
-    const d = new Date(iso);
-    return d.toLocaleDateString('pt-BR') + ' ' +
-           d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-}
-function fmtDate(val) {
-    if (!val) return '—';
-    return new Date(val + 'T00:00:00').toLocaleDateString('pt-BR');
-}
-
-// ── Salvar LOTE ───────────────────────────────────────────────
-
-window.salvarLoteModal = async function(ordId) {
-    const input = document.getElementById('lote-modal-input');
-    const val   = input ? input.value.trim() || null : null;
-    try {
-        const { error } = await supabaseClient.from('orders').update({ lote: val }).eq('id', ordId);
-        if (error) throw error;
-        const o = window.state?.orders?.find(x => x.id === ordId);
-        if (o) o.lote = val;
-        // Atualiza display
-        const display = document.getElementById('lote-modal-display');
-        if (display) display.textContent = val || '— sem lote';
-        // Alterna views
-        document.getElementById('lote-view-wrap')?.classList.remove('hidden');
-        document.getElementById('lote-edit-wrap')?.classList.add('hidden');
-        if (typeof renderOrdensTable === 'function') renderOrdensTable();
-        if (typeof showToast === 'function') showToast('✅ Lote salvo!', 'success');
-    } catch(e) {
-        if (typeof showToast === 'function') showToast('Erro: ' + e.message, 'error');
-    }
-};
-
-window.toggleLoteEdit = function(show, loteAtual) {
-    const viewWrap = document.getElementById('lote-view-wrap');
-    const editWrap = document.getElementById('lote-edit-wrap');
-    const input    = document.getElementById('lote-modal-input');
-    if (show) {
-        viewWrap?.classList.add('hidden');
-        editWrap?.classList.remove('hidden');
-        if (input) { input.value = loteAtual || ''; input.focus(); }
-    } else {
-        viewWrap?.classList.remove('hidden');
-        editWrap?.classList.add('hidden');
-    }
-};
-
-// ── Modal principal ───────────────────────────────────────────
-
-window.showOrdemDetail = async function(orderId) {
-    // Busca ordem do state ou do Supabase
-    let ordem = window.state?.orders?.find(o => o.id === orderId);
-    if (!ordem) { if (typeof showToast === 'function') showToast('Ordem não encontrada', 'error'); return; }
-
-    // Atualiza dados frescos
-    try {
-        const { data, error } = await supabaseClient.from('orders').select('*').eq('id', orderId).single();
-        if (!error && data) { ordem = data; }
-    } catch(_) {}
-
-    const status = window.ORDEM_STATUS_MAP[ordem.status] || window.ORDEM_STATUS_MAP.pending;
-    const nivel  = typeof getNivel === 'function' ? getNivel() : 0;
-
-    // ── Timeline ──────────────────────────────────────────────
-    const steps = [
-        {
-            icon:'add_circle', cor:'#6366f1', titulo:'Ordem Registrada',
-            linhas:[
-                { label:'Data/Hora',  val: fmtDT(ordem.created_at) },
-                { label:'Operador',   val: ordem.created_by || ordem.operador_responsavel || 'Sistema' },
-                { label:'Produto',    val: ordem.product || '—' },
-                { label:'Qtd',        val: ordem.quantity ? ordem.quantity + ' un' : '—' },
-                { label:'Célula',     val: ordem.station  || ordem.estacao || '—' },
-                { label:'Previsão',   val: fmtDate(ordem.data_prevista) },
-                ordem.tipo_embalagem || ordem.packaging_type
-                    ? { label:'Embalagem', val: ordem.tipo_embalagem || ordem.packaging_type }
-                    : null,
-                ordem.notes || ordem.observacoes
-                    ? { label:'Obs', val: ordem.notes || ordem.observacoes }
-                    : null,
-            ].filter(Boolean),
-            done: true,
-        },
-        {
-            icon:'play_circle', cor:'#3b82f6', titulo:'Separação Iniciada',
-            linhas:[
-                { label:'Data/Hora',  val: fmtDT(ordem.inicio_separacao) },
-                { label:'Separador',  val: ordem.separador || '—' },
-            ],
-            done: !!ordem.inicio_separacao,
-        },
-        {
-            icon:'check_circle', cor:'#22c55e', titulo:'Separação Concluída',
-            linhas:[
-                { label:'Data/Hora',     val: fmtDT(ordem.fim_separacao) },
-                { label:'Separador',     val: ordem.separador || '—' },
-                { label:'Ordem',         val: ordem.ordem_completa === false ? '⚠️ Incompleta' : ordem.ordem_completa === true ? '✅ Completa' : '—' },
-                { label:'Embalagem',     val: ordem.packaging_type || ordem.tipo_embalagem || '—' },
-                { label:'Emb. separada', val: ordem.embalagem_separada === true ? '✅ Sim' : ordem.embalagem_separada === false ? '❌ Não' : '—' },
-                ordem.numero_volumes ? { label:'Volumes', val: ordem.numero_volumes + ' vol.' } : null,
-                { label:'Tempo total',   val: ordem.tempo_total || '—' },
-            ].filter(Boolean),
-            done: !!ordem.fim_separacao,
-        },
-        {
-            icon:'local_shipping', cor:'#8b5cf6', titulo:'Entrega Registrada',
-            linhas:[
-                { label:'Data/Hora',   val: fmtDT(ordem.data_entrega) },
-                { label:'Responsável', val: ordem.responsavel_entrega || '—' },
-                ordem.destino_entrega    ? { label:'Destino',  val: ordem.destino_entrega    } : null,
-                ordem.placa_veiculo      ? { label:'Veículo',  val: ordem.placa_veiculo      } : null,
-                ordem.observacoes_entrega? { label:'Obs',      val: ordem.observacoes_entrega} : null,
-            ].filter(Boolean),
-            done: !!ordem.data_entrega,
-        },
-    ];
-
-    const timelineHTML = steps.map((step, i) => {
-        const isLast  = i === steps.length - 1;
-        const opacity = step.done ? '1' : '0.32';
-
-        const linhasHTML = step.linhas.map(l => `
-            <div class="flex items-start gap-2 py-1 border-b border-slate-100 dark:border-slate-800/50 last:border-0">
-                <span class="text-[10px] text-slate-400 w-24 flex-shrink-0 pt-0.5">${l.label}</span>
-                <span class="text-[11px] font-medium text-slate-700 dark:text-slate-200 flex-1">${l.val}</span>
-            </div>`).join('');
-
-        return `
-        <div class="flex gap-3" style="opacity:${opacity}">
-            <div class="flex flex-col items-center flex-shrink-0">
-                <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                     style="background:${step.cor}22;border:2px solid ${step.done ? step.cor : 'rgba(148,163,184,.25)'};">
-                    <span class="material-symbols-rounded text-sm" style="color:${step.cor};font-variation-settings:'FILL' 1">${step.icon}</span>
-                </div>
-                ${!isLast ? `<div class="w-0.5 flex-1 my-1 min-h-[16px] rounded-full" style="background:${step.done ? step.cor + '44' : 'rgba(148,163,184,.12)'}"></div>` : ''}
-            </div>
-            <div class="flex-1 pb-3">
-                <div class="flex items-center gap-2 mb-1.5">
-                    <p class="text-xs font-bold" style="color:${step.cor}">${step.titulo}</p>
-                    ${!step.done ? '<span class="text-[9px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">Pendente</span>' : ''}
-                </div>
-                ${step.done ? `<div class="bg-slate-50 dark:bg-slate-800/40 rounded-xl px-3 py-1 space-y-0">${linhasHTML}</div>` : ''}
-            </div>
-        </div>`;
-    }).join('');
-
-    // ── Botão de ação ─────────────────────────────────────────
-    let actionBtn = '';
-    if (ordem.status === 'pending' && nivel >= 2) {
-        actionBtn = `
-            <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
-                <label class="block text-xs font-semibold text-slate-500 mb-1.5">Selecione o Operador</label>
-                <select id="operador-iniciar-${ordem.id}"
-                    class="w-full px-3 py-2 mb-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm dark:text-white focus:border-primary-500 outline-none">
-                    <option value="">Carregando...</option>
-                </select>
-                <button onclick="window.iniciarOrdem('${ordem.id}')"
-                    class="w-full py-2.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-colors"
-                    style="background:linear-gradient(135deg,#2563eb,#3b82f6);">
-                    <span class="material-symbols-rounded text-lg">play_arrow</span>
-                    Iniciar Separação
-                </button>
-            </div>`;
-    } else if (['progress','in_progress'].includes(ordem.status) && nivel >= 2) {
-        actionBtn = `
-            <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
-                <button onclick="window.concluirOrdem('${ordem.id}')"
-                    class="w-full py-2.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-colors"
-                    style="background:linear-gradient(135deg,#059669,#10b981);">
-                    <span class="material-symbols-rounded text-lg">check_circle</span>
-                    Concluir Separação
-                </button>
-            </div>`;
-    } else if (ordem.status === 'completed' && nivel >= 1) {
-        actionBtn = `
-            <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
-                <button onclick="window.irParaEntrega('${ordem.id}')"
-                    class="w-full py-2.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-colors"
-                    style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);">
-                    <span class="material-symbols-rounded text-lg">local_shipping</span>
-                    Registrar Entrega
-                </button>
-            </div>`;
-    }
-
-    // ── Monta e injeta modal ──────────────────────────────────
-    document.getElementById('ordem-detail-modal')?.remove();
-
-    const modal = document.createElement('div');
-    modal.id = 'ordem-detail-modal';
-    modal.className = 'fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm';
-
-    modal.innerHTML = `
-        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg flex flex-col" style="max-height:90vh;">
-
-            <!-- Header -->
-            <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between flex-shrink-0">
-                <div>
-                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Detalhes da Ordem</h3>
-                    <p class="text-xs text-slate-400 mt-0.5">Ordem #${ordem.id}</p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="px-3 py-1 rounded-full text-xs font-bold ${status.bg} ${status.text}">${status.label}</span>
-                    <button id="btn-fechar-modal"
-                        class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
-                        <span class="material-symbols-rounded text-lg">close</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Body scrollável -->
-            <div class="flex-1 overflow-y-auto px-5 py-5">
-
-                <!-- Campo LOTE editável -->
-                <div class="flex items-center gap-3 mb-5 p-3 rounded-xl"
-                     style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.18);">
-                    <span class="material-symbols-rounded text-indigo-400 text-lg flex-shrink-0">label</span>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Lote</p>
-
-                        <!-- View -->
-                        <div id="lote-view-wrap" class="flex items-center gap-2">
-                            <span id="lote-modal-display" class="text-sm font-semibold text-white">
-                                ${ordem.lote || '— sem lote'}
-                            </span>
-                            <button id="btn-editar-lote"
-                                class="p-0.5 text-slate-500 hover:text-indigo-400 transition-colors rounded" title="Editar lote">
-                                <span class="material-symbols-rounded text-sm">edit</span>
-                            </button>
-                        </div>
-
-                        <!-- Edit -->
-                        <div id="lote-edit-wrap" class="hidden flex items-center gap-2">
-                            <input id="lote-modal-input" type="text"
-                                placeholder="Ex: LOTE-2024-001"
-                                class="flex-1 px-2 py-1 text-sm rounded-lg text-white outline-none"
-                                style="background:rgba(255,255,255,.08);border:1px solid rgba(99,102,241,.5);">
-                            <button id="btn-salvar-lote"
-                                class="px-2.5 py-1 text-xs font-bold text-white rounded-lg"
-                                style="background:#4f46e5;">Salvar</button>
-                            <button id="btn-cancelar-lote"
-                                class="text-xs text-slate-400 hover:text-slate-200 px-1">✕</button>
-                        </div>
+window.openCreateOrderModal = function() {
+    const modalHTML = `
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" id="modal-create-order">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800">
+                <div class="sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-6 z-10">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Nova Ordem de Separação</h2>
+                        <button onclick="closeCreateOrderModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                            <span class="material-symbols-rounded text-3xl">close</span>
+                        </button>
                     </div>
                 </div>
-
-                <!-- Timeline -->
-                ${timelineHTML}
-
-                <!-- Botão de ação -->
-                ${actionBtn}
+                <div class="p-6">
+                    <form id="create-order-form" class="space-y-6" onsubmit="handleCreateOrder(event)">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Data</label>
+                            <input type="date" id="ordem-data"
+                                   value="${new Date().toISOString().split('T')[0]}"
+                                   class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary-500 dark:text-white [color-scheme:light] dark:[color-scheme:dark]"
+                                   required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Operador Responsável</label>
+                            <select id="ordem-operador"
+                                    class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary-500 dark:text-white">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Produto *</label>
+                            <input type="text" id="ordem-produto" placeholder="Ex: Sensor de Temperatura XYZ"
+                                   class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary-500 dark:text-white placeholder:text-slate-400"
+                                   required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Quantidade *</label>
+                            <input type="number" id="ordem-quantidade" min="1" placeholder="Ex: 100"
+                                   class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary-500 dark:text-white placeholder:text-slate-400"
+                                   required>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Célula/Estação</label>
+                                <input type="text" id="ordem-celula" placeholder="Ex: Linha A - Estação 3"
+                                       class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary-500 dark:text-white placeholder:text-slate-400">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Prioridade</label>
+                                <select id="ordem-prioridade"
+                                        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary-500 dark:text-white">
+                                    <option value="low">Baixa</option>
+                                    <option value="medium" selected>Média</option>
+                                    <option value="high">Alta</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Tipo de Embalagem</label>
+                            <div class="grid grid-cols-2 gap-4">
+                                <label class="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer hover:border-primary-500 transition-colors">
+                                    <input type="radio" name="tipo-embalagem" value="montadora" checked class="w-4 h-4 text-primary-600">
+                                    <div>
+                                        <p class="font-semibold text-slate-900 dark:text-white">Montadora</p>
+                                        <p class="text-xs text-slate-500">Envio direto à linha</p>
+                                    </div>
+                                </label>
+                                <label class="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer hover:border-primary-500 transition-colors">
+                                    <input type="radio" name="tipo-embalagem" value="reposicao" class="w-4 h-4 text-primary-600">
+                                    <div>
+                                        <p class="font-semibold text-slate-900 dark:text-white">Reposição</p>
+                                        <p class="text-xs text-slate-500">Reposição de estoque</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Observações</label>
+                            <textarea id="ordem-observacoes" rows="3"
+                                      placeholder="Informações adicionais sobre a ordem..."
+                                      class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary-500 dark:text-white placeholder:text-slate-400 resize-none"></textarea>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="ordem-prioridade-alta" class="w-4 h-4 text-primary-600 border-slate-300 rounded">
+                            <label for="ordem-prioridade-alta" class="text-sm text-slate-700 dark:text-slate-300">Marcar como prioridade alta</label>
+                        </div>
+                        <div class="flex items-center justify-end gap-3 pt-4">
+                            <button type="button" onclick="closeCreateOrderModal()"
+                                    class="px-6 py-3 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg font-semibold transition-colors">
+                                Cancelar
+                            </button>
+                            <button type="submit" id="btn-create-order"
+                                    class="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-primary-500/30 transition-all">
+                                <span class="material-symbols-rounded">add</span>
+                                Criar Ordem
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>`;
 
-    document.body.appendChild(modal);
-
-    // ── Event listeners (sem inline JS) ──────────────────────
-
-    // Fechar
-    document.getElementById('btn-fechar-modal').onclick = () => modal.remove();
-    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
-
-    // Editar lote
-    document.getElementById('btn-editar-lote').onclick = () => {
-        window.toggleLoteEdit(true, ordem.lote);
-    };
-    document.getElementById('btn-cancelar-lote').onclick = () => {
-        window.toggleLoteEdit(false);
-    };
-    document.getElementById('btn-salvar-lote').onclick = () => {
-        window.salvarLoteModal(ordem.id);
-    };
-    document.getElementById('lote-modal-input').addEventListener('keydown', e => {
-        if (e.key === 'Enter')  window.salvarLoteModal(ordem.id);
-        if (e.key === 'Escape') window.toggleLoteEdit(false);
-    });
-
-    // Operadores (se pendente)
-    if (ordem.status === 'pending' && nivel >= 2) {
-        carregarOperadoresModal(ordem.id);
-    }
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    if (typeof window.populateOperators === 'function') window.populateOperators('ordem-operador');
+    setTimeout(() => document.getElementById('ordem-produto')?.focus(), 100);
 };
 
-// ── Carregar operadores ───────────────────────────────────────
+window.closeCreateOrderModal = function() {
+    document.getElementById('modal-create-order')?.remove();
+    isSubmitting = false;
+};
 
-async function carregarOperadoresModal(ordemId) {
-    const sel = document.getElementById('operador-iniciar-' + ordemId);
-    if (!sel) return;
+// ── Cria ordem ────────────────────────────────────────────────
+
+async function handleCreateOrder(event) {
+    event.preventDefault();
+    if (isSubmitting) return;
+
+    const produto       = document.getElementById('ordem-produto')?.value?.trim();
+    const quantidade    = document.getElementById('ordem-quantidade')?.value;
+    const operador      = document.getElementById('ordem-operador')?.value;
+    const celula        = document.getElementById('ordem-celula')?.value?.trim();
+    const prioridade    = document.getElementById('ordem-prioridade')?.value;
+    const observacoes   = document.getElementById('ordem-observacoes')?.value?.trim();
+    const prioridadeAlta = document.getElementById('ordem-prioridade-alta')?.checked;
+    const tipoEmbalagem = document.querySelector('input[name="tipo-embalagem"]:checked')?.value;
+
+    if (!produto)            { showToast('Informe o produto!', 'warning'); return; }
+    if (!quantidade || quantidade <= 0) { showToast('Informe uma quantidade válida!', 'warning'); return; }
+
+    // ── Quem está criando ──────────────────────────────────────
+    let createdBy   = 'Sistema';
+    let createdById = null;
     try {
-        const ops = await fetchOperators();
-        sel.innerHTML = '<option value="">Selecione um operador...</option>';
-        ops.forEach(op => sel.innerHTML += `<option value="${op.id}">${op.name}</option>`);
-    } catch {
-        sel.innerHTML = '<option value="">Erro ao carregar</option>';
+        const s = JSON.parse(localStorage.getItem('ordem_pro_session') || '{}');
+        createdBy   = s?.user?.nome || s?.user?.email || 'Sistema';
+        createdById = s?.user?.id   || null;
+    } catch(_) {}
+
+    try {
+        isSubmitting = true;
+        const submitBtn = document.getElementById('btn-create-order');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<span class="material-symbols-rounded animate-spin">progress_activity</span><span>Criando...</span>`;
+        }
+
+        // Extrai linha/estação da célula
+        let linha = 'A', estacao = '1';
+        if (celula) {
+            const lm = celula.match(/linha\s*([A-Z])/i);
+            const em = celula.match(/esta[çc][aã]o\s*(\d+)/i);
+            if (lm) linha   = lm[1].toUpperCase();
+            if (em) estacao = em[1];
+        }
+
+        const timestamp    = Date.now();
+        const randomSuffix = Math.floor(Math.random() * 1000);
+        const orderId      = `${timestamp}${randomSuffix}`;
+
+        const ordemData = {
+            id:                   orderId,
+            product:              produto,
+            quantity:             parseInt(quantidade),
+            operador_responsavel: operador || null,
+            station:              celula   || null,
+            linha,
+            estacao,
+            priority:             prioridadeAlta ? 'high' : (prioridade || 'medium'),
+            status:               'pending',
+            tipo_embalagem:       tipoEmbalagem || 'montadora',
+            packaging_type:       tipoEmbalagem || 'montadora',
+            observacoes:          observacoes   || null,
+            numero_volumes:       1,
+            created_at:           new Date().toISOString(),
+            // ── Quem criou ──────────────────────────────────────
+            lote:                 lote,
+            created_by:           createdBy,
+            created_by_id:        createdById,
+        };
+
+        if (!window.supabaseClient) throw new Error('Supabase não conectado');
+
+        const { data: novaOrdem, error } = await window.supabaseClient
+            .from('orders')
+            .insert([ordemData])
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        document.getElementById('modal-create-order')?.remove();
+        showToast(`✅ Ordem ${orderId} criada por ${createdBy}!`, 'success');
+
+        setTimeout(async () => {
+            if (typeof window.loadOrders         === 'function') await window.loadOrders();
+            if (typeof window.renderRecentOrders === 'function') window.renderRecentOrders();
+            if (typeof window.renderOrdensTable  === 'function') window.renderOrdensTable();
+            if (typeof window.updateCharts       === 'function') window.updateCharts();
+            if (typeof window.renderDashboardStats === 'function') window.renderDashboardStats();
+            isSubmitting = false;
+        }, 300);
+
+    } catch(error) {
+        console.error('Erro ao criar ordem:', error);
+        const submitBtn = document.getElementById('btn-create-order');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<span class="material-symbols-rounded">add</span>Criar Ordem`;
+        }
+        isSubmitting = false;
+        showToast('Erro: ' + error.message, 'error');
     }
 }
 
-// ── Ações ─────────────────────────────────────────────────────
+window.openCreateOrderModal  = openCreateOrderModal;
+window.closeCreateOrderModal = closeCreateOrderModal;
+window.handleCreateOrder     = handleCreateOrder;
+window.handleNewOrder        = handleCreateOrder; // alias
 
-window.iniciarOrdem = async function(orderId) {
-    const sel = document.getElementById('operador-iniciar-' + orderId);
-    const operadorId = sel?.value;
-    if (!operadorId) { showToast && showToast('Selecione um operador!', 'warning'); return; }
-    const operadorNome = sel.options[sel.selectedIndex]?.text || '';
-    try {
-        const { error } = await supabaseClient.from('orders').update({
-            status: 'progress', operator_id: operadorId,
-            separador: operadorNome, inicio_separacao: new Date().toISOString(),
-        }).eq('id', orderId);
-        if (error) throw error;
-        document.getElementById('ordem-detail-modal')?.remove();
-        await loadOrders();
-        if (typeof renderRecentOrders === 'function') renderRecentOrders();
-        if (typeof renderOrdensTable  === 'function') renderOrdensTable();
-        showToast && showToast('✅ Separação iniciada!', 'success');
-    } catch(e) { showToast && showToast('Erro: ' + e.message, 'error'); }
-};
-
-window.concluirOrdem = function(orderId) {
-    document.getElementById('ordem-detail-modal')?.remove();
-    setTimeout(() => {
-        if (typeof abrirFinalizacaoModal === 'function') abrirFinalizacaoModal(orderId);
-    }, 300);
-};
-
-window.irParaEntrega = function(orderId) {
-    document.getElementById('ordem-detail-modal')?.remove();
-    if (typeof showPage === 'function') showPage('entrega');
-    setTimeout(() => {
-        const campo = document.getElementById('entrega-ordem');
-        if (campo) {
-            campo.value = orderId;
-            campo.classList.add('ring-2','ring-violet-500');
-            setTimeout(() => campo.classList.remove('ring-2','ring-violet-500'), 2000);
-        }
-        document.getElementById('entrega-responsavel')?.focus();
-        showToast && showToast('Preencha os dados de entrega e confirme', 'info');
-    }, 200);
-};
-
-window.entregarOrdem = window.irParaEntrega;
-
-console.log('✅ ordem-detail-modal.js — timeline completa');
+console.log('✅ create-order-handler.js carregado (versão final com alias)!');
