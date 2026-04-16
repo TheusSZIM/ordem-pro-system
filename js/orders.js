@@ -33,7 +33,12 @@ function renderRecentOrders() {
         const progress = calculateProgress(ordem);
         return `
             <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer" onclick="showOrdemDetail('${ordem.id}')">
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-white">${ordem.lote || ordem.id}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-white">
+                    ${ordem.lote
+                        ? `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400">${ordem.lote}</span>`
+                        : `<span class="text-slate-400 text-xs font-normal">— sem lote</span>`
+                    }
+                </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 dark:text-slate-300">${ordem.product || '-'}</td>
                 <td class="px-6 py-4 whitespace-nowrap">
                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${status.bg} ${status.text}">
