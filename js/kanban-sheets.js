@@ -195,11 +195,11 @@ function calcularHorasModelo(nomeModelo) {
 
     if (posCount === 0) return { horas:0, totalKits:0, consumo, minPosKey:'' };
 
-    // Horas = total de unidades do PN mais escasso ÷ consumo por hora
-    // (representa quanto tempo de produção o estoque atual suporta)
-    const totalKits = totalQtdMinPN;
-    const horas     = consumo > 0 ? totalKits / consumo : 0;
-    return { horas, totalKits: Math.round(totalKits), consumo, minQtd: Math.round(minQtdGlobal) };
+    // Horas = PN MÍNIMO de uma posição ÷ consumo por hora
+    // = quanto tempo de produção a posição mais crítica suporta
+    // Ex: Acoplamento com 1.848 un ÷ 120 pç/h = 15,4h
+    const horas = consumo > 0 ? minQtdGlobal / consumo : 0;
+    return { horas, totalKits: Math.round(minQtdGlobal), consumo, minQtd: Math.round(minQtdGlobal) };
 }
 
 // ── GAUGE SVG (meia-lua) ──────────────────────────────────────
@@ -351,7 +351,7 @@ function avaliarPosicao(nivel, pos) {
     const itens=estrutura.map(comp=>{
         const qtdReal=pnsPos.get(comp.pn)||0;
         const qtdEsperada=qtdBase*comp.mult;
-        const estado=qtdReal<=0?'falta':qtdReal>=qtdEsperada*1.8?'duplicado':'ok';
+        const estado=qtdReal<=0?'falta':qtdReal>=qtdEsperada*2.0?'duplicado':'ok';
         return{...comp,qtdReal,qtdEsperada,estado};
     });
     const estranhos=[];
