@@ -185,7 +185,7 @@ async function handleCreateOrder(event) {
             numero_volumes:       1,
             created_at:           new Date().toISOString(),
             // ── Quem criou ──────────────────────────────────────
-            lote:                 lote,
+            lote:                 orderId,
             created_by:           createdBy,
             created_by_id:        createdById,
         };
