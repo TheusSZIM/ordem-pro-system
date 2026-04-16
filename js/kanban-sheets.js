@@ -160,19 +160,23 @@ function getQtdBase() { return KS.qtdBase; }
 
 function calcularHorasModelo(nomeModelo) {
     const modelo   = MODELOS.find(m => m.nome === nomeModelo);
-    if (!modelo) return { horas:0, totalKits:0, consumo:0, minPosKey:'' };
+    if (!modelo) return { horas:0, totalKits:0, consumo:0 };
 
     const estrutura = ESTRUTURAS[nomeModelo] || [];
     const consumo   = KS.consumoHora[nomeModelo] || 0;
+    const qtdBase   = KS.qtdBase[nomeModelo] || 1000;
 
-    // ── Soma a quantidade de CADA PN por posição e pega o mínimo ──
-    // Cada posição física é um kanban. A hora de produção é limitada
-    // pela posição com menor estoque do componente mais escasso.
-    // Fórmula: min(PN mais escasso em cada posição) / consumo_por_hora
+    // ── Lógica correta ───────────────────────────────────────────
+    // 1. Para cada posição física (nivel+pos), acha o PN mais escasso
+    //    que tenha pelo menos 1 peça E seja da estrutura do modelo
+    // 2. Só considera posições com estrutura completa (status OK ou incompleto)
+    // 3. Soma o PN mais escasso de CADA posição válida
+    // 4. Horas = soma total ÷ consumo/hora
+    //
+    // Ex: 9 posições × 1.848 un mínima = 16.632 ÷ 120 pç/h = 138,6h
 
-    let minQtdGlobal = Infinity; // menor qtd de qualquer PN em qualquer posição
-    let totalQtdMinPN = 0;       // soma do PN mais escasso em cada posição (para display)
-    let posCount = 0;
+    let somaMinPN  = 0;  // soma do componente mínimo de cada posição
+    let posCount   = 0;
 
     for (let nivel = 0; nivel <= 12; nivel++) {
         if (NIVEL_SKIP.has(nivel)) continue;
@@ -180,26 +184,33 @@ function calcularHorasModelo(nomeModelo) {
             const pnsPos = KS.grade[nivel]?.[pos] || new Map();
             if (pnsPos.size === 0) continue;
 
-            // Qtd do PN mais escasso nesta posição
+            // Verifica se a posição tem pelo menos 1 PN da estrutura
+            let temPN = false;
+            for (const comp of estrutura) {
+                if ((pnsPos.get(comp.pn) || 0) > 0) { temPN = true; break; }
+            }
+            if (!temPN) continue;
+
+            // Pega a MENOR quantidade de qualquer PN da estrutura nesta posição
+            // (componente gargalo = determina quantas unidades pode montar)
             let minQtdPos = Infinity;
             for (const comp of estrutura) {
                 const qtd = pnsPos.get(comp.pn) || 0;
-                if (qtd > 0) minQtdPos = Math.min(minQtdPos, qtd);
+                // PN ausente (0) limita a posição — mas só conta se estrutura completa
+                const qtdEfetiva = qtd; // inclui zeros para ser conservador
+                minQtdPos = Math.min(minQtdPos, qtdEfetiva);
             }
-            if (minQtdPos === Infinity) continue;
-            totalQtdMinPN += minQtdPos;
-            minQtdGlobal   = Math.min(minQtdGlobal, minQtdPos);
+            if (minQtdPos === Infinity || minQtdPos <= 0) continue;
+
+            somaMinPN += minQtdPos;
             posCount++;
         }
     }
 
-    if (posCount === 0) return { horas:0, totalKits:0, consumo, minPosKey:'' };
+    if (posCount === 0) return { horas:0, totalKits:0, consumo };
 
-    // Horas = PN MÍNIMO de uma posição ÷ consumo por hora
-    // = quanto tempo de produção a posição mais crítica suporta
-    // Ex: Acoplamento com 1.848 un ÷ 120 pç/h = 15,4h
-    const horas = consumo > 0 ? minQtdGlobal / consumo : 0;
-    return { horas, totalKits: Math.round(minQtdGlobal), consumo, minQtd: Math.round(minQtdGlobal) };
+    const horas = consumo > 0 ? somaMinPN / consumo : 0;
+    return { horas, totalKits: Math.round(somaMinPN), consumo, posCount };
 }
 
 // ── GAUGE SVG (meia-lua) ──────────────────────────────────────
