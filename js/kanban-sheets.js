@@ -58,10 +58,12 @@ const ESTRUTURAS = {
         { pn:'20.008.1750', desc:'Tampa Respiro Ø7',       mult:1  },
     ],
     'RENAULT': [
-        { pn:'20.001.3114', desc:'Rolamento WR1630075-3',  mult:1 },
-        { pn:'20.008.9950', desc:'Tampao Ø14',             mult:1 },
-        { pn:'20.002.0344', desc:'Selo Mecanico 94566',    mult:1 },
-        { pn:'16.400.0662', desc:'Rotor PPS Renault',      mult:1 },
+        { pn:'16.400.7010', desc:'Rotor PPS MPI FFV',      mult:1 },
+        { pn:'20.001.7010', desc:'Rolamento WZ1630075',    mult:1 },
+        { pn:'20.002.1918', desc:'Selo Mecanico 94539',    mult:1 },
+        { pn:'20.003.7010', desc:'Junta metal JZ3020',     mult:1 },
+        { pn:'20.004.7015', desc:'Flange SMF4050',         mult:1 },
+        { pn:'20.008.7010', desc:'Tampão Ø16 MPI FFV',    mult:1 },
     ],
     'HYUNDAI VOLUTA': [
         { pn:'20.003.7011', desc:'Junta Saida Voluta',     mult:1 },
@@ -74,12 +76,10 @@ const ESTRUTURAS = {
         { pn:'22.010.7010', desc:'Sensor Temperatura',     mult:1 },
     ],
     'HYUNDAI PRIME': [
-        { pn:'16.400.7010', desc:'Rotor PPS MPI FFV',      mult:1 },
-        { pn:'20.001.7010', desc:'Rolamento WZ1630075',    mult:1 },
-        { pn:'20.002.1918', desc:'Selo Mecanico 94539',    mult:1 },
-        { pn:'20.003.7010', desc:'Junta metal JZ3020',     mult:1 },
-        { pn:'20.004.7015', desc:'Flange SMF4050',         mult:1 },
-        { pn:'20.008.7010', desc:'Tampão Ø16 MPI FFV',    mult:1 },
+        { pn:'20.001.3114', desc:'Rolamento WR1630075-3',  mult:1 },
+        { pn:'20.008.9950', desc:'Tampao Ø14',             mult:1 },
+        { pn:'20.002.0344', desc:'Selo Mecanico 94566',    mult:1 },
+        { pn:'16.400.0662', desc:'Rotor PPS Renault',      mult:1 },
     ],
     'MAN D08': [
         { pn:'20.001.1787', desc:'Rolamento WR2555127-1',  mult:1 },
@@ -95,9 +95,9 @@ const MODELOS = [
     { nome:'GM ASP',         pos:[3,4],  cor:'#86efac', cls:'m-gmasp',      barColor:'#22c55e' },
     { nome:'GM TURBO',       pos:[5,6],  cor:'#5eead4', cls:'m-gmturbo',    barColor:'#14b8a6' },
     { nome:'FRONT COVER',    pos:[7],    cor:'#67e8f9', cls:'m-frontcover', barColor:'#06b6d4' },
-    { nome:'RENAULT',        pos:[10],   cor:'#a5b4fc', cls:'m-renault',    barColor:'#6366f1' },
+    { nome:'RENAULT',        pos:[8],    cor:'#a5b4fc', cls:'m-renault',    barColor:'#6366f1' },
     { nome:'HYUNDAI VOLUTA', pos:[9],    cor:'#fde047', cls:'m-hyundai',    barColor:'#eab308' },
-    { nome:'HYUNDAI PRIME',  pos:[8],    cor:'#fca5a5', cls:'m-prime',      barColor:'#ef4444' },
+    { nome:'HYUNDAI PRIME',  pos:[10],   cor:'#fca5a5', cls:'m-prime',      barColor:'#ef4444' },
     { nome:'MAN D08',        pos:[11],   cor:'#93c5fd', cls:'m-man',        barColor:'#2563eb' },
 ];
 
