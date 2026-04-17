@@ -396,6 +396,76 @@ function toCSVUrl(url) {
 function parseCSVRows(csv) {
     return csv.trim().split('\n').map(line=>{const cells=[];let cur='',inQ=false;for(const ch of line){if(ch==='"')inQ=!inQ;else if((ch===','||ch===';')&&!inQ){cells.push(cur.trim());cur='';}else cur+=ch;}cells.push(cur.trim());return cells;});
 }
+// Parser para XLS (SheetJS rows — valores RAW, sem problemas de formato)
+function parseEstoqueXLS(rows) {
+    if (!rows || rows.length < 2) return {};
+
+    // Linha 0 = cabeçalho
+    const h = rows[0].map(c => String(c||'').toLowerCase().trim());
+
+    const fi = names => {
+        for (const n of names) {
+            const i = h.findIndex(c => c.includes(n));
+            if (i >= 0) return i;
+        }
+        return -1;
+    };
+
+    const iPN  = fi(['item']);
+    const iDep = fi(['dep']);
+    const iLoc = fi(['localiz']);
+    const iQty = fi(['qtd liq','quantidade','qtd']);
+
+    const grade = {};
+    const seen  = new Set();
+
+    rows.slice(1).forEach(r => {
+        if (!r || !r.length) return;
+        const dep = String(r[iDep]||'').trim().toUpperCase();
+        if (dep !== 'ALM') return;
+
+        const loc = String(r[iLoc]||'').trim().toUpperCase();
+        const m   = loc.match(/^F(\d+)-0*(\d+)$/);
+        if (!m) return;
+
+        const nivel = parseInt(m[1]), pos = parseInt(m[2]);
+        if (pos > KS.POSICOES || nivel > 12) return;
+
+        const pn = String(r[iPN]||'').trim();
+        if (!pn) return;
+
+        // Qtd: já é número (raw:true) ou string — converte sem risco de formato
+        let qtd = r[iQty];
+        if (typeof qtd === 'number') {
+            // SheetJS leu como número — usa direto
+            qtd = Math.round(qtd); // remove decimais de arredondamento
+        } else {
+            // String — remove formatação BR ou EN
+            const s = String(qtd||'0').trim();
+            // Detecta formato BR "1.920,00" vs EN "1,920.00"
+            if (/\.\d{3}/.test(s) || (s.includes(',') && !s.includes('.'))) {
+                // Formato BR: remove pontos e troca vírgula
+                qtd = parseFloat(s.replace(/\./g,'').replace(',','.')) || 0;
+            } else {
+                // Formato EN ou número simples: remove vírgulas
+                qtd = parseFloat(s.replace(/,/g,'')) || 0;
+            }
+        }
+        if (qtd <= 0) return;
+
+        // Dedup: mesmo PN + pos + qtd exata = linha duplicada do ERP
+        const chave = pn + '|' + nivel + '|' + pos + '|' + qtd;
+        if (seen.has(chave)) return;
+        seen.add(chave);
+
+        if (!grade[nivel])      grade[nivel]      = {};
+        if (!grade[nivel][pos]) grade[nivel][pos] = new Map();
+        grade[nivel][pos].set(pn, (grade[nivel][pos].get(pn)||0) + qtd);
+    });
+
+    return grade;
+}
+
 function parseEstoqueALM(csv) {
     const rows=parseCSVRows(csv); if(rows.length<2) return {};
     const h=rows[0].map(c=>(c||'').toLowerCase().trim());
@@ -446,7 +516,6 @@ async function processarUploadXLS(event) {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Aceita .xls e .xlsx
     const ext = file.name.split('.').pop().toLowerCase();
     if (!['xls','xlsx'].includes(ext)) {
         if (typeof showToast === 'function') showToast('Arquivo deve ser .xls ou .xlsx', 'warning');
@@ -457,24 +526,26 @@ async function processarUploadXLS(event) {
     animateSyncIcon(true);
 
     try {
-        // Lê o arquivo como ArrayBuffer
         const buffer = await file.arrayBuffer();
-
-        // SheetJS — disponível via CDN no index.html
-        const XLSX = window.XLSX;
+        const XLSX   = window.XLSX;
         if (!XLSX) throw new Error('SheetJS não carregado. Adicione a CDN no index.html');
 
-        const workbook  = XLSX.read(buffer, { type: 'array' });
-        const sheetName = workbook.SheetNames[0]; // primeira aba
+        const workbook  = XLSX.read(buffer, { type: 'array', cellDates: false });
+        const sheetName = workbook.SheetNames[0];
         const sheet     = workbook.Sheets[sheetName];
 
-        // Converte para CSV para usar o parser já existente
-        const csv = XLSX.utils.sheet_to_csv(sheet, { FS: ',', RS: '\n' });
+        // Lê como JSON com valores RAW (números como números, sem formatação)
+        // Isso evita o problema de "1,920" → parseFloat → 1.92
+        const rows = XLSX.utils.sheet_to_json(sheet, {
+            header: 1,       // array de arrays (linha 0 = cabeçalho)
+            defval: '',      // valor padrão para células vazias
+            raw:    true,    // valores numéricos como number, não string formatada
+        });
 
-        if (!csv || csv.length < 50) throw new Error('Arquivo vazio ou sem dados reconhecíveis');
+        if (!rows || rows.length < 2) throw new Error('Arquivo vazio ou sem dados reconhecíveis');
 
-        // Usa o mesmo parser do Google Sheets
-        KS.grade = parseEstoqueALM(csv);
+        // Processa diretamente as linhas (sem conversão CSV)
+        KS.grade = parseEstoqueXLS(rows);
 
         // Salva nome do arquivo e timestamp para referência
         KS.ultimoArquivo = file.name;
