@@ -111,6 +111,7 @@ const KS = {
     POSICOES: 11,
     grade: {},
     fonte: 'sheets',
+    gradeXLS: {},   // grade preservado do upload TOTVS
     currentFilter: 'all',
     sheetsUrl: '',
     qtdBase: { 'FIREFLY':1000,'GM ASP':1000,'GM TURBO':1000,'FRONT COVER':1000,'RENAULT':1000,'HYUNDAI VOLUTA':375,'HYUNDAI PRIME':1000,'MAN D08':1000 },
@@ -206,6 +207,7 @@ function calcularHorasModelo(nomeModelo) {
     if (posCount === 0) return { horas:0, totalKits:0, consumo };
 
     const horas = consumo > 0 ? somaMinPN / consumo : 0;
+    if (consumo > 0) console.log('[Horas] ' + nomeModelo + ': somaMinPN=' + somaMinPN + ', consumo=' + consumo + ', horas=' + horas.toFixed(1) + ', posCount=' + posCount);
     return { horas, totalKits: Math.round(somaMinPN), consumo, posCount };
 }
 
@@ -349,6 +351,8 @@ async function syncSheets() {
     try {
         const csv = await fetchCSV(url);
         KS.grade = parseEstoqueALM(csv);
+        console.log('[Sheets] Grade carregado. Amostra F11-pos1:',
+            KS.grade[11]?.[1] ? Object.fromEntries(KS.grade[11][1]) : 'vazio');
         renderShelf();
         const now = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
         setSyncStatus('✓ Sincronizado', 'ok');
@@ -545,7 +549,12 @@ async function processarUploadXLS(event) {
         if (!rows || rows.length < 2) throw new Error('Arquivo vazio ou sem dados reconhecíveis');
 
         // Processa diretamente as linhas (sem conversão CSV)
-        KS.grade = parseEstoqueXLS(rows);
+        KS.grade    = parseEstoqueXLS(rows);
+        KS.gradeXLS = KS.grade; // preserva ao trocar fonte
+
+        // Debug: mostra amostra dos valores lidos
+        console.log('[XLS] Grade carregado. Amostra F11-pos1:',
+            KS.grade[11]?.[1] ? Object.fromEntries(KS.grade[11][1]) : 'vazio');
 
         // Salva nome do arquivo e timestamp para referência
         KS.ultimoArquivo = file.name;
@@ -908,18 +917,37 @@ function animateSyncIcon(on){const i=document.getElementById('sync-icon');if(i)i
 function setKanbanFonte(fonte) {
     KS.fonte = fonte;
     localStorage.setItem('kanban_fonte', fonte);
+
     document.querySelectorAll('.kanban-fonte-tab').forEach(b => b.classList.remove('active-fonte'));
     document.getElementById('tab-' + fonte)?.classList.add('active-fonte');
     const panel = document.getElementById('kanban-totvs-panel');
     if (panel) panel.classList.toggle('visible', fonte === 'totvs');
+
     const label = document.getElementById('kanban-action-label');
     const icon  = document.getElementById('sync-icon');
+
     if (fonte === 'totvs') {
         if (label) label.textContent = 'Carregar XLS';
         if (icon)  icon.textContent  = 'upload_file';
+
+        // Restaura o grade do último upload se existir
+        if (KS.gradeXLS && Object.keys(KS.gradeXLS).length > 0) {
+            KS.grade = KS.gradeXLS;
+            renderShelf();
+            // Atualiza label da dropzone com nome do último arquivo
+            const labelDZ = document.getElementById('kanban-ultimo-arquivo');
+            if (labelDZ && KS.ultimoArquivo) {
+                labelDZ.textContent = '📄 ' + KS.ultimoArquivo;
+                labelDZ.classList.remove('hidden');
+            }
+            setSyncStatus('✓ ' + (KS.ultimoArquivo || 'Arquivo carregado'), 'ok');
+        } else {
+            setSyncStatus('Aguardando arquivo XLS do TOTVS', 'neutral');
+        }
     } else {
         if (label) label.textContent = 'Atualizar';
         if (icon)  icon.textContent  = 'sync';
+        // Ao voltar para Sheets, não apaga o gradeXLS — só sincroniza Sheets
     }
 }
 // Exporta imediatamente para que onclick do HTML funcione
