@@ -214,6 +214,7 @@ async function handleCreateOrder(event) {
 
         document.getElementById('modal-create-order')?.remove();
         showToast(`✅ Ordem ${orderId} criada por ${createdBy}!`, 'success');
+        if (window.notify) window.notify.registro(produto, quantidade);
 
         setTimeout(async () => {
             if (typeof window.loadOrders         === 'function') await window.loadOrders();
