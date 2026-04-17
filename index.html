@@ -180,6 +180,7 @@
     <script src="js/ordem-detail-modal.js"></script>
     <script src="js/finalizacao-modal.js"></script>
     <script src="js/dashboard-stats.js"></script>
+    <script src="js/dashboard.js"></script>
     <script src="js/app.js"></script>
     <script src="js/kanban-sheets.js"></script>
     <script src="js/entrega.js"></script>
@@ -336,6 +337,22 @@
                 });
                 var gs = document.getElementById('global-search');
                 if (gs) gs.value = '';
+
+                // Init dashboard layout after components load
+                setTimeout(function() {
+                    if (typeof setDashLayout === 'function') {
+                        var saved = (function(){
+                            try {
+                                var s = JSON.parse(localStorage.getItem('ordem_pro_session')||'{}');
+                                var uid = s && s.user && s.user.id ? s.user.id : 'guest';
+                                return localStorage.getItem('dash_layout_'+uid) || 'classic';
+                            } catch(e){ return 'classic'; }
+                        })();
+                        setDashLayout(saved);
+                    }
+                    if (typeof updateTime === 'function') { updateTime(); setInterval(updateTime, 1000); }
+                    if (typeof dashUpdateAll === 'function') dashUpdateAll();
+                }, 300);
             }, 100);
         });
     </script>
