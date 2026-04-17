@@ -110,6 +110,7 @@ MODELOS.forEach(m => m.pos.forEach(p => POS_MODELO[p] = m));
 const KS = {
     POSICOES: 11,
     grade: {},
+    fonte: 'sheets',
     currentFilter: 'all',
     sheetsUrl: '',
     qtdBase: { 'FIREFLY':1000,'GM ASP':1000,'GM TURBO':1000,'FRONT COVER':1000,'RENAULT':1000,'HYUNDAI VOLUTA':375,'HYUNDAI PRIME':1000,'MAN D08':1000 },
@@ -326,8 +327,24 @@ async function initKanban() {
     setSyncStatus('Carregando…', 'loading');
     await carregarConfigDoSupabase();
     if (typeof aplicarPermissoes === 'function') aplicarPermissoes();
-    if (KS.sheetsUrl) await syncSheets();
-    else setSyncStatus('Configure o Google Sheets (Admin)', 'neutral');
+    const fonteSalva = localStorage.getItem('kanban_fonte') || 'sheets';
+    KS.fonte = fonteSalva;
+    setTimeout(() => setKanbanFonte(fonteSalva), 150);
+    if (fonteSalva === 'totvs') {
+        setSyncStatus('Aguardando arquivo XLS do TOTVS', 'neutral');
+        if (Object.keys(KS.grade).length > 0) renderShelf();
+    } else {
+        if (KS.sheetsUrl) await syncSheets();
+        else setSyncStatus('Configure o Google Sheets (Admin)', 'neutral');
+    }
+}, 100);
+
+    if (KS.fonte === 'sheets') {
+        if (KS.sheetsUrl) await syncSheets();
+        else setSyncStatus('Configure o Google Sheets (Admin)', 'neutral');
+    } else {
+        setSyncStatus('Aguardando arquivo XLS do TOTVS', 'neutral');
+    }
 }
 
 // ── SYNC ─────────────────────────────────────────────────────
@@ -426,6 +443,143 @@ function parseEstoqueALM(csv) {
     });
     return grade;
 }
+
+// ── UPLOAD XLS (TOTVS) ───────────────────────────────────────
+
+function abrirUploadXLS() {
+    document.getElementById('kanban-xls-input')?.click();
+}
+
+async function processarUploadXLS(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Aceita .xls e .xlsx
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!['xls','xlsx'].includes(ext)) {
+        if (typeof showToast === 'function') showToast('Arquivo deve ser .xls ou .xlsx', 'warning');
+        return;
+    }
+
+    setSyncStatus('Lendo arquivo...', 'loading');
+    animateSyncIcon(true);
+
+    try {
+        // Lê o arquivo como ArrayBuffer
+        const buffer = await file.arrayBuffer();
+
+        // SheetJS — disponível via CDN no index.html
+        const XLSX = window.XLSX;
+        if (!XLSX) throw new Error('SheetJS não carregado. Adicione a CDN no index.html');
+
+        const workbook  = XLSX.read(buffer, { type: 'array' });
+        const sheetName = workbook.SheetNames[0]; // primeira aba
+        const sheet     = workbook.Sheets[sheetName];
+
+        // Converte para CSV para usar o parser já existente
+        const csv = XLSX.utils.sheet_to_csv(sheet, { FS: ',', RS: '
+' });
+
+        if (!csv || csv.length < 50) throw new Error('Arquivo vazio ou sem dados reconhecíveis');
+
+        // Usa o mesmo parser do Google Sheets
+        KS.grade = parseEstoqueALM(csv);
+
+        // Salva nome do arquivo e timestamp para referência
+        KS.ultimoArquivo = file.name;
+        KS.ultimaSync    = new Date();
+
+        renderShelf();
+
+        const now = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+        setSyncStatus('✓ Arquivo carregado', 'ok');
+        setText('last-sync', `${file.name} às ${now}`);
+
+        if (typeof showToast === 'function')
+            showToast(`✅ ${file.name} processado com sucesso!`, 'success');
+
+        // Atualiza info do último arquivo no painel
+        const nomeEl = document.getElementById('kanban-arquivo-nome');
+        const horaEl = document.getElementById('kanban-arquivo-hora');
+        const infoEl = document.getElementById('kanban-ultimo-arquivo');
+        const dropEl = document.getElementById('kanban-drop-zone');
+        if (nomeEl) nomeEl.textContent = file.name;
+        if (horaEl) horaEl.textContent = 'às ' + new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+        if (infoEl) { infoEl.style.display = 'flex'; infoEl.classList.remove('hidden'); }
+        if (dropEl) dropEl.style.display = 'none';
+
+    } catch(e) {
+        console.error('[Upload XLS]', e);
+        setSyncStatus('Erro ao ler arquivo', 'error');
+        if (typeof showToast === 'function')
+            showToast('Erro: ' + e.message, 'error');
+    }
+
+    animateSyncIcon(false);
+    // Limpa o input para permitir re-upload do mesmo arquivo
+    event.target.value = '';
+}
+
+window.abrirUploadXLS     = abrirUploadXLS;
+window.processarUploadXLS = processarUploadXLS;
+
+// ── FONTE DE DADOS — Sheets ou TOTVS ─────────────────────────
+
+KS.fonte = localStorage.getItem('kanban_fonte') || 'sheets';
+
+function setKanbanFonte(fonte) {
+    KS.fonte = fonte;
+    localStorage.setItem('kanban_fonte', fonte);
+
+    // Atualiza tabs
+    document.querySelectorAll('.kanban-fonte-tab').forEach(btn => {
+        btn.classList.remove('active-fonte');
+    });
+    document.getElementById('tab-' + fonte)?.classList.add('active-fonte');
+
+    // Mostra/esconde painel TOTVS
+    const panel = document.getElementById('kanban-totvs-panel');
+    if (panel) panel.classList.toggle('visible', fonte === 'totvs');
+
+    // Atualiza botão de ação
+    const btn   = document.getElementById('kanban-action-btn');
+    const label = document.getElementById('kanban-action-label');
+    const icon  = document.getElementById('sync-icon');
+
+    if (fonte === 'totvs') {
+        if (label) label.textContent = 'Carregar XLS';
+        if (icon)  icon.textContent  = 'upload_file';
+        if (btn)   btn.style.background = 'linear-gradient(135deg,#059669,#10b981)';
+    } else {
+        if (label) label.textContent = 'Atualizar';
+        if (icon)  icon.textContent  = 'sync';
+        if (btn)   btn.style.background = '';
+    }
+}
+
+function kanbanFonteAction() {
+    if (KS.fonte === 'totvs') abrirUploadXLS();
+    else syncSheets();
+}
+
+// Drag & drop no painel TOTVS
+window.kanbanHandleDrop = function(event) {
+    event.preventDefault();
+    const dz = document.getElementById('kanban-drop-zone');
+    if (dz) dz.style.background = 'rgba(16,185,129,.06)';
+    const file = event.dataTransfer?.files?.[0];
+    if (!file) return;
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!['xls','xlsx'].includes(ext)) {
+        if (typeof showToast === 'function') showToast('Arquivo deve ser .xls ou .xlsx', 'warning');
+        return;
+    }
+    // Simula o evento de upload
+    processarUploadXLS({ target: { files: [file], value: '' } });
+};
+
+window.setKanbanFonte    = setKanbanFonte;
+window.kanbanFonteAction = kanbanFonteAction;
 
 // ── AVALIA POSIÇÃO ────────────────────────────────────────────
 
@@ -715,7 +869,43 @@ function animateSyncIcon(on){const i=document.getElementById('sync-icon');if(i)i
 
 // ── EXPORTS ───────────────────────────────────────────────────
 
-window.initKanban=initKanban; window.syncSheets=syncSheets; window.filterKanban=filterKanban;
+// ── FONTE DE DADOS — TABS ─────────────────────────────────────
+
+function setKanbanFonte(fonte) {
+    KS.fonte = fonte;
+    localStorage.setItem('kanban_fonte', fonte);
+    document.querySelectorAll('.kanban-fonte-tab').forEach(b => b.classList.remove('active-fonte'));
+    document.getElementById('tab-' + fonte)?.classList.add('active-fonte');
+    const panel = document.getElementById('kanban-totvs-panel');
+    if (panel) panel.classList.toggle('visible', fonte === 'totvs');
+    const label = document.getElementById('kanban-action-label');
+    const icon  = document.getElementById('sync-icon');
+    if (fonte === 'totvs') {
+        if (label) label.textContent = 'Carregar XLS';
+        if (icon)  icon.textContent  = 'upload_file';
+    } else {
+        if (label) label.textContent = 'Atualizar';
+        if (icon)  icon.textContent  = 'sync';
+    }
+}
+
+function kanbanFonteAction() {
+    if (KS.fonte === 'totvs') abrirUploadXLS();
+    else syncSheets();
+}
+
+window.kanbanHandleDrop = function(event) {
+    event.preventDefault();
+    const file = event.dataTransfer?.files?.[0];
+    if (!file) return;
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    const inp = document.getElementById('kanban-xls-input');
+    if (inp) { inp.files = dt.files; inp.dispatchEvent(new Event('change',{bubbles:true})); }
+};
+
+
+window.initKanban=initKanban; window.setKanbanFonte=setKanbanFonte; window.kanbanFonteAction=kanbanFonteAction; window.syncSheets=syncSheets; window.filterKanban=filterKanban;
 window.openSheetsConfig=openSheetsConfig; window.closeSheetsConfig=closeSheetsConfig; window.saveSheetsConfig=saveSheetsConfig;
 window.openKanbanDetail=openKanbanDetail; window.closeKanbanDetail=closeKanbanDetail;
 window.openQtdConfig=openQtdConfig; window.closeQtdConfig=closeQtdConfig; window.salvarQtdConfig=salvarQtdConfig;
