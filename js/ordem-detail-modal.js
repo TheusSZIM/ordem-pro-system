@@ -326,6 +326,7 @@ window.iniciarOrdem = async function(orderId) {
         if (typeof renderRecentOrders === 'function') renderRecentOrders();
         if (typeof renderOrdensTable  === 'function') renderOrdensTable();
         showToast && showToast('✅ Separação iniciada!', 'success');
+        if (window.notify) window.notify.inicio(ordem?.product, operadorNome);
     } catch(e) { showToast && showToast('Erro: ' + e.message, 'error'); }
 };
 
