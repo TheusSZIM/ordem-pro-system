@@ -19,6 +19,7 @@ const ESTRUTURAS = {
         { pn:'20.006.3299', desc:'Nipple Inox Ø20',        mult:1 },
         { pn:'20.008.3289', desc:'Tampao Inox Ø32',        mult:1 },
         { pn:'20.003.3295', desc:'Junta Carcaca',          mult:1 },
+        { pn:'16.400.3029', desc:'Rotor PPS Ø46',          mult:1 },
         { pn:'20.001.3339', desc:'Rolamento Lip Seal HNBR',mult:1 },
         { pn:'20.002.0344', desc:'Selo Mecanico 94566',    mult:1 },
         { pn:'20.007.4288', desc:'Parafuso M5X24,5',       mult:1 },
@@ -30,6 +31,7 @@ const ESTRUTURAS = {
         { pn:'20.006.3299', desc:'Nipple Inox Ø20',        mult:1 },
         { pn:'20.008.3289', desc:'Tampao Inox Ø32',        mult:1 },
         { pn:'20.003.3295', desc:'Junta Carcaca',          mult:1 },
+        { pn:'16.400.3292', desc:'Rotor PPS Ø51,5 Turbo', mult:1 },
         { pn:'20.001.3340', desc:'Rolamento FKM',          mult:1 },
         { pn:'20.002.0344', desc:'Selo Mecanico 94566',    mult:1 },
         { pn:'20.007.4300', desc:'Parafuso M6x16',         mult:1 },
@@ -40,17 +42,20 @@ const ESTRUTURAS = {
     'FRONT COVER': [
         { pn:'20.007.3403', desc:'Parafuso M6X16',         mult:4  },
         { pn:'20.007.3404', desc:'Parafuso M8X28',         mult:4  },
+        { pn:'20.005.3414', desc:'Anel Externo',           mult:11 },
         { pn:'20.005.0005', desc:'Palheta',                mult:2  },
         { pn:'20.006.3418', desc:'Bucha Guia',             mult:1  },
         { pn:'20.009.0001', desc:'Mola Anel Externo',      mult:1  },
         { pn:'20.003.3419', desc:'Anel Vedação PTFE',      mult:1  },
         { pn:'20.003.0010', desc:'Junta Deslizamento FKM', mult:1  },
+        { pn:'20.006.3420', desc:'Válvula SAE 8620',       mult:1  },
         { pn:'20.009.0002', desc:'Mola Válvula',           mult:1  },
         { pn:'20.007.3408', desc:'Parafuso Bujão',         mult:1  },
         { pn:'20.007.3409', desc:'Parafuso M5x15',         mult:1  },
         { pn:'20.010.0001', desc:'Eletroválvula',          mult:1  },
         { pn:'20.009.0003', desc:'Mola Válvula Seg.',      mult:1  },
         { pn:'20.006.3416', desc:'Esfera G Cr15',          mult:1  },
+        { pn:'20.003.0012', desc:'Retentor PTFE/ACM',      mult:1  },
         { pn:'20.003.3422', desc:'Junta HNBR J727',        mult:2  },
         { pn:'20.005.3427', desc:'Anel da Palheta',        mult:1  },
         { pn:'20.007.4635', desc:'Parafuso Tampão M6',     mult:2  },
@@ -527,35 +532,7 @@ window.processarUploadXLS = processarUploadXLS;
 
 KS.fonte = localStorage.getItem('kanban_fonte') || 'sheets';
 
-function setKanbanFonte(fonte) {
-    KS.fonte = fonte;
-    localStorage.setItem('kanban_fonte', fonte);
 
-    // Atualiza tabs
-    document.querySelectorAll('.kanban-fonte-tab').forEach(btn => {
-        btn.classList.remove('active-fonte');
-    });
-    document.getElementById('tab-' + fonte)?.classList.add('active-fonte');
-
-    // Mostra/esconde painel TOTVS
-    const panel = document.getElementById('kanban-totvs-panel');
-    if (panel) panel.classList.toggle('visible', fonte === 'totvs');
-
-    // Atualiza botão de ação
-    const btn   = document.getElementById('kanban-action-btn');
-    const label = document.getElementById('kanban-action-label');
-    const icon  = document.getElementById('sync-icon');
-
-    if (fonte === 'totvs') {
-        if (label) label.textContent = 'Carregar XLS';
-        if (icon)  icon.textContent  = 'upload_file';
-        if (btn)   btn.style.background = 'linear-gradient(135deg,#059669,#10b981)';
-    } else {
-        if (label) label.textContent = 'Atualizar';
-        if (icon)  icon.textContent  = 'sync';
-        if (btn)   btn.style.background = '';
-    }
-}
 
 function kanbanFonteAction() {
     if (KS.fonte === 'totvs') abrirUploadXLS();
@@ -888,11 +865,14 @@ function setKanbanFonte(fonte) {
         if (icon)  icon.textContent  = 'sync';
     }
 }
+// Exporta imediatamente para que onclick do HTML funcione
+window.setKanbanFonte = setKanbanFonte;
 
 function kanbanFonteAction() {
     if (KS.fonte === 'totvs') abrirUploadXLS();
     else syncSheets();
 }
+window.kanbanFonteAction = kanbanFonteAction;
 
 window.kanbanHandleDrop = function(event) {
     event.preventDefault();
