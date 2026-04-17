@@ -123,6 +123,7 @@ async function handleEntrega(event) {
 
         const loteLabel = ordem.lote ? `Lote ${ordem.lote}` : `Ordem #${ordemId}`;
         showToast(`✅ Entrega de ${loteLabel} registrada!`, 'success');
+        if (window.notify) window.notify.entrega(ordem.product, responsavel);
 
     } catch (err) {
         console.error('Erro ao registrar entrega:', err);
