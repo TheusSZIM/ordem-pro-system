@@ -31,7 +31,8 @@ function renderDashboardStats() {
     setText('stat-em-separacao',    emSeparacao);
     setText('stat-concluidas-hoje', concluidasHoje);
     setText('stat-total',           total);
-    setText('distribution-total',   total);
+    // distribution-total removido — o plugin centerText do Chart.js
+    // já renderiza o total diretamente no canvas do donut
 
     // Círculos de progresso
     drawCircle('progress-a-separar',    aSeparar,       total, '#f59e0b');
