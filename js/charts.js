@@ -1,64 +1,9 @@
-// ============================================
-// CHARTS.JS — Dashboard Gráficos
-// Linha Amarela: ordens registradas por dia
-// Linha Azul:    ordens concluídas por dia
-// Atualização dinâmica a cada 15s
-// ============================================
+// ── Command Center chart (performanceChart4) ──────────────────
 
-let weekChart   = null;
-let pieChart    = null;
-let chartMode   = 'semana'; // 'semana' | 'mes'
-let chartTimer  = null;
+let cmdChart = null;
 
-// ── Gera dados dos últimos N dias agrupando por data ─────────
-
-function getChartData(days) {
-    const orders = window.state?.orders || [];
-    const labels  = [];
-    const criadas  = [];   // amarelo: criadas no dia
-    const concluidas = []; // azul: concluídas no dia
-
-    const today = new Date();
-    today.setHours(23,59,59,999);
-
-    for (let i = days - 1; i >= 0; i--) {
-        const d = new Date(today);
-        d.setDate(today.getDate() - i);
-        const dStr = d.toISOString().slice(0,10); // yyyy-mm-dd
-
-        labels.push(
-            days <= 7
-                ? d.toLocaleDateString('pt-BR', { weekday:'short' }).replace('.','')
-                : d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' })
-        );
-
-        // Criadas: qualquer ordem criada nesse dia
-        criadas.push(orders.filter(o => {
-            const dt = o.created_at || o.data_prevista || '';
-            return dt.slice(0,10) === dStr;
-        }).length);
-
-        // Concluídas: ordens com status completed ou delivered finalizadas nesse dia
-        concluidas.push(orders.filter(o => {
-            if (!['completed','delivered'].includes(o.status)) return false;
-            const dt = o.fim_separacao || o.data_entrega || o.updated_at || '';
-            return dt.slice(0,10) === dStr;
-        }).length);
-    }
-
-    return { labels, criadas, concluidas };
-}
-
-// ── Inicializa / atualiza o gráfico de linha ─────────────────
-
-function initCharts() {
-    buildWeekChart();
-    buildPieChart();
-    startChartTimer();
-}
-
-function buildWeekChart() {
-    const ctx = document.getElementById('performanceChart');
+function buildCommandChart() {
+    const ctx = document.getElementById('performanceChart4');
     if (!ctx) return;
 
     const days = chartMode === 'semana' ? 7 : 30;
@@ -70,30 +15,30 @@ function buildWeekChart() {
             labels,
             datasets: [
                 {
-                    label: 'Ordens Registradas',
+                    label: 'Registradas',
                     data: criadas,
-                    borderColor: '#eab308',
-                    backgroundColor: 'rgba(234,179,8,.08)',
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99,102,241,.07)',
                     borderWidth: 2.5,
-                    pointBackgroundColor: '#eab308',
-                    pointBorderColor: '#0f172a',
+                    pointBackgroundColor: '#6366f1',
+                    pointBorderColor: '#0d1526',
                     pointBorderWidth: 2,
-                    pointRadius: 5,
-                    pointHoverRadius: 8,
+                    pointRadius: 4,
+                    pointHoverRadius: 7,
                     tension: 0.45,
                     fill: true,
                 },
                 {
-                    label: 'Ordens Concluídas',
+                    label: 'Concluídas',
                     data: concluidas,
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59,130,246,.08)',
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16,185,129,.07)',
                     borderWidth: 2.5,
-                    pointBackgroundColor: '#3b82f6',
-                    pointBorderColor: '#0f172a',
+                    pointBackgroundColor: '#10b981',
+                    pointBorderColor: '#0d1526',
                     pointBorderWidth: 2,
-                    pointRadius: 5,
-                    pointHoverRadius: 8,
+                    pointRadius: 4,
+                    pointHoverRadius: 7,
                     tension: 0.45,
                     fill: true,
                 },
@@ -103,49 +48,33 @@ function buildWeekChart() {
             responsive: true,
             maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
-            animation: {
-                duration: 900,
-                easing: 'easeInOutQuart',
-            },
+            animation: { duration: 900, easing: 'easeInOutQuart' },
             plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                    align: 'end',
-                    labels: {
-                        color: '#94a3b8',
-                        font: { size: 12, family: "'Plus Jakarta Sans', sans-serif", weight: '600' },
-                        usePointStyle: true,
-                        pointStyleWidth: 10,
-                        boxHeight: 6,
-                        padding: 20,
-                    }
-                },
+                legend: { display: false },
                 tooltip: {
-                    backgroundColor: '#1e293b',
-                    borderColor: 'rgba(148,163,184,.2)',
+                    backgroundColor: '#111827',
+                    borderColor: 'rgba(255,255,255,.08)',
                     borderWidth: 1,
                     titleColor: '#f1f5f9',
                     bodyColor: '#94a3b8',
                     padding: 12,
                     cornerRadius: 10,
                     callbacks: {
-                        title: items => items[0].label,
                         label: item => ` ${item.dataset.label}: ${item.parsed.y} ordens`,
                     }
                 }
             },
             scales: {
                 x: {
-                    grid: { color: 'rgba(148,163,184,.07)', drawBorder: false },
-                    ticks: { color: '#64748b', font: { size: 11, family: "'Plus Jakarta Sans', sans-serif" } },
+                    grid: { color: 'rgba(255,255,255,.04)', drawBorder: false },
+                    ticks: { color: '#475569', font: { size: 10 } },
                 },
                 y: {
                     beginAtZero: true,
-                    grid: { color: 'rgba(148,163,184,.07)', drawBorder: false },
+                    grid: { color: 'rgba(255,255,255,.04)', drawBorder: false },
                     ticks: {
-                        color: '#64748b',
-                        font: { size: 11 },
+                        color: '#475569',
+                        font: { size: 10 },
                         stepSize: 1,
                         callback: v => Number.isInteger(v) ? v : null,
                     },
@@ -154,147 +83,21 @@ function buildWeekChart() {
         }
     };
 
-    if (weekChart) {
-        // Atualização suave dos dados
-        weekChart.data.labels              = labels;
-        weekChart.data.datasets[0].data    = criadas;
-        weekChart.data.datasets[1].data    = concluidas;
-        weekChart.update('active');
+    if (cmdChart) {
+        cmdChart.data.labels           = labels;
+        cmdChart.data.datasets[0].data = criadas;
+        cmdChart.data.datasets[1].data = concluidas;
+        cmdChart.update('active');
     } else {
-        weekChart = new Chart(ctx, cfg);
+        cmdChart = new Chart(ctx, cfg);
     }
 }
 
-// ── Gráfico de pizza (distribuição) ──────────────────────────
+// Sobrescreve initCharts para incluir o command chart
+const _initChartsOriginal = window.initCharts;
+window.initCharts = function() {
+    _initChartsOriginal && _initChartsOriginal();
+    buildCommandChart();
+};
 
-function buildPieChart() {
-    const ctx = document.getElementById('distributionChart');
-    if (!ctx) return;
-
-    const orders = window.state?.orders || [];
-    const pending   = orders.filter(o=>o.status==='pending').length;
-    const progress  = orders.filter(o=>['progress','in_progress'].includes(o.status)).length;
-    const completed = orders.filter(o=>o.status==='completed').length;
-    const delivered = orders.filter(o=>o.status==='delivered').length;
-    const total = pending + progress + completed + delivered || 1;
-
-    const cfg = {
-        type: 'doughnut',
-        data: {
-            labels: ['A Separar', 'Em Separação', 'Concluídas', 'Entregues'],
-            datasets: [{
-                data: [pending, progress, completed, delivered],
-                backgroundColor: [
-                    'rgba(99,102,241,.8)',
-                    'rgba(59,130,246,.8)',
-                    'rgba(16,185,129,.8)',
-                    'rgba(234,179,8,.8)',
-                ],
-                borderColor: '#0f172a',
-                borderWidth: 3,
-                hoverOffset: 8,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '70%',
-            animation: { duration: 900, easing: 'easeInOutQuart' },
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        color: '#94a3b8',
-                        font: { size: 11, family: "'Plus Jakarta Sans', sans-serif", weight: '600' },
-                        usePointStyle: true, padding: 16,
-                    }
-                },
-                tooltip: {
-                    backgroundColor: '#1e293b',
-                    borderColor: 'rgba(148,163,184,.2)',
-                    borderWidth: 1,
-                    titleColor: '#f1f5f9',
-                    bodyColor: '#94a3b8',
-                    padding: 12,
-                    cornerRadius: 10,
-                    callbacks: {
-                        label: item => ` ${item.label}: ${item.parsed} (${Math.round(item.parsed/total*100)}%)`,
-                    }
-                }
-            }
-        },
-        plugins: [{
-            // Texto central
-            id: 'centerText',
-            beforeDraw(chart) {
-                const { width, height, ctx: c } = chart;
-                c.save();
-                const cx = width / 2, cy = height / 2 - 10;
-                c.font = `bold 28px 'Plus Jakarta Sans', sans-serif`;
-                c.fillStyle = '#f1f5f9';
-                c.textAlign = 'center'; c.textBaseline = 'middle';
-                c.fillText(total, cx, cy);
-                c.font = `12px 'Plus Jakarta Sans', sans-serif`;
-                c.fillStyle = '#64748b';
-                c.fillText('Total', cx, cy + 22);
-                c.restore();
-            }
-        }]
-    };
-
-    if (pieChart) {
-        pieChart.data.datasets[0].data = [pending, progress, completed, delivered];
-        pieChart.update('active');
-    } else {
-        pieChart = new Chart(ctx, cfg);
-    }
-}
-
-// ── Auto-refresh a cada 15s com animação suave ────────────────
-
-function startChartTimer() {
-    if (chartTimer) clearInterval(chartTimer);
-    chartTimer = setInterval(() => {
-        // Busca dados atualizados
-        if (typeof loadOrders === 'function') {
-            loadOrders().then(() => {
-                buildWeekChart();
-                buildPieChart();
-                // Pulsa o indicador de atualização
-                const dot = document.getElementById('chart-live-dot');
-                if (dot) {
-                    dot.style.transform = 'scale(2)';
-                    dot.style.opacity   = '1';
-                    setTimeout(() => { dot.style.transform = 'scale(1)'; dot.style.opacity = '.7'; }, 400);
-                }
-            });
-        } else {
-            buildWeekChart();
-            buildPieChart();
-        }
-    }, 15000);
-}
-
-// ── Toggle Semana / Mês ───────────────────────────────────────
-
-function toggleChartMode(mode) {
-    chartMode = mode;
-    document.querySelectorAll('.chart-mode-btn').forEach(b =>
-        b.classList.toggle('active-chart-btn', b.dataset.mode === mode));
-    buildWeekChart();
-}
-
-// ── Chamado quando dados são atualizados externamente ─────────
-
-function updateCharts() {
-    buildWeekChart();
-    buildPieChart();
-}
-
-window.initCharts    = initCharts;
-window.updateCharts  = updateCharts;
-window.toggleChartMode = toggleChartMode;
-window.buildWeekChart  = buildWeekChart;
-window.buildPieChart   = buildPieChart;
-
-console.log('✅ charts.js carregado — atualização dinâmica a cada 15s');
+window.buildCommandChart = buildCommandChart;
