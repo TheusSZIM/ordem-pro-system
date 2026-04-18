@@ -12,30 +12,51 @@
 .skel-num{height:36px;width:48px}.skel-circ{width:72px;height:72px;border-radius:50%}
 @keyframes pulse-dot{0%,90%,100%{transform:scale(1);opacity:.6}93%{transform:scale(2.4);opacity:1;background:#60a5fa}96%{transform:scale(1);opacity:.6}}
 #chart-live-dot{animation:pulse-dot 15s ease-in-out infinite}
-
-/* Layout switcher */
 .layout-btn{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:9px;cursor:pointer;border:1.5px solid rgba(148,163,184,.2);color:#64748b;background:transparent;transition:all .2s}
 .layout-btn:hover{border-color:rgba(99,102,241,.5);color:#6366f1;background:rgba(99,102,241,.08)}
 .layout-btn.active-layout{background:rgba(99,102,241,.15);border-color:rgba(99,102,241,.5);color:#818cf8}
-.layout-btn-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-top:2px;color:inherit;display:block;line-height:1}
-
-/* Layout panels */
-.dash-layout{display:none}
-.dash-layout.active{display:block}
-
-/* Cards */
+.dash-layout{display:none}.dash-layout.active{display:block}
 .metric-card{background:white;border-radius:16px;padding:20px;border:1px solid rgba(148,163,184,.15);transition:transform .2s,box-shadow .2s;cursor:pointer}
 .dark .metric-card{background:#0f172a}
 .metric-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.12)}
-
-/* Chart buttons */
 .chart-mode-btn{padding:4px 12px;border-radius:7px;font-size:11px;font-weight:600;border:1.5px solid rgba(148,163,184,.25);color:#64748b;cursor:pointer;transition:all .2s;background:transparent}
 .chart-mode-btn:hover{border-color:#3b82f6;color:#60a5fa}
 .active-chart-btn{background:#3b82f6!important;border-color:#3b82f6!important;color:#fff!important}
-
-/* Timeline card */
 .tl-card{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;border:1px solid rgba(148,163,184,.1);background:rgba(148,163,184,.04);transition:background .15s;cursor:pointer}
 .tl-card:hover{background:rgba(99,102,241,.07)}
+
+/* ── Command layout ── */
+.cmd-card{background:#0d1526;border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:24px;transition:border-color .2s,transform .2s;cursor:default;position:relative;overflow:hidden}
+.cmd-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at top left,rgba(99,102,241,.07),transparent 60%);pointer-events:none}
+.cmd-card:hover{border-color:rgba(99,102,241,.25)}
+.cmd-badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.cmd-badge-queue{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.25)}
+.cmd-badge-active{background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.25)}
+.cmd-badge-done{background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(16,185,129,.25)}
+.cmd-badge-deliver{background:rgba(139,92,246,.15);color:#a78bfa;border:1px solid rgba(139,92,246,.25)}
+.cmd-total-card{background:linear-gradient(135deg,#111827,#0d1526);border:1px solid rgba(99,102,241,.2);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:border-color .2s,transform .2s}
+.cmd-total-card::after{content:'';position:absolute;right:-30px;top:-30px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,.12),transparent 70%)}
+.cmd-total-card:hover{border-color:rgba(99,102,241,.4);transform:translateY(-2px)}
+.cmd-number{font-size:52px;font-weight:900;line-height:1;letter-spacing:-3px;color:#f1f5f9}
+.cmd-trend{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;background:rgba(16,185,129,.12);color:#34d399}
+.cmd-stat-num{font-size:38px;font-weight:900;line-height:1;letter-spacing:-2px;margin-top:8px}
+.cmd-order-row{display:flex;align-items:center;gap:12px;padding:11px 10px;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;transition:background .15s;border-radius:8px}
+.cmd-order-row:hover{background:rgba(99,102,241,.07)}
+.cmd-order-row:last-child{border-bottom:none}
+.cmd-order-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.cmd-order-info{flex:1;min-width:0}
+.cmd-order-lote{display:block;font-size:12px;font-weight:700;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cmd-order-product{font-size:10px;color:#64748b}
+.cmd-order-badge{font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:3px 8px;border-radius:20px;flex-shrink:0}
+.cmd-order-date{font-size:10px;color:#475569;flex-shrink:0;font-variant-numeric:tabular-nums}
+.cmd-empty{font-size:12px;color:#475569;text-align:center;padding:24px}
+.cmd-section-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#475569;margin-bottom:6px;display:block}
+@keyframes cmd-in{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.cmd-animate{animation:cmd-in .5s cubic-bezier(.16,1,.3,1) both}
+.cmd-animate:nth-child(1){animation-delay:.04s}.cmd-animate:nth-child(2){animation-delay:.1s}
+.cmd-animate:nth-child(3){animation-delay:.16s}.cmd-animate:nth-child(4){animation-delay:.22s}
+.cmd-animate:nth-child(5){animation-delay:.28s}.cmd-animate:nth-child(6){animation-delay:.34s}
+.cmd-action-btn{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;border:1px solid}
 </style>
 
 <div id="dashboard" class="page active p-4 lg:p-6 max-w-[1700px] mx-auto">
@@ -60,7 +81,6 @@
                 <span class="material-symbols-rounded">refresh</span>
             </button>
             <div class="w-px h-8 bg-slate-200 dark:bg-slate-700"></div>
-            <!-- Layout switcher -->
             <div class="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl" title="Selecionar visualização">
                 <button class="layout-btn active-layout" onclick="setDashLayout('classic')" id="layout-btn-classic" title="Clássico">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="0" y="0" width="6" height="6" rx="1.5"/><rect x="8" y="0" width="6" height="6" rx="1.5"/><rect x="0" y="8" width="6" height="6" rx="1.5"/><rect x="8" y="8" width="6" height="6" rx="1.5"/></svg>
@@ -70,6 +90,9 @@
                 </button>
                 <button class="layout-btn" onclick="setDashLayout('compact')" id="layout-btn-compact" title="Compacto">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="0" y="0" width="14" height="3" rx="1.5"/><rect x="0" y="5.5" width="14" height="3" rx="1.5"/><rect x="0" y="11" width="14" height="3" rx="1.5"/></svg>
+                </button>
+                <button class="layout-btn" onclick="setDashLayout('command')" id="layout-btn-command" title="Command Center">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="0" y="0" width="8" height="8" rx="1.5"/><rect x="10" y="0" width="4" height="3.5" rx="1"/><rect x="10" y="5" width="4" height="3.5" rx="1"/><rect x="0" y="10" width="14" height="4" rx="1.5"/></svg>
                 </button>
             </div>
         </div>
@@ -107,7 +130,6 @@
                 <div class="flex items-center gap-1 text-xs text-white/70"><span class="material-symbols-rounded text-base">trending_up</span><span id="stat-crescimento">+12% este mês</span></div>
             </div>
         </div>
-
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
             <div class="lg:col-span-3 bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800">
                 <div class="flex items-center justify-between mb-4">
@@ -126,7 +148,6 @@
             <div class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800">
                 <h3 class="font-bold text-slate-900 dark:text-white mb-1">Distribuição</h3>
                 <p class="text-xs text-slate-400 mb-4">Status atual das ordens</p>
-                <!-- id mantido oculto para compatibilidade com dashboard-stats.js -->
                 <span id="distribution-total" style="display:none"></span>
                 <div class="h-40 flex items-center justify-center relative overflow-hidden">
                     <canvas id="distributionChart"></canvas>
@@ -139,7 +160,6 @@
                 </div>
             </div>
         </div>
-
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                 <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
@@ -159,22 +179,10 @@
             <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800">
                 <h3 class="font-bold text-slate-900 dark:text-white mb-4">Ações Rápidas</h3>
                 <div class="space-y-2">
-                    <button onclick="showModal('new-order')" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left group">
-                        <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-primary-100 dark:bg-primary-900/30"><span class="material-symbols-rounded text-primary-600 dark:text-primary-400 text-lg" style="font-variation-settings:'FILL' 1">add_circle</span></div>
-                        <div><p class="text-sm font-semibold text-slate-700 dark:text-slate-200">Nova Ordem</p><p class="text-xs text-slate-400">Registrar separação</p></div>
-                    </button>
-                    <button onclick="showPage('kanban')" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left group">
-                        <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-indigo-100 dark:bg-indigo-900/30"><span class="material-symbols-rounded text-indigo-600 dark:text-indigo-400 text-lg" style="font-variation-settings:'FILL' 1">view_kanban</span></div>
-                        <div><p class="text-sm font-semibold text-slate-700 dark:text-slate-200">Kanban</p><p class="text-xs text-slate-400">Ver prateleira F</p></div>
-                    </button>
-                    <button onclick="showPage('entrega')" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left group">
-                        <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-violet-100 dark:bg-violet-900/30"><span class="material-symbols-rounded text-violet-600 dark:text-violet-400 text-lg" style="font-variation-settings:'FILL' 1">local_shipping</span></div>
-                        <div><p class="text-sm font-semibold text-slate-700 dark:text-slate-200">Registrar Entrega</p><p class="text-xs text-slate-400">Saída de ordens prontas</p></div>
-                    </button>
-                    <button onclick="showPage('estoque')" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left group">
-                        <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-amber-100 dark:bg-amber-900/30"><span class="material-symbols-rounded text-amber-600 dark:text-amber-400 text-lg" style="font-variation-settings:'FILL' 1">inventory_2</span></div>
-                        <div><p class="text-sm font-semibold text-slate-700 dark:text-slate-200">Estoque</p><p class="text-xs text-slate-400">Regularizações pendentes</p></div>
-                    </button>
+                    <button onclick="showModal('new-order')" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left group"><div class="w-9 h-9 rounded-xl flex items-center justify-center bg-primary-100 dark:bg-primary-900/30"><span class="material-symbols-rounded text-primary-600 dark:text-primary-400 text-lg" style="font-variation-settings:'FILL' 1">add_circle</span></div><div><p class="text-sm font-semibold text-slate-700 dark:text-slate-200">Nova Ordem</p><p class="text-xs text-slate-400">Registrar separação</p></div></button>
+                    <button onclick="showPage('kanban')" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left group"><div class="w-9 h-9 rounded-xl flex items-center justify-center bg-indigo-100 dark:bg-indigo-900/30"><span class="material-symbols-rounded text-indigo-600 dark:text-indigo-400 text-lg" style="font-variation-settings:'FILL' 1">view_kanban</span></div><div><p class="text-sm font-semibold text-slate-700 dark:text-slate-200">Kanban</p><p class="text-xs text-slate-400">Ver prateleira F</p></div></button>
+                    <button onclick="showPage('entrega')" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left group"><div class="w-9 h-9 rounded-xl flex items-center justify-center bg-violet-100 dark:bg-violet-900/30"><span class="material-symbols-rounded text-violet-600 dark:text-violet-400 text-lg" style="font-variation-settings:'FILL' 1">local_shipping</span></div><div><p class="text-sm font-semibold text-slate-700 dark:text-slate-200">Registrar Entrega</p><p class="text-xs text-slate-400">Saída de ordens prontas</p></div></button>
+                    <button onclick="showPage('estoque')" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left group"><div class="w-9 h-9 rounded-xl flex items-center justify-center bg-amber-100 dark:bg-amber-900/30"><span class="material-symbols-rounded text-amber-600 dark:text-amber-400 text-lg" style="font-variation-settings:'FILL' 1">inventory_2</span></div><div><p class="text-sm font-semibold text-slate-700 dark:text-slate-200">Estoque</p><p class="text-xs text-slate-400">Regularizações pendentes</p></div></button>
                 </div>
             </div>
         </div>
@@ -183,47 +191,19 @@
     <!-- ═══════ LAYOUT 2 — ANALYTICS ═══════ -->
     <div id="layout-analytics" class="dash-layout space-y-5">
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div class="metric-card card-reveal" onclick="showPage('ordens')">
-                <div class="flex items-center justify-between">
-                    <div><p class="text-xs text-slate-500 dark:text-slate-400 font-medium">A Separar</p><div id="al-a-separar" class="text-2xl font-bold text-amber-500 mt-0.5">—</div></div>
-                    <span class="material-symbols-rounded text-3xl text-amber-400 opacity-20" style="font-variation-settings:'FILL' 1">pending</span>
-                </div>
-                <div class="mt-2 h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="al-bar-pending" class="h-full bg-amber-400 rounded-full transition-all duration-700" style="width:0%"></div></div>
-            </div>
-            <div class="metric-card card-reveal" onclick="showPage('ordens')">
-                <div class="flex items-center justify-between">
-                    <div><p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Em Separação</p><div id="al-em-separacao" class="text-2xl font-bold text-blue-500 mt-0.5">—</div></div>
-                    <span class="material-symbols-rounded text-3xl text-blue-400 opacity-20" style="font-variation-settings:'FILL' 1">sync</span>
-                </div>
-                <div class="mt-2 h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="al-bar-progress" class="h-full bg-blue-500 rounded-full transition-all duration-700" style="width:0%"></div></div>
-            </div>
-            <div class="metric-card card-reveal" onclick="showPage('ordens')">
-                <div class="flex items-center justify-between">
-                    <div><p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Concluídas</p><div id="al-concluidas" class="text-2xl font-bold text-emerald-500 mt-0.5">—</div></div>
-                    <span class="material-symbols-rounded text-3xl text-emerald-400 opacity-20" style="font-variation-settings:'FILL' 1">task_alt</span>
-                </div>
-                <div class="mt-2 h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="al-bar-completed" class="h-full bg-emerald-500 rounded-full transition-all duration-700" style="width:0%"></div></div>
-            </div>
-            <div class="metric-card card-reveal" style="background:linear-gradient(135deg,#1e293b,#0f172a);border:1px solid rgba(99,102,241,.3)">
-                <div class="flex items-center justify-between">
-                    <div><p class="text-xs text-white/50 font-medium">Eficiência</p><div id="al-eficiencia" class="text-2xl font-bold text-white mt-0.5">—%</div></div>
-                    <svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="4"/><circle id="al-efic-arc" cx="24" cy="24" r="20" fill="none" stroke="#6366f1" stroke-width="4" stroke-linecap="round" stroke-dasharray="125.6" stroke-dashoffset="125.6" transform="rotate(-90 24 24)" style="transition:stroke-dashoffset .8s ease"/></svg>
-                </div>
-                <p class="text-xs text-white/40 mt-1">concluídas + entregues / total</p>
-            </div>
+            <div class="metric-card card-reveal" onclick="showPage('ordens')"><div class="flex items-center justify-between"><div><p class="text-xs text-slate-500 dark:text-slate-400 font-medium">A Separar</p><div id="al-a-separar" class="text-2xl font-bold text-amber-500 mt-0.5">—</div></div><span class="material-symbols-rounded text-3xl text-amber-400 opacity-20" style="font-variation-settings:'FILL' 1">pending</span></div><div class="mt-2 h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="al-bar-pending" class="h-full bg-amber-400 rounded-full transition-all duration-700" style="width:0%"></div></div></div>
+            <div class="metric-card card-reveal" onclick="showPage('ordens')"><div class="flex items-center justify-between"><div><p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Em Separação</p><div id="al-em-separacao" class="text-2xl font-bold text-blue-500 mt-0.5">—</div></div><span class="material-symbols-rounded text-3xl text-blue-400 opacity-20" style="font-variation-settings:'FILL' 1">sync</span></div><div class="mt-2 h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="al-bar-progress" class="h-full bg-blue-500 rounded-full transition-all duration-700" style="width:0%"></div></div></div>
+            <div class="metric-card card-reveal" onclick="showPage('ordens')"><div class="flex items-center justify-between"><div><p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Concluídas</p><div id="al-concluidas" class="text-2xl font-bold text-emerald-500 mt-0.5">—</div></div><span class="material-symbols-rounded text-3xl text-emerald-400 opacity-20" style="font-variation-settings:'FILL' 1">task_alt</span></div><div class="mt-2 h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="al-bar-completed" class="h-full bg-emerald-500 rounded-full transition-all duration-700" style="width:0%"></div></div></div>
+            <div class="metric-card card-reveal" style="background:linear-gradient(135deg,#1e293b,#0f172a);border:1px solid rgba(99,102,241,.3)"><div class="flex items-center justify-between"><div><p class="text-xs text-white/50 font-medium">Eficiência</p><div id="al-eficiencia" class="text-2xl font-bold text-white mt-0.5">—%</div></div><svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="4"/><circle id="al-efic-arc" cx="24" cy="24" r="20" fill="none" stroke="#6366f1" stroke-width="4" stroke-linecap="round" stroke-dasharray="125.6" stroke-dashoffset="125.6" transform="rotate(-90 24 24)" style="transition:stroke-dashoffset .8s ease"/></svg></div><p class="text-xs text-white/40 mt-1">concluídas + entregues / total</p></div>
         </div>
-
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800">
-                <div class="flex items-center justify-between mb-4">
-                    <div><h3 class="font-bold text-slate-900 dark:text-white">Histórico de Produção</h3><p class="text-xs text-slate-400 mt-0.5">Ordens registradas vs concluídas</p></div>
-                    <div class="flex gap-1"><button class="chart-mode-btn active-chart-btn" onclick="switchChartMode('week',this)">7d</button><button class="chart-mode-btn" onclick="switchChartMode('month',this)">30d</button></div>
-                </div>
+                <div class="flex items-center justify-between mb-4"><div><h3 class="font-bold text-slate-900 dark:text-white">Histórico de Produção</h3><p class="text-xs text-slate-400 mt-0.5">Ordens registradas vs concluídas</p></div><div class="flex gap-1"><button class="chart-mode-btn active-chart-btn" onclick="switchChartMode('week',this)">7d</button><button class="chart-mode-btn" onclick="switchChartMode('month',this)">30d</button></div></div>
                 <div class="h-56"><canvas id="performanceChart2"></canvas></div>
             </div>
             <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800">
                 <h3 class="font-bold text-slate-900 dark:text-white mb-3">Volume por Status</h3>
-                <div class="space-y-3" id="al-status-bars">
+                <div class="space-y-3">
                     <div class="space-y-1"><div class="flex justify-between text-xs"><span class="text-slate-500">A Separar</span><span class="font-bold text-amber-500" id="al-pct-pending">—</span></div><div class="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="al-barp-pending" class="h-full bg-amber-400 rounded-full transition-all duration-700" style="width:0%"></div></div></div>
                     <div class="space-y-1"><div class="flex justify-between text-xs"><span class="text-slate-500">Em Separação</span><span class="font-bold text-blue-500" id="al-pct-progress">—</span></div><div class="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="al-barp-progress" class="h-full bg-blue-500 rounded-full transition-all duration-700" style="width:0%"></div></div></div>
                     <div class="space-y-1"><div class="flex justify-between text-xs"><span class="text-slate-500">Concluídas</span><span class="font-bold text-emerald-500" id="al-pct-completed">—</span></div><div class="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="al-barp-completed" class="h-full bg-emerald-500 rounded-full transition-all duration-700" style="width:0%"></div></div></div>
@@ -240,47 +220,21 @@
     <!-- ═══════ LAYOUT 3 — COMPACTO ═══════ -->
     <div id="layout-compact" class="dash-layout space-y-4">
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div class="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 text-center cursor-pointer hover:border-amber-400 transition-colors" onclick="showPage('ordens')">
-                <div id="cp-pending" class="text-3xl font-black text-amber-500">—</div>
-                <div class="text-xs text-slate-400 mt-0.5 font-medium">A Separar</div>
-                <div class="w-full h-1 bg-amber-100 dark:bg-amber-900/20 rounded-full mt-2"><div id="cp-bar-pending" class="h-full bg-amber-400 rounded-full transition-all" style="width:0%"></div></div>
-            </div>
-            <div class="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 text-center cursor-pointer hover:border-blue-400 transition-colors" onclick="showPage('ordens')">
-                <div id="cp-progress" class="text-3xl font-black text-blue-500">—</div>
-                <div class="text-xs text-slate-400 mt-0.5 font-medium">Em Separação</div>
-                <div class="w-full h-1 bg-blue-100 dark:bg-blue-900/20 rounded-full mt-2"><div id="cp-bar-progress" class="h-full bg-blue-500 rounded-full transition-all" style="width:0%"></div></div>
-            </div>
-            <div class="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 text-center cursor-pointer hover:border-emerald-400 transition-colors" onclick="showPage('ordens')">
-                <div id="cp-completed" class="text-3xl font-black text-emerald-500">—</div>
-                <div class="text-xs text-slate-400 mt-0.5 font-medium">Concluídas</div>
-                <div class="w-full h-1 bg-emerald-100 dark:bg-emerald-900/20 rounded-full mt-2"><div id="cp-bar-completed" class="h-full bg-emerald-500 rounded-full transition-all" style="width:0%"></div></div>
-            </div>
-            <div class="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 text-center cursor-pointer hover:border-violet-400 transition-colors" onclick="showPage('ordens')">
-                <div id="cp-delivered" class="text-3xl font-black text-violet-500">—</div>
-                <div class="text-xs text-slate-400 mt-0.5 font-medium">Entregues</div>
-                <div class="w-full h-1 bg-violet-100 dark:bg-violet-900/20 rounded-full mt-2"><div id="cp-bar-delivered" class="h-full bg-violet-500 rounded-full transition-all" style="width:0%"></div></div>
-            </div>
+            <div class="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 text-center cursor-pointer hover:border-amber-400 transition-colors" onclick="showPage('ordens')"><div id="cp-pending" class="text-3xl font-black text-amber-500">—</div><div class="text-xs text-slate-400 mt-0.5 font-medium">A Separar</div><div class="w-full h-1 bg-amber-100 dark:bg-amber-900/20 rounded-full mt-2"><div id="cp-bar-pending" class="h-full bg-amber-400 rounded-full transition-all" style="width:0%"></div></div></div>
+            <div class="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 text-center cursor-pointer hover:border-blue-400 transition-colors" onclick="showPage('ordens')"><div id="cp-progress" class="text-3xl font-black text-blue-500">—</div><div class="text-xs text-slate-400 mt-0.5 font-medium">Em Separação</div><div class="w-full h-1 bg-blue-100 dark:bg-blue-900/20 rounded-full mt-2"><div id="cp-bar-progress" class="h-full bg-blue-500 rounded-full transition-all" style="width:0%"></div></div></div>
+            <div class="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 text-center cursor-pointer hover:border-emerald-400 transition-colors" onclick="showPage('ordens')"><div id="cp-completed" class="text-3xl font-black text-emerald-500">—</div><div class="text-xs text-slate-400 mt-0.5 font-medium">Concluídas</div><div class="w-full h-1 bg-emerald-100 dark:bg-emerald-900/20 rounded-full mt-2"><div id="cp-bar-completed" class="h-full bg-emerald-500 rounded-full transition-all" style="width:0%"></div></div></div>
+            <div class="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 text-center cursor-pointer hover:border-violet-400 transition-colors" onclick="showPage('ordens')"><div id="cp-delivered" class="text-3xl font-black text-violet-500">—</div><div class="text-xs text-slate-400 mt-0.5 font-medium">Entregues</div><div class="w-full h-1 bg-violet-100 dark:bg-violet-900/20 rounded-full mt-2"><div id="cp-bar-delivered" class="h-full bg-violet-500 rounded-full transition-all" style="width:0%"></div></div></div>
         </div>
-
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
             <div class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
-                <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">Semana</h3>
-                    <div class="flex gap-1"><button class="chart-mode-btn active-chart-btn" style="padding:3px 10px;font-size:11px" onclick="switchChartMode('week',this)">7d</button><button class="chart-mode-btn" style="padding:3px 10px;font-size:11px" onclick="switchChartMode('month',this)">30d</button></div>
-                </div>
+                <div class="flex items-center justify-between mb-3"><h3 class="text-sm font-bold text-slate-900 dark:text-white">Semana</h3><div class="flex gap-1"><button class="chart-mode-btn active-chart-btn" style="padding:3px 10px;font-size:11px" onclick="switchChartMode('week',this)">7d</button><button class="chart-mode-btn" style="padding:3px 10px;font-size:11px" onclick="switchChartMode('month',this)">30d</button></div></div>
                 <div class="h-36"><canvas id="performanceChart3"></canvas></div>
             </div>
             <div class="lg:col-span-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-                <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800">
-                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">Ordens Recentes</h3>
-                    <button onclick="showPage('ordens')" class="text-xs text-primary-600 font-semibold">Ver todas →</button>
-                </div>
-                <div class="divide-y divide-slate-100 dark:divide-slate-800 overflow-y-auto" style="max-height:180px" id="cp-orders-list">
-                    <div class="px-4 py-3 text-xs text-slate-400 text-center">Carregando...</div>
-                </div>
+                <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800"><h3 class="text-sm font-bold text-slate-900 dark:text-white">Ordens Recentes</h3><button onclick="showPage('ordens')" class="text-xs text-primary-600 font-semibold">Ver todas →</button></div>
+                <div class="divide-y divide-slate-100 dark:divide-slate-800 overflow-y-auto" style="max-height:180px" id="cp-orders-list"><div class="px-4 py-3 text-xs text-slate-400 text-center">Carregando...</div></div>
             </div>
         </div>
-
         <div class="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
             <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Ações Rápidas</p>
             <div class="flex flex-wrap gap-2">
@@ -290,6 +244,142 @@
                 <button onclick="showPage('estoque')" class="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 hover:bg-amber-100 transition-colors"><span class="material-symbols-rounded text-base">inventory_2</span>Estoque</button>
                 <button onclick="showPage('equipe')" class="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 transition-colors"><span class="material-symbols-rounded text-base">group</span>Equipe</button>
             </div>
+        </div>
+    </div>
+
+    <!-- ═══════ LAYOUT 4 — COMMAND CENTER ═══════ -->
+    <div id="layout-command" class="dash-layout space-y-4">
+
+        <!-- Fila 1: Total + 3 status cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="cmd-total-card cmd-animate" onclick="showPage('ordens')">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
+                    <div>
+                        <span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#6366f1;display:block;margin-bottom:8px">Total de Ordens</span>
+                        <div class="cmd-number" id="cmd-total">—</div>
+                    </div>
+                    <span class="material-symbols-rounded" style="font-size:34px;color:rgba(99,102,241,.3);font-variation-settings:'FILL' 1;position:relative;z-index:1">receipt_long</span>
+                </div>
+                <span class="cmd-trend"><span class="material-symbols-rounded" style="font-size:12px">trending_up</span>+12% este mês</span>
+            </div>
+
+            <div class="cmd-card cmd-animate" onclick="showPage('ordens');setOrdensTab&&setOrdensTab('pending')" style="cursor:pointer">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+                    <span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#64748b">A Separar</span>
+                    <span class="cmd-badge cmd-badge-queue">FILA</span>
+                </div>
+                <div class="cmd-stat-num" id="cmd-pending" style="color:#f59e0b">—</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:10px">
+                    <span class="material-symbols-rounded" style="font-size:14px;color:#f59e0b">pending</span>
+                    <span style="font-size:11px;color:#64748b">aguardando operador</span>
+                </div>
+            </div>
+
+            <div class="cmd-card cmd-animate" onclick="showPage('ordens');setOrdensTab&&setOrdensTab('progress')" style="cursor:pointer">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+                    <span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#64748b">Em Separação</span>
+                    <span class="cmd-badge cmd-badge-active">ATIVO</span>
+                </div>
+                <div class="cmd-stat-num" id="cmd-progress" style="color:#60a5fa">—</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:10px">
+                    <span class="material-symbols-rounded" style="font-size:14px;color:#60a5fa">groups</span>
+                    <span style="font-size:11px;color:#64748b">em andamento agora</span>
+                </div>
+            </div>
+
+            <div class="cmd-card cmd-animate" onclick="showPage('ordens');setOrdensTab&&setOrdensTab('completed')" style="cursor:pointer">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+                    <span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#64748b">Concluídas</span>
+                    <span class="cmd-badge cmd-badge-done">PRONTO</span>
+                </div>
+                <div class="cmd-stat-num" id="cmd-completed" style="color:#34d399">—</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:10px">
+                    <span class="material-symbols-rounded" style="font-size:14px;color:#34d399">check_circle</span>
+                    <span style="font-size:11px;color:#64748b">separações finalizadas</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fila 2: Gráfico + Eficiência/Ações -->
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+            <div class="lg:col-span-3 cmd-card cmd-animate" style="padding:20px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+                    <div>
+                        <span class="cmd-section-label">Desempenho Semanal</span>
+                        <p style="font-size:15px;font-weight:700;color:#e2e8f0;margin:0">Registradas vs Concluídas</p>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px">
+                        <span style="display:flex;align-items:center;gap:5px">
+                            <span style="width:7px;height:7px;background:#6366f1;border-radius:50%;display:inline-block"></span>
+                            <span style="font-size:10px;color:#475569;font-family:monospace">LIVE 15s</span>
+                        </span>
+                        <div style="display:flex;gap:4px">
+                            <button class="chart-mode-btn active-chart-btn" onclick="switchChartMode('week',this)" style="font-size:10px;padding:3px 10px">7d</button>
+                            <button class="chart-mode-btn" onclick="switchChartMode('month',this)" style="font-size:10px;padding:3px 10px">30d</button>
+                        </div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:16px;margin-bottom:10px">
+                    <span style="display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b"><span style="width:20px;height:2px;background:#6366f1;border-radius:2px;display:inline-block"></span>Registradas</span>
+                    <span style="display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b"><span style="width:20px;height:2px;background:#10b981;border-radius:2px;display:inline-block"></span>Concluídas</span>
+                </div>
+                <div style="height:180px"><canvas id="performanceChart4"></canvas></div>
+            </div>
+
+            <div class="lg:col-span-2 flex flex-col gap-4">
+                <!-- Arco de eficiência -->
+                <div class="cmd-card cmd-animate" style="padding:20px;flex:1">
+                    <span class="cmd-section-label">Eficiência Operacional</span>
+                    <div style="display:flex;align-items:center;gap:16px;margin-top:8px">
+                        <div style="position:relative;flex-shrink:0">
+                            <svg width="110" height="110" viewBox="0 0 120 120">
+                                <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="10" stroke-linecap="round"/>
+                                <circle id="cmd-efic-arc" cx="60" cy="60" r="54" fill="none" stroke="#10b981" stroke-width="10" stroke-linecap="round" stroke-dasharray="339.3" stroke-dashoffset="339.3" transform="rotate(-90 60 60)" style="transition:stroke-dashoffset .9s cubic-bezier(.4,0,.2,1),stroke .4s ease"/>
+                            </svg>
+                            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                                <span id="cmd-efic" style="font-size:22px;font-weight:900;line-height:1;letter-spacing:-1px;color:#10b981;transition:color .4s">—</span>
+                                <span style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#475569;margin-top:2px">eficiência</span>
+                            </div>
+                        </div>
+                        <div style="flex:1;min-width:0">
+                            <div style="margin-bottom:14px">
+                                <p style="font-size:10px;color:#64748b;margin-bottom:3px">Entregues</p>
+                                <div style="display:flex;align-items:center;gap:6px">
+                                    <span class="cmd-badge cmd-badge-deliver">ENTREGUE</span>
+                                    <span id="cmd-delivered" style="font-size:20px;font-weight:900;color:#a78bfa;letter-spacing:-1px">—</span>
+                                </div>
+                            </div>
+                            <div>
+                                <p style="font-size:10px;color:#64748b;margin-bottom:3px">Conc. + Entregues</p>
+                                <p id="cmd-done-sum" style="font-size:20px;font-weight:900;color:#e2e8f0;letter-spacing:-1px">—</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ações rápidas -->
+                <div class="cmd-card cmd-animate" style="padding:16px">
+                    <span class="cmd-section-label">Ações Rápidas</span>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+                        <button onclick="showModal('new-order')" class="cmd-action-btn" style="background:rgba(99,102,241,.1);border-color:rgba(99,102,241,.2);color:#818cf8" onmouseover="this.style.background='rgba(99,102,241,.2)'" onmouseout="this.style.background='rgba(99,102,241,.1)'"><span class="material-symbols-rounded" style="font-size:15px">add_circle</span>Nova Ordem</button>
+                        <button onclick="showPage('kanban')" class="cmd-action-btn" style="background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.2);color:#60a5fa" onmouseover="this.style.background='rgba(59,130,246,.2)'" onmouseout="this.style.background='rgba(59,130,246,.1)'"><span class="material-symbols-rounded" style="font-size:15px">view_kanban</span>Kanban</button>
+                        <button onclick="showPage('entrega')" class="cmd-action-btn" style="background:rgba(139,92,246,.1);border-color:rgba(139,92,246,.2);color:#a78bfa" onmouseover="this.style.background='rgba(139,92,246,.2)'" onmouseout="this.style.background='rgba(139,92,246,.1)'"><span class="material-symbols-rounded" style="font-size:15px">local_shipping</span>Entrega</button>
+                        <button onclick="showPage('estoque')" class="cmd-action-btn" style="background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.2);color:#fbbf24" onmouseover="this.style.background='rgba(245,158,11,.2)'" onmouseout="this.style.background='rgba(245,158,11,.1)'"><span class="material-symbols-rounded" style="font-size:15px">inventory_2</span>Estoque</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fila 3: Ordens recentes -->
+        <div class="cmd-card cmd-animate" style="padding:20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+                <div>
+                    <span class="cmd-section-label">Ordens Recentes</span>
+                    <p style="font-size:15px;font-weight:700;color:#e2e8f0;margin:0">Últimas movimentações</p>
+                </div>
+                <button onclick="showPage('ordens')" style="font-size:12px;font-weight:700;color:#6366f1;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.2);padding:6px 14px;border-radius:8px;cursor:pointer;transition:background .2s" onmouseover="this.style.background='rgba(99,102,241,.2)'" onmouseout="this.style.background='rgba(99,102,241,.1)'">Ver todas →</button>
+            </div>
+            <div id="cmd-orders-list"><div class="cmd-empty">Carregando...</div></div>
         </div>
     </div>
 </div>
