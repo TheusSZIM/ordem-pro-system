@@ -1,6 +1,6 @@
 // ============================================================
 // DASHBOARD — js/dashboard.js
-// Layout switcher + analytics + compact updaters
+// Layout switcher + analytics + compact + command updaters
 // ============================================================
 
 // ── Layout switcher ───────────────────────────────────────────
@@ -140,11 +140,70 @@ function updateCompactLayout() {
     }
 }
 
+// ── Command layout ────────────────────────────────────────────
+
+function updateCommandLayout() {
+    const orders = window.state?.orders || [];
+    const total     = orders.length;
+    const pending   = orders.filter(o => o.status === 'pending').length;
+    const progress  = orders.filter(o => ['progress','in_progress'].includes(o.status)).length;
+    const completed = orders.filter(o => o.status === 'completed').length;
+    const delivered = orders.filter(o => o.status === 'delivered').length;
+    const efic      = total > 0 ? Math.round((completed + delivered) / total * 100) : 0;
+
+    const set = (id, v) => { const e = document.getElementById(id); if(e) e.textContent = v; };
+
+    set('cmd-total',     total);
+    set('cmd-pending',   pending);
+    set('cmd-progress',  progress);
+    set('cmd-completed', completed);
+    set('cmd-delivered', delivered);
+    set('cmd-efic',      efic + '%');
+    set('cmd-done-sum',  completed + delivered);
+
+    // Arco de eficiência
+    const arc = document.getElementById('cmd-efic-arc');
+    if (arc) {
+        const circ = 2 * Math.PI * 54;
+        arc.style.strokeDasharray  = circ;
+        arc.style.strokeDashoffset = circ * (1 - efic / 100);
+        arc.style.stroke = efic >= 80 ? '#10b981' : efic >= 50 ? '#f59e0b' : '#ef4444';
+    }
+    const eficTxt = document.getElementById('cmd-efic-color');
+    if (eficTxt) eficTxt.style.color = efic >= 80 ? '#10b981' : efic >= 50 ? '#f59e0b' : '#ef4444';
+
+    // Lista de ordens recentes
+    const list = document.getElementById('cmd-orders-list');
+    if (list) {
+        const sc = {
+            pending:    {c:'#f59e0b', bg:'rgba(245,158,11,.12)', label:'FILA'},
+            progress:   {c:'#3b82f6', bg:'rgba(59,130,246,.12)', label:'ATIVO'},
+            in_progress:{c:'#3b82f6', bg:'rgba(59,130,246,.12)', label:'ATIVO'},
+            completed:  {c:'#10b981', bg:'rgba(16,185,129,.12)', label:'PRONTO'},
+            delivered:  {c:'#8b5cf6', bg:'rgba(139,92,246,.12)', label:'ENTREGUE'},
+        };
+        list.innerHTML = orders.slice(0,6).map(o => {
+            const cfg = sc[o.status] || sc.pending;
+            const dt  = new Date(o.created_at).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+            return `<div class="cmd-order-row" onclick="showOrdemDetail('${o.id}')">
+                <div class="cmd-order-dot" style="background:${cfg.c}"></div>
+                <div class="cmd-order-info">
+                    <span class="cmd-order-lote">${o.lote || '—'}</span>
+                    <span class="cmd-order-product">${o.product || '—'} · ${o.quantity||0} un</span>
+                </div>
+                <span class="cmd-order-badge" style="background:${cfg.bg};color:${cfg.c}">${cfg.label}</span>
+                <span class="cmd-order-date">${dt}</span>
+            </div>`;
+        }).join('') || '<div class="cmd-empty">Nenhuma ordem registrada</div>';
+    }
+}
+
 // ── Shared ────────────────────────────────────────────────────
 
 function dashUpdateAll() {
     updateAnalyticsLayout();
     updateCompactLayout();
+    updateCommandLayout();
 }
 
 window.refreshDashboard = function() {
@@ -166,10 +225,11 @@ window.updateTime = function() {
 
 // ── Exports ───────────────────────────────────────────────────
 
-window.setDashLayout         = setDashLayout;
-window.updateAnalyticsLayout = updateAnalyticsLayout;
-window.updateCompactLayout   = updateCompactLayout;
-window.dashUpdateAll         = dashUpdateAll;
+window.setDashLayout          = setDashLayout;
+window.updateAnalyticsLayout  = updateAnalyticsLayout;
+window.updateCompactLayout    = updateCompactLayout;
+window.updateCommandLayout    = updateCommandLayout;
+window.dashUpdateAll          = dashUpdateAll;
 
 // Listen to state updates
 document.addEventListener('stateUpdated', dashUpdateAll);
@@ -185,4 +245,4 @@ document.addEventListener('pageChanged', e => {
     }
 });
 
-console.log('✅ dashboard.js — 3 layouts carregados');
+console.log('✅ dashboard.js — 4 layouts carregados (classic, analytics, compact, command)');
