@@ -34,18 +34,40 @@
   --em-amber:  #fbbf24;
 }
 
-/* ── Fonte global ──────────────────────────────────────────── */
-body, * {
+/* ── Fonte global — NÃO sobrescreve ícones Material Symbols ── */
+body,
+p, span:not(.material-symbols-rounded):not([class*="material"]),
+div:not(.material-symbols-rounded),
+a, button, input, select, textarea,
+label, td, th, li, ul, ol,
+.card, [class*="card"] {
   font-family: 'Exo 2', 'Plus Jakarta Sans', sans-serif !important;
 }
+
+/* Títulos em Rajdhani */
 h1, h2, h3, h4, h5,
-.text-2xl, .text-3xl, .text-4xl,
-.font-bold, .font-extrabold, .font-black,
 .page-title, [class*="page-title"],
-.stat-value, [class*="stat-value"],
-.text-4xl, .text-5xl {
+[class*="stat-value"],
+[class*="font-bold"][class*="text-4xl"],
+[class*="font-bold"][class*="text-3xl"],
+[class*="font-extrabold"],
+[class*="font-black"] {
   font-family: 'Rajdhani', 'Exo 2', sans-serif !important;
   letter-spacing: 0.02em !important;
+}
+
+/* Garante que ícones NÃO são afetados */
+.material-symbols-rounded,
+[class*="material-symbols"],
+[class*="material-icons"] {
+  font-family: 'Material Symbols Rounded' !important;
+  font-weight: normal !important;
+  font-style: normal !important;
+  letter-spacing: normal !important;
+  word-wrap: normal !important;
+  white-space: nowrap !important;
+  direction: ltr !important;
+  -webkit-font-smoothing: antialiased !important;
 }
 
 /* ── Reset base ────────────────────────────────────────────── */
