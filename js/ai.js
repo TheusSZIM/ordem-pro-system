@@ -15,10 +15,15 @@ const VetoAI = (() => {
   let _busy = false;
 
   const CFG = {
-    key:       'AIzaSyCHGuI3ihk5LAwnvutTQga66ZkAqOSVBwU',
-    model:     'gemini-1.5-flash',
+    key:       'AIzaSyCHGuI3ihk5LAwnvutTQga66ZkAqOSVBwU', // aistudio.google.com → Get API Key
     maxTokens: 600,
     histMax:   16,
+    // modelos tentados em ordem — para na primeira que funcionar
+    models: [
+      'gemini-2.0-flash',          // rápido, gratuito, disponível
+      'gemini-2.0-flash-lite',     // leve, fallback
+      'gemini-2.5-flash',          // mais poderoso, fallback
+    ],
   };
 
   // ── Contexto dinâmico ──────────────────────────────────────────
@@ -312,31 +317,35 @@ Ajude com: busca/explicação de ordens, status, funcionalidades, operações de
 </div>`;
   }
 
-  // ── Gemini API ─────────────────────────────────────────────────
+  // ── Gemini API — tenta modelos em sequência ────────────────────
   async function _ask(text) {
     _msgs.push({ role: 'user', parts: [{ text }] });
     if (_msgs.length > CFG.histMax) _msgs = _msgs.slice(-CFG.histMax);
 
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${CFG.model}:generateContent?key=${CFG.key}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: _ctx() }] },
-          contents: _msgs,
-          generationConfig: { maxOutputTokens: CFG.maxTokens, temperature: 0.75 },
-        }),
-      }
-    );
-    if (res.status === 429) throw new Error('RATE_LIMIT');
-    if (res.status === 403) throw new Error('FORBIDDEN');
-    if (!res.ok) throw new Error(`Gemini ${res.status}`);
-    const data  = await res.json();
-    const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text
-      || 'Não consegui uma resposta. 😅 Tenta de novo?';
-    _msgs.push({ role: 'model', parts: [{ text: reply }] });
-    return reply;
+    const body = JSON.stringify({
+      system_instruction: { parts: [{ text: _ctx() }] },
+      contents: _msgs,
+      generationConfig: { maxOutputTokens: CFG.maxTokens, temperature: 0.75 },
+    });
+
+    let lastStatus = 0;
+    for (const model of CFG.models) {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${CFG.key}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }
+      );
+      lastStatus = res.status;
+      if (res.status === 429) throw new Error('RATE_LIMIT');
+      if (res.status === 403) throw new Error('FORBIDDEN');
+      if (!res.ok) continue; // tenta próximo modelo
+      const data  = await res.json();
+      const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text
+        || 'Não consegui uma resposta. 😅 Tenta de novo?';
+      _msgs.push({ role: 'model', parts: [{ text: reply }] });
+      console.log('[Vito] Modelo OK:', model);
+      return reply;
+    }
+    throw new Error(`ALL_FAILED_${lastStatus}`);
   }
 
   // ── DOM helpers ────────────────────────────────────────────────
@@ -403,11 +412,17 @@ Ajude com: busca/explicação de ordens, status, funcionalidades, operações de
       _addMsg('bot', await _ask(text));
     } catch(e) {
       console.error('[Vito]', e);
-      const msg =
-        e.message === 'RATE_LIMIT' ? '⏳ Muitas requisições por minuto! Aguarda alguns segundinhos e tenta de novo. 😅'
-        : e.message === 'FORBIDDEN' ? '🔑 Chave de API sem permissão. Verifique em aistudio.google.com se a chave está ativa.'
-        : CFG.key === 'SUA_CHAVE_GEMINI_AQUI' ? '⚠️ Configure a chave da API!\n\naistudio.google.com → "Get API Key" → cole em **CFG.key** no `js/ai.js`.'
-        : 'Ops, não consegui conectar agora. 😅 Tenta em instantes!';
+      let msg;
+      if (CFG.key === 'SUA_CHAVE_GEMINI_AQUI')
+        msg = '⚠️ Chave não configurada!\n\nVá em **aistudio.google.com** → "Get API Key" e cole em CFG.key no arquivo `js/ai.js`.';
+      else if (e.message === 'RATE_LIMIT')
+        msg = '⏳ Muitas requisições! Aguarda uns segundos e tenta de novo. 😅';
+      else if (e.message === 'FORBIDDEN')
+        msg = '🔑 Permissão negada. Verifique se a chave está ativa em **aistudio.google.com**.';
+      else if (e.message?.startsWith('ALL_FAILED_404'))
+        msg = '⚠️ Nenhum modelo encontrado (404).\n\n**Possíveis causas:**\n• Chave criada há menos de 5 min — aguarde um pouco\n• Chave do Google Cloud (não do AI Studio)\n\nTeste sua chave em:\naistudio.google.com → My API Keys';
+      else
+        msg = 'Ops, não consegui conectar agora. 😅 Tenta em instantes!';
       _addMsg('bot', msg);
     } finally {
       _hideTyping();
