@@ -16,7 +16,7 @@ const VetoAI = (() => {
 
   const CFG = {
     key:       'AIzaSyCHGuI3ihk5LAwnvutTQga66ZkAqOSVBwU',
-    model:     'gemini-2.0-flash',
+    model:     'gemini-1.5-flash',
     maxTokens: 600,
     histMax:   16,
   };
@@ -329,6 +329,8 @@ Ajude com: busca/explicação de ordens, status, funcionalidades, operações de
         }),
       }
     );
+    if (res.status === 429) throw new Error('RATE_LIMIT');
+    if (res.status === 403) throw new Error('FORBIDDEN');
     if (!res.ok) throw new Error(`Gemini ${res.status}`);
     const data  = await res.json();
     const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text
@@ -401,9 +403,12 @@ Ajude com: busca/explicação de ordens, status, funcionalidades, operações de
       _addMsg('bot', await _ask(text));
     } catch(e) {
       console.error('[Vito]', e);
-      _addMsg('bot', CFG.key === 'SUA_CHAVE_GEMINI_AQUI'
-        ? '⚠️ Configure a chave da API!\n\naistudio.google.com → "Get API Key" → cole em **CFG.key** no arquivo `js/ai.js`.'
-        : 'Ops, não consegui conectar agora. 😅 Tenta em instantes!');
+      const msg =
+        e.message === 'RATE_LIMIT' ? '⏳ Muitas requisições por minuto! Aguarda alguns segundinhos e tenta de novo. 😅'
+        : e.message === 'FORBIDDEN' ? '🔑 Chave de API sem permissão. Verifique em aistudio.google.com se a chave está ativa.'
+        : CFG.key === 'SUA_CHAVE_GEMINI_AQUI' ? '⚠️ Configure a chave da API!\n\naistudio.google.com → "Get API Key" → cole em **CFG.key** no `js/ai.js`.'
+        : 'Ops, não consegui conectar agora. 😅 Tenta em instantes!';
+      _addMsg('bot', msg);
     } finally {
       _hideTyping();
       _busy = false;
