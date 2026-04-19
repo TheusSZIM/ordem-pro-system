@@ -13,6 +13,7 @@ const VetoAI = (() => {
   let _open = false;
   let _msgs = [];
   let _busy = false;
+  let _cooldownUntil = 0;
 
   const CFG = {
     key:       'AIzaSyCHGuI3ihk5LAwnvutTQga66ZkAqOSVBwU', // aistudio.google.com → Get API Key
@@ -400,6 +401,11 @@ Ajude com: busca/explicação de ordens, status, funcionalidades, operações de
 
   async function send() {
     if (_busy) return;
+    if (Date.now() < _cooldownUntil) {
+      const rem = Math.ceil((_cooldownUntil - Date.now()) / 1000);
+      _addMsg('bot', `⏳ Ainda em cooldown. Aguarda mais ${rem}s.`);
+      return;
+    }
     const inp  = document.getElementById('vito-inp');
     const text = (inp?.value || '').trim();
     if (!text) return;
@@ -414,29 +420,25 @@ Ajude com: busca/explicação de ordens, status, funcionalidades, operações de
     } catch(e) {
       console.error('[Vito]', e);
       if (e.message === 'RATE_LIMIT') {
-        // auto-retry com countdown
-        let secs = 15;
+        // cooldown: bloqueia por 60s sem retry automático
+        _cooldownUntil = Date.now() + 60000;
+        let secs = 60;
         const box = document.getElementById('vito-msgs');
         const el  = document.createElement('div');
-        el.className = 'vmsg'; el.id = 'vito-retry';
+        el.className = 'vmsg'; el.id = 'vito-cd-msg';
         el.innerHTML = `<div class="vico">${_svg(28,false)}</div>
-          <div class="vbub bot">⏳ Limite atingido. Tentando novamente em <strong id="vito-cd">${secs}s</strong>...</div>`;
+          <div class="vbub bot">⏳ Limite da API atingido. Aguarde <strong id="vito-cd">${secs}s</strong> para perguntar novamente.</div>`;
         box.appendChild(el); box.scrollTop = box.scrollHeight;
-        _hideTyping();
-        const interval = setInterval(() => {
+        const iv = setInterval(() => {
           secs--;
           const cd = document.getElementById('vito-cd');
           if (cd) cd.textContent = secs + 's';
           if (secs <= 0) {
-            clearInterval(interval);
-            document.getElementById('vito-retry')?.remove();
-            _showTyping();
-            _ask(text).then(r => { _hideTyping(); _addMsg('bot', r); })
-              .catch(() => { _hideTyping(); _addMsg('bot', 'Ainda com limite. Aguarda 1 minuto e tenta. 😅'); })
-              .finally(() => { _busy = false; if (btn) btn.disabled = false; });
+            clearInterval(iv);
+            document.getElementById('vito-cd-msg')?.remove();
+            _addMsg('bot', '✅ Pronto! Pode perguntar agora.');
           }
         }, 1000);
-        return; // não cai no finally ainda
       }
       let msg;
       if (CFG.key === 'SUA_CHAVE_GEMINI_AQUI')
