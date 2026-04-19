@@ -900,6 +900,23 @@ const ThemeManager = (() => {
         ::-webkit-scrollbar-thumb { background: #dde3f0 !important; border-radius: 3px !important; }
         ::-webkit-scrollbar-thumb:hover { background: #c44dff !important; }
 
+        /* ── STAT CARD ACCENT (Total) — gradiente ── */
+        /* Último stat card com gradiente coral→rosa→roxo */
+        [id*="stat-"] > *:last-of-type,
+        [id*="stat-total"],
+        [class*="stat-card"]:last-child,
+        .stat-card.accent,
+        [class*="accent-card"] {
+          background: linear-gradient(135deg,#ff9a56 0%,#ff6b9d 50%,#c44dff 100%) !important;
+          border-color: transparent !important;
+          color: #fff !important;
+        }
+        [id*="stat-total"] *, .stat-card.accent * { color: #fff !important; }
+
+        /* Chart.js — cores overridadas via JS (veja onApply) */
+        /* Grid lines do chart no modo light */
+        canvas { filter: none !important; }
+
         /* ── VITO ── */
         #vito-panel {
           background: rgba(255,255,255,0.98) !important;
@@ -997,12 +1014,113 @@ const ThemeManager = (() => {
     }
     _styleEl.textContent = t.css;
 
+    // Executa JS do tema (ex: patcher de gráficos)
+    if (t.onApply) {
+      try { t.onApply(); } catch(e) { console.warn('[ThemeManager] onApply:', e); }
+    } else {
+      // Restaura Chart.js para defaults do tema original ao sair
+      _restoreCharts();
+    }
+
     // Salva por usuário
     if (save) localStorage.setItem(KEY + '_' + _uid(), id);
 
     _updatePanel();
     window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: id } }));
     console.log('🎨 Tema:', t.label);
+  }
+
+  // Restaura cores padrão dos charts (ao sair de um tema com cores customizadas)
+  function _restoreCharts() {
+    if (typeof Chart === 'undefined') return;
+    try {
+      // Reseta paleta
+      if (Chart._tm_palette) Chart._tm_palette = null;
+      // Desconecta observer
+      if (window._tm_obs) { window._tm_obs.disconnect(); window._tm_obs = null; }
+      // Restaura defaults escuros
+      Chart.defaults.color = '#94a3b8';
+      Chart.defaults.borderColor = 'rgba(148,163,184,0.12)';
+      Chart.defaults.font.family = '"Plus Jakarta Sans", system-ui, sans-serif';
+      // Restaura datasets
+      Object.values(Chart.instances || {}).forEach(chart => {
+        const orig = chart._tm_original;
+        if (!orig) return;
+        chart.data.datasets.forEach((ds, i) => {
+          if (orig[i]) {
+            ds.borderColor     = orig[i].borderColor;
+            ds.backgroundColor = orig[i].backgroundColor;
+            ds.pointBackgroundColor = orig[i].pointBackgroundColor;
+          }
+        });
+        chart.update('none');
+      });
+    } catch(e) {}
+  }
+
+  // Aplica paleta de cores em todos os charts ativos
+  function _patchCharts(palette) {
+    if (typeof Chart === 'undefined') {
+      // Chart.js ainda não carregou, tenta depois
+      setTimeout(() => _patchCharts(palette), 500);
+      return;
+    }
+    try {
+      const instances = Object.values(Chart.instances || {});
+      instances.forEach(chart => {
+        // Guarda original na primeira vez
+        if (!chart._tm_original) {
+          chart._tm_original = chart.data.datasets.map(ds => ({
+            borderColor:          ds.borderColor,
+            backgroundColor:      ds.backgroundColor,
+            pointBackgroundColor: ds.pointBackgroundColor,
+          }));
+        }
+        chart.data.datasets.forEach((ds, i) => {
+          const p = palette[i % palette.length];
+          if (!p) return;
+          ds.borderColor     = p.line;
+          ds.backgroundColor = p.area;
+          if (p.point) ds.pointBackgroundColor = p.point;
+        });
+        // Se for line chart, suaviza área
+        if (chart.config.type === 'line') {
+          chart.data.datasets.forEach(ds => { ds.fill = true; });
+        }
+        chart.update('none');
+      });
+    } catch(e) { console.warn('[ThemeManager] patchCharts:', e); }
+  }
+
+  // Intercepta criação futura de charts
+  function _interceptChartCreation(palette) {
+    if (typeof Chart === 'undefined') return;
+    if (Chart._tm_patched) return;
+    Chart._tm_patched = true;
+    const OrigChart = Chart;
+    // Armazena paleta globalmente para uso no afterInit
+    Chart._tm_palette = palette;
+    // Plugin global que aplica cores após init
+    Chart.register({
+      id: 'tm-color-plugin',
+      afterInit(chart) {
+        const pal = Chart._tm_palette;
+        if (!pal) return;
+        chart._tm_original = chart.data.datasets.map(ds => ({
+          borderColor:          ds.borderColor,
+          backgroundColor:      ds.backgroundColor,
+          pointBackgroundColor: ds.pointBackgroundColor,
+        }));
+        chart.data.datasets.forEach((ds, i) => {
+          const p = pal[i % pal.length];
+          if (!p) return;
+          ds.borderColor     = p.line;
+          ds.backgroundColor = p.area;
+          if (p.point) ds.pointBackgroundColor = p.point;
+          if (chart.config.type === 'line') ds.fill = true;
+        });
+      }
+    });
   }
 
   function loadSaved() {
