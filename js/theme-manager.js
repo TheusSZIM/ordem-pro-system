@@ -1159,6 +1159,15 @@ const ThemeManager = (() => {
       // Restaura dots de legenda HTML
       document.querySelectorAll('.bg-amber-400').forEach(el => { el.style.backgroundColor = ''; });
       document.querySelectorAll('.bg-blue-500').forEach(el  => { el.style.backgroundColor = ''; });
+
+      // Restaura sidebar e main content para tamanho original
+      const sb   = document.getElementById('sidebar');
+      const main = document.getElementById('main-content');
+      if (sb)   { sb.style.removeProperty('width'); sb.style.removeProperty('min-width'); }
+      if (main) { main.style.removeProperty('margin-left'); main.style.removeProperty('transition'); }
+
+      // Remove classe light do body
+      document.body.classList.remove('tm-light');
     } catch(e) {}
   }
 
@@ -1241,25 +1250,42 @@ const ThemeManager = (() => {
     const style = document.createElement('style');
     style.textContent = `
       #tm-fab{
-        position:fixed;bottom:88px;right:24px;z-index:9300;
-        width:42px;height:42px;border-radius:13px;border:none;cursor:pointer;
-        background:rgba(15,15,15,0.85);backdrop-filter:blur(12px);
-        box-shadow:0 4px 20px rgba(0,0,0,0.4);
-        display:flex;align-items:center;justify-content:center;
-        transition:transform .2s,box-shadow .2s;
+        position:fixed;top:12px;right:340px;z-index:9300;
+        height:36px;padding:0 14px;border-radius:10px;border:none;cursor:pointer;
+        background:rgba(255,255,255,0.08);backdrop-filter:blur(12px);
+        border:1px solid rgba(255,255,255,0.12);
+        box-shadow:0 2px 12px rgba(0,0,0,0.2);
+        display:flex;align-items:center;gap:7px;
+        transition:all .2s;
+        font-family:system-ui,sans-serif;font-size:11px;font-weight:600;
+        color:rgba(255,255,255,0.7);letter-spacing:.02em;
+        white-space:nowrap;
       }
-      #tm-fab:hover{transform:scale(1.08);box-shadow:0 6px 26px rgba(0,0,0,0.5)}
-      #tm-fab svg{width:19px;height:19px;stroke:rgba(255,255,255,0.75);stroke-width:1.8;fill:none}
+      #tm-fab:hover{background:rgba(255,255,255,0.14);color:rgba(255,255,255,0.95);box-shadow:0 4px 18px rgba(0,0,0,0.3)}
+      #tm-fab svg{width:14px;height:14px;stroke:currentColor;stroke-width:1.8;fill:none;flex-shrink:0}
+      #tm-fab-swatch{width:14px;height:14px;border-radius:4px;flex-shrink:0;border:1px solid rgba(255,255,255,0.2)}
+
+      /* Versão light do FAB */
+      body.tm-light #tm-fab{
+        background:rgba(255,255,255,0.9);
+        border:1px solid rgba(200,210,230,0.6);
+        color:#1a1f36;
+        box-shadow:0 2px 12px rgba(100,120,180,0.12);
+      }
+      body.tm-light #tm-fab:hover{
+        background:#ffffff;
+        box-shadow:0 4px 18px rgba(100,120,180,0.18);
+      }
 
       #tm-panel{
-        position:fixed;bottom:140px;right:24px;z-index:9299;
+        position:fixed;top:56px;right:340px;z-index:9299;
         width:230px;background:rgba(12,10,24,0.98);
         border:1px solid rgba(255,255,255,0.1);border-radius:16px;
         padding:16px;backdrop-filter:blur(24px);
         box-shadow:0 20px 60px rgba(0,0,0,0.6);
         transition:opacity .25s,transform .25s;
       }
-      #tm-panel.tm-hide{opacity:0;transform:translateY(10px);pointer-events:none}
+      #tm-panel.tm-hide{opacity:0;transform:translateY(-6px);pointer-events:none}
 
       #tm-header{
         display:flex;align-items:center;justify-content:space-between;
@@ -1308,7 +1334,11 @@ const ThemeManager = (() => {
     // FAB
     const fab = document.createElement('button');
     fab.id = 'tm-fab'; fab.title = 'Trocar tema';
-    fab.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>`;
+    fab.innerHTML = `
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+      <div id="tm-fab-swatch"></div>
+      <span id="tm-fab-label">Tema</span>
+    `;
     fab.onclick = () => togglePanel();
 
     // Painel
@@ -1354,6 +1384,22 @@ const ThemeManager = (() => {
           </div>
         </div>`;
     }).join('');
+
+    // Atualiza swatch e label do FAB
+    const t = THEMES[_current];
+    if (t) {
+      const swatch = document.getElementById('tm-fab-swatch');
+      const label  = document.getElementById('tm-fab-label');
+      const colors = t.preview;
+      const grad   = colors.length === 3
+        ? `linear-gradient(135deg,${colors[0]} 30%,${colors[1]} 70%,${colors[2]} 120%)`
+        : `linear-gradient(135deg,${colors[0]} 40%,${colors[1]} 130%)`;
+      if (swatch) swatch.style.background = grad;
+      if (label)  label.textContent = t.label;
+    }
+
+    // Adiciona classe ao body para estilizar FAB no tema light
+    document.body.classList.toggle('tm-light', _current === 'light');
   }
 
   function togglePanel() {
