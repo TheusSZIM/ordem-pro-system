@@ -523,15 +523,24 @@ const ThemeManager = (() => {
           display: flex !important; flex-direction: column !important; align-items: center !important;
           gap: 6px !important;
         }
-        /* Esconde textos, mantém ícones */
-        #sidebar *:not(.material-symbols-rounded):not([class*="material"]) {
-          font-size: 0 !important; line-height: 0 !important;
+        /* Esconde textos da sidebar via overflow + clip — sem font-size:0 */
+        #sidebar .logo-text, #sidebar .logo-sub,
+        #sidebar span:not(.material-symbols-rounded):not([class*="material"]),
+        #sidebar p, #sidebar [class*="nav-section"],
+        #sidebar [class*="text-xs"], #sidebar [class*="text-sm"],
+        #sidebar [class*="font-bold"]:not(.material-symbols-rounded),
+        #sidebar [class*="tracking-"],
+        [id*="sidebar"] span:not(.material-symbols-rounded) {
+          display: none !important;
         }
-        #sidebar .material-symbols-rounded, [id*="sidebar"] .material-symbols-rounded {
+        /* Ícones permanecem visíveis */
+        #sidebar .material-symbols-rounded,
+        [id*="sidebar"] .material-symbols-rounded,
+        aside .material-symbols-rounded {
           font-size: 22px !important;
           font-family: 'Material Symbols Rounded' !important;
           display: flex !important; visibility: visible !important;
-          color: inherit !important;
+          color: inherit !important; line-height: 1 !important;
         }
 
         /* Tab de toggle da sidebar — oculta */
@@ -819,10 +828,13 @@ const ThemeManager = (() => {
         [class*="bg-indigo-5"], [class*="bg-indigo-6"], [class*="bg-indigo-7"] {
           background: var(--grad-warm) !important;
         }
-        [class*="from-indigo"], [class*="to-indigo"],
-        [class*="bg-indigo"], [class*="bg-primary"] { background: transparent !important; }
+        /* Apenas sobrescreve gradientes de fundo dos headings, não containers */
+        button[class*="bg-indigo"], a[class*="bg-indigo"],
+        button[class*="from-indigo"] { background: var(--grad-warm) !important; }
         hr, [class*="divider"] { border-color: var(--border) !important; }
-        .text-white:not(button):not([style*="background"]):not([class*="btn"]) {
+        /* Apenas texto branco em elementos de texto puro */
+        h1.text-white, h2.text-white, h3.text-white, p.text-white,
+        span.text-white:not(.material-symbols-rounded) {
           color: var(--text) !important;
         }
 
