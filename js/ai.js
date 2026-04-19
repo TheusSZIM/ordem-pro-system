@@ -471,7 +471,7 @@ Ajude com: busca/explicação de ordens, status, funcionalidades, operações de
       }
       let msg;
       if (!CFG.key)
-        msg = '⚠️ Chave não configurada!\n\nVá em **console.groq.com** → 'Create API Key' e cole em CFG.key no arquivo `js/ai.js`.';
+        msg = '⚠️ Chave não configurada! Abra o Vito e informe sua chave Groq.';
       else if (e.message === 'FORBIDDEN')
         msg = '🔑 Chave inválida. Verifique em **console.groq.com** → API Keys.';
       else if (e.message?.startsWith('ALL_FAILED_404'))
