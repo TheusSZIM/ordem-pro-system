@@ -15,7 +15,7 @@ const VetoAI = (() => {
   let _busy = false;
 
   const CFG = {
-    key:       'SUA_CHAVE_GEMINI_AQUI',
+    key:       'AIzaSyCHGuI3ihk5LAwnvutTQga66ZkAqOSVBwU',
     model:     'gemini-1.5-flash-latest',
     maxTokens: 600,
     histMax:   16,
