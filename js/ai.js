@@ -53,7 +53,12 @@ ${recent}
 - Usuários: níveis 0 (Visualizador) → 3 (Admin)
 - Stack: HTML + Vanilla JS + Tailwind + Supabase + Vercel
 
-Ajude com: busca/explicação de ordens, status, funcionalidades, operações de armazém.`;
+Ajude com: busca/explicação de ordens, status, funcionalidades, operações de armazém.
+
+IMAGENS: Quando o usuário pedir para VER ou MOSTRAR algo (produto, peça, equipamento), responda normalmente e adicione ao final uma linha exatamente assim (sem espaços extras):
+[IMG_SEARCH: termo de busca em português]
+Exemplo: [IMG_SEARCH: bomba hidráulica vbd 904]
+Use sempre termos técnicos precisos para melhores resultados.`;
   }
 
   // ── SVG Vito — caixinha robô estilo 3D ────────────────────────
@@ -384,12 +389,36 @@ Ajude com: busca/explicação de ordens, status, funcionalidades, operações de
     const box = document.getElementById('vito-msgs');
     const div = document.createElement('div');
     div.className = `vmsg ${role === 'bot' ? '' : 'u'}`;
+
+    // detecta [IMG_SEARCH: termo]
+    let imgBtn = '';
+    const imgMatch = text.match(/\[IMG_SEARCH:\s*(.+?)\]/);
+    if (imgMatch) {
+      const termo = imgMatch[1].trim();
+      const url   = 'https://www.google.com/search?q=' + encodeURIComponent(termo) + '&tbm=isch';
+      imgBtn = `<a href="${url}" target="_blank" rel="noopener"
+        style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;
+               padding:7px 13px;border-radius:10px;font-size:12px;font-weight:700;
+               background:rgba(99,102,241,.18);border:1px solid rgba(99,102,241,.35);
+               color:#a5b4fc;text-decoration:none;transition:background .15s;"
+        onmouseover="this.style.background='rgba(99,102,241,.32)'"
+        onmouseout="this.style.background='rgba(99,102,241,.18)'">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="2.5"/>
+          <polyline points="21 15 16 10 5 21"/>
+        </svg>
+        Ver imagens: ${termo}
+      </a>`;
+      text = text.replace(/\[IMG_SEARCH:\s*.+?\]/, '').trim();
+    }
+
     const fmt = text
       .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
       .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
       .replace(/\n/g,'<br>');
+
     div.innerHTML = role === 'bot'
-      ? `<div class="vico">${_svg(28, true)}</div><div class="vbub bot">${fmt}</div>`
+      ? `<div class="vico">${_svg(28, true)}</div><div class="vbub bot">${fmt}${imgBtn}</div>`
       : `<div class="vbub usr">${fmt}</div>`;
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
