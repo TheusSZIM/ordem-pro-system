@@ -439,6 +439,17 @@ Ajude com: busca/explicação de ordens, status, funcionalidades, operações de
     const text = (inp?.value || '').trim();
     if (!text) return;
     inp.value = ''; inp.style.height = 'auto';
+
+    // Detecta chave Groq digitada no chat
+    if (text.startsWith('gsk_')) {
+      localStorage.setItem('vito_groq_key', text);
+      _hideSetup();
+      _addMsg('bot', '✅ Chave salva com sucesso! Agora pode me perguntar o que quiser. 😄\n\n⚠️ Dica: não compartilhe sua chave com ninguém.');
+      return;
+    }
+
+    // Sem chave configurada: mostra form de setup
+    if (!CFG.key) { _showSetup(); return; }
     _addMsg('user', text);
     _busy = true;
     const btn = document.getElementById('vito-send');
