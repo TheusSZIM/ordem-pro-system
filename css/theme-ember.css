@@ -631,3 +631,151 @@ hr, [class*="divider"] { border-color: var(--em-border) !important; }
 @media (max-width: 768px) {
   #vito-panel { width: calc(100vw - 32px) !important; right: 16px !important; }
 }
+
+
+/* ══════════════════════════════════════════════════════════════
+   EMBER v3 — REFINAMENTOS FOSCO + ANTI-INDIGO
+══════════════════════════════════════════════════════════════ */
+
+/* Mata qualquer resquício de azul/indigo do tema original */
+[class*="bg-slate-900"], [class*="bg-slate-950"],
+[class*="dark:bg-slate"], .dark\:bg-slate-950,
+.dark\:bg-slate-900, .dark\:bg-slate-800 {
+  background-color: var(--em-bg-1) !important;
+}
+[class*="bg-indigo"], [class*="from-indigo"], [class*="to-indigo"],
+[class*="via-indigo"] {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+[class*="text-indigo"], [class*="dark:text-indigo"] {
+  color: var(--em-orange) !important;
+}
+[class*="border-indigo"] { border-color: var(--em-border-md) !important; }
+[class*="ring-indigo"]   { --tw-ring-color: rgba(249,115,22,0.3) !important; }
+[class*="shadow-indigo"] { box-shadow: 0 0 20px var(--em-glow) !important; }
+
+/* Sidebar — remove qualquer azul residual */
+#sidebar,
+#sidebar-container > *,
+aside {
+  background: #0b0a08 !important;
+  border-right: 1px solid rgba(249,115,22,0.08) !important;
+}
+/* Tab lateral (seta) */
+#sb-tab, [id*="sb-tab"] {
+  background: #0f0e0b !important;
+  border: 1px solid rgba(249,115,22,0.1) !important;
+  color: var(--em-text-3) !important;
+  box-shadow: none !important;
+}
+
+/* Header — remove azul */
+#header-container > *,
+header > * {
+  background: rgba(8,8,6,0.94) !important;
+}
+
+/* Card glass — noise texture via pseudo */
+[class*="rounded-xl"],
+[class*="rounded-2xl"],
+[class*="card"] {
+  position: relative !important;
+}
+
+/* Fundo dos cards — mais escuro e fosco */
+[class*="bg-white"], [class*="dark:bg-slate-800"],
+[class*="dark:bg-slate-900"], [class*="dark:bg-slate-850"],
+.rounded-xl, .rounded-2xl {
+  background: rgba(14,13,9,0.88) !important;
+  backdrop-filter: blur(10px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(120%) !important;
+  border: 1px solid rgba(249,115,22,0.08) !important;
+}
+
+/* Botão Nova Ordem — sem o gradiente indigo original */
+button[class*="gradient"],
+button[style*="gradient"],
+#nova-ordem-btn,
+[id*="nova-ordem"] {
+  background: var(--em-orange-d) !important;
+  background-image: none !important;
+  border: 1px solid rgba(249,115,22,0.45) !important;
+  box-shadow: 0 0 24px rgba(249,115,22,0.2), 0 4px 12px rgba(0,0,0,0.4) !important;
+  color: #fff !important;
+}
+
+/* Botão refresh */
+button[onclick*="reload"], button[onclick*="refresh"],
+button[onclick*="Atualizar"], [title*="Atualizar"] {
+  background: rgba(255,255,255,0.03) !important;
+  border: 1px solid rgba(249,115,22,0.1) !important;
+  color: var(--em-text-3) !important;
+}
+
+/* Switcher layout — botão ativo */
+[id*="btn-layout"].active, [class*="btn-layout"].active,
+#layout-switcher .active {
+  background: rgba(194,84,10,0.85) !important;
+  border-color: rgba(249,115,22,0.4) !important;
+  color: #fff !important;
+}
+
+/* Número grande dos stats */
+.text-4xl, .text-5xl, .text-3xl {
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 700 !important;
+}
+
+/* Efeito glow no card de total */
+[id*="total"] {
+  box-shadow: inset 0 0 40px rgba(249,115,22,0.03) !important;
+}
+
+/* Ordens recentes — header da tabela mais escuro */
+thead tr, thead th {
+  background: rgba(10,9,6,0.95) !important;
+}
+
+/* Ações rápidas — borda laranja no hover mais suave */
+[class*="acao"], [class*="quick"],
+[onclick*="showPage('kanban')"], [onclick*="showPage('entrega')"],
+[onclick*="showPage('estoque')"] {
+  background: rgba(255,255,255,0.02) !important;
+  border: 1px solid rgba(249,115,22,0.12) !important;
+  color: var(--em-text-2) !important;
+}
+
+/* Barra de progresso / donut */
+svg circle[stroke*="indigo"],
+svg circle[stroke*="6366"],
+svg circle[stroke*="4f46"] {
+  stroke: var(--em-orange) !important;
+}
+
+/* Textos muted residuais */
+[class*="text-slate-400"], [class*="dark:text-slate-400"],
+[class*="text-slate-500"], [class*="dark:text-slate-500"],
+[class*="text-slate-600"] {
+  color: var(--em-text-2) !important;
+}
+[class*="text-slate-300"], [class*="dark:text-slate-300"] {
+  color: var(--em-text-1) !important;
+}
+[class*="text-slate-700"], [class*="text-slate-800"] {
+  color: var(--em-text-3) !important;
+}
+
+/* Bordas residuais slate */
+[class*="border-slate"], [class*="dark:border-slate"],
+[class*="divide-slate"] {
+  border-color: var(--em-border) !important;
+}
+
+/* bg-grid overlay — troca a cor */
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(249,115,22,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(249,115,22,0.04) 1px, transparent 1px) !important;
+  background-size: 48px 48px !important;
+}
