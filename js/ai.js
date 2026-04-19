@@ -3,8 +3,8 @@
  * Vetore Movimentação · Powered by Google Gemini (gratuito)
  *
  * SETUP:
- * 1. aistudio.google.com → "Get API Key" → copie a chave
- * 2. Cole em CFG.key abaixo
+ * 1. console.groq.com → "Create API Key" → copie a chave
+ * 2. Cole em CFG.key abaixo (começa com gsk_...)
  * 3. Adicione <script src="js/ai.js"></script> no index.html (último script)
  */
 
@@ -16,15 +16,10 @@ const VetoAI = (() => {
   let _cooldownUntil = 0;
 
   const CFG = {
-    key:       'AIzaSyCHGuI3ihk5LAwnvutTQga66ZkAqOSVBwU', // aistudio.google.com → Get API Key
+    key:      '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', // console.groq.com → Create API Key
+    model:    'llama-3.1-8b-instant', // rápido e gratuito
     maxTokens: 600,
     histMax:   16,
-    // modelos tentados em ordem — para na primeira que funcionar
-    models: [
-      'gemini-2.0-flash',          // rápido, gratuito, disponível
-      'gemini-2.0-flash-lite',     // leve, fallback
-      'gemini-2.5-flash',          // mais poderoso, fallback
-    ],
   };
 
   // ── Contexto dinâmico ──────────────────────────────────────────
@@ -318,36 +313,38 @@ Ajude com: busca/explicação de ordens, status, funcionalidades, operações de
 </div>`;
   }
 
-  // ── Gemini API — tenta modelos em sequência ────────────────────
+  // ── Groq API (formato OpenAI) ──────────────────────────────────
   async function _ask(text) {
-    _msgs.push({ role: 'user', parts: [{ text }] });
+    // histórico no formato OpenAI: [{role:'user'|'assistant', content}]
+    _msgs.push({ role: 'user', content: text });
     if (_msgs.length > CFG.histMax) _msgs = _msgs.slice(-CFG.histMax);
 
-    const body = JSON.stringify({
-      system_instruction: { parts: [{ text: _ctx() }] },
-      contents: _msgs,
-      generationConfig: { maxOutputTokens: CFG.maxTokens, temperature: 0.75 },
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${CFG.key}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: CFG.model,
+        messages: [
+          { role: 'system', content: _ctx() },
+          ..._msgs,
+        ],
+        max_tokens: CFG.maxTokens,
+        temperature: 0.75,
+      }),
     });
 
-    let lastStatus = 0;
-    for (const model of CFG.models) {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${CFG.key}`,
-        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }
-      );
-      lastStatus = res.status;
-      if (res.status === 429) throw new Error('RATE_LIMIT');
-      if (res.status === 403) throw new Error('FORBIDDEN');
-      if (!res.ok) continue; // tenta próximo modelo
-      const data  = await res.json();
-      const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text
-        || 'Não consegui uma resposta. 😅 Tenta de novo?';
-      _msgs.push({ role: 'model', parts: [{ text: reply }] });
-      console.log('[Vito] Modelo OK:', model);
-      return reply;
-    }
-    if (lastStatus === 429) throw new Error('RATE_LIMIT');
-    throw new Error(`ALL_FAILED_${lastStatus}`);
+    if (res.status === 429) throw new Error('RATE_LIMIT');
+    if (res.status === 401) throw new Error('FORBIDDEN');
+    if (!res.ok) throw new Error(`Groq ${res.status}`);
+
+    const data  = await res.json();
+    const reply = data?.choices?.[0]?.message?.content
+      || 'Não consegui uma resposta. 😅 Tenta de novo?';
+    _msgs.push({ role: 'assistant', content: reply });
+    return reply;
   }
 
   // ── DOM helpers ────────────────────────────────────────────────
@@ -441,12 +438,12 @@ Ajude com: busca/explicação de ordens, status, funcionalidades, operações de
         }, 1000);
       }
       let msg;
-      if (CFG.key === 'SUA_CHAVE_GEMINI_AQUI')
-        msg = '⚠️ Chave não configurada!\n\nVá em **aistudio.google.com** → "Get API Key" e cole em CFG.key no arquivo `js/ai.js`.';
+      if (CFG.key === 'SUA_CHAVE_GROQ_AQUI')
+        msg = '⚠️ Chave não configurada!\n\nVá em **console.groq.com** → 'Create API Key' e cole em CFG.key no arquivo `js/ai.js`.';
       else if (e.message === 'FORBIDDEN')
-        msg = '🔑 Permissão negada. Verifique se a chave está ativa em **aistudio.google.com**.';
+        msg = '🔑 Chave inválida. Verifique em **console.groq.com** → API Keys.';
       else if (e.message?.startsWith('ALL_FAILED_404'))
-        msg = '⚠️ Nenhum modelo disponível (404).\n\nVerifique sua chave em aistudio.google.com → My API Keys';
+        msg = '⚠️ Erro na API Groq. Verifique sua chave em console.groq.com';
       else
         msg = 'Ops, não consegui conectar agora. 😅 Tenta em instantes!';
       _addMsg('bot', msg);
@@ -483,4 +480,4 @@ if (document.readyState === 'loading') {
   VetoAI.init();
 }
 window.VetoAI = VetoAI;
-console.log('✅ Vito carregado — Assistente IA do Ordem Pro!');
+console.log('✅ Vito carregado — Powered by Groq (Llama 3.1)!');
