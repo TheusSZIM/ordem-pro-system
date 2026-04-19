@@ -954,15 +954,28 @@ const ThemeManager = (() => {
           background-clip: text !important;
         }
 
-        /* ── LEGENDAS DO GRÁFICO — cores atualizadas via JS ── */
-        /* Dot amarelo → rosa */
-        .bg-amber-400.rounded-full { background-color: rgb(255,107,157) !important; }
-        /* Dot azul → roxo */
-        .bg-blue-500.rounded-full { background-color: rgb(162,155,254) !important; }
+        /* ── LEGENDAS DO GRÁFICO — cores atualizadas via JS e CSS ── */
+        .bg-amber-400.rounded-full,
+        span.bg-amber-400,
+        .bg-amber-400.inline-block { background-color: rgb(255,107,157) !important; }
+        .bg-blue-500.rounded-full,
+        span.bg-blue-500,
+        .bg-blue-500.inline-block  { background-color: rgb(162,155,254) !important; }
 
         /* ── CHART CONTAINER — mais alto ── */
-        .h-48 { height: 14rem !important; }
+        .h-48 { height: 15rem !important; }
         canvas { filter: none !important; }
+
+        /* ── TOOLTIP do chart no modo light ── */
+        /* (controlado via JS) */
+
+        /* ── ACTIVE CHART BTN — estilo pill ── */
+        .active-chart-btn {
+          background: linear-gradient(135deg,#ff9a56,#c44dff) !important;
+          border-color: transparent !important;
+          color: #fff !important;
+          font-weight: 700 !important;
+        }
 
         /* ── BOTÕES DE MODO (Semana/Mês) ── */
         .chart-mode-btn {
