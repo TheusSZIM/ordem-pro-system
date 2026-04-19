@@ -817,3 +817,137 @@ progress { accent-color: var(--ob-teal) !important; }
 @media (max-width: 768px) {
   #vito-panel { width: calc(100vw - 32px) !important; right: 16px !important; }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   SIDEBAR FIX v2 — corrige indicadores coloridos e tint azul
+══════════════════════════════════════════════════════════════ */
+
+/* Fundo do sidebar — puro, sem tint */
+#sidebar,
+#sidebar-container,
+#sidebar-container > *,
+aside,
+.sidebar,
+[id*="sidebar"] {
+  background: #0b0e10 !important;
+  background-color: #0b0e10 !important;
+  background-image: none !important;
+  border-right: 1px solid rgba(0,212,184,0.07) !important;
+  box-shadow: none !important;
+}
+
+/* Remove TODOS os fundos coloridos dos itens de nav */
+#sidebar a, #sidebar button, #sidebar li,
+#sidebar [class*="nav"], #sidebar [class*="item"],
+#sidebar .nav-item, aside a, aside button,
+aside li, .nav-item, [class*="nav-item"],
+[id*="sidebar"] a, [id*="sidebar"] button {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #2e4a47 !important;
+  transition: color .2s, background-color .2s !important;
+}
+
+/* Remove fundos dos ícones dentro dos nav items */
+#sidebar a *, #sidebar button *,
+#sidebar .nav-item *,
+aside a *, [class*="nav-item"] * {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Hover — só muda a cor, sem fundo */
+#sidebar a:hover, #sidebar button:hover,
+.nav-item:hover, aside a:hover,
+[id*="sidebar"] a:hover {
+  color: #557870 !important;
+  background-color: rgba(0,212,184,0.04) !important;
+}
+
+/* Ativo — barra esquerda + teal */
+#sidebar a.active, #sidebar button.active,
+.nav-item.active, .nav-item.active-nav,
+aside a.active, [id*="sidebar"] a.active,
+[class*="nav-item"].active {
+  color: var(--ob-teal) !important;
+  background-color: rgba(0,212,184,0.06) !important;
+}
+
+/* Barra lateral ativa — muito mais sutil */
+#sidebar a.active::before, .nav-item.active::before,
+.nav-item.active-nav::before, aside a.active::before {
+  content: '' !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 20% !important;
+  height: 60% !important;
+  width: 2px !important;
+  background: var(--ob-teal) !important;
+  border-radius: 0 2px 2px 0 !important;
+  box-shadow: 0 0 6px var(--ob-teal) !important;
+}
+
+/* Garante position relative para o ::before funcionar */
+#sidebar a, #sidebar button,
+.nav-item, aside a { position: relative !important; }
+
+/* Ícones Material */
+#sidebar .material-symbols-rounded,
+#sidebar-container .material-symbols-rounded,
+aside .material-symbols-rounded,
+.nav-item .material-symbols-rounded,
+[class*="nav-item"] .material-symbols-rounded {
+  color: inherit !important;
+  font-family: 'Material Symbols Rounded' !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Tab lateral (chevron) */
+#sb-tab, [id*="sb-tab"],
+.sidebar-toggle, [class*="sidebar-toggle"] {
+  background: #0f1215 !important;
+  background-color: #0f1215 !important;
+  border: 1px solid rgba(0,212,184,0.08) !important;
+  color: #2e4a47 !important;
+  box-shadow: none !important;
+}
+
+/* Remove quaisquer dots/badges coloridos na sidebar */
+#sidebar [class*="dot"], #sidebar [class*="badge"],
+#sidebar [class*="indicator"], #sidebar [class*="circle"],
+aside [class*="dot"], aside [class*="badge"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Header da sidebar (logo) */
+#sidebar-header, [id*="sidebar-header"],
+.sidebar-header {
+  background: #0b0e10 !important;
+  border-bottom: 1px solid rgba(0,212,184,0.07) !important;
+}
+
+/* Texto do título na sidebar expandida */
+#sidebar [class*="logo"], #sidebar [class*="brand"] {
+  color: #dcecea !important;
+}
+
+/* TITLE FIX — garante teal e não laranja */
+#dashboard-title em,
+#dashboard-title span,
+.page-title em,
+.page-title span,
+h1 span, h1 em {
+  color: #00d4b8 !important;
+  background: none !important;
+  text-shadow: 0 0 20px rgba(0,212,184,0.18) !important;
+}
