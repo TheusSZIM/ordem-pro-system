@@ -900,22 +900,125 @@ const ThemeManager = (() => {
         ::-webkit-scrollbar-thumb { background: #dde3f0 !important; border-radius: 3px !important; }
         ::-webkit-scrollbar-thumb:hover { background: #c44dff !important; }
 
-        /* ── STAT CARD ACCENT (Total) — gradiente ── */
-        /* Último stat card com gradiente coral→rosa→roxo */
-        [id*="stat-"] > *:last-of-type,
-        [id*="stat-total"],
-        [class*="stat-card"]:last-child,
-        .stat-card.accent,
-        [class*="accent-card"] {
+        /* ── NÚMEROS DOS STAT CARDS — seletores precisos ── */
+        /* Remove gradiente dos 3 primeiros cards */
+        #stat-a-separar-wrap h3,
+        #stat-em-separacao-wrap h3,
+        #stat-concluidas-hoje-wrap h3 {
+          color: #1a1f36 !important;
+          -webkit-text-fill-color: #1a1f36 !important;
+          background: none !important;
+          -webkit-background-clip: unset !important;
+          background-clip: unset !important;
+          font-size: 2rem !important;
+          font-weight: 800 !important;
+        }
+        /* Total de ordens — texto branco */
+        #stat-total-wrap h3 {
+          color: #ffffff !important;
+          -webkit-text-fill-color: #ffffff !important;
+          background: none !important;
+          -webkit-background-clip: unset !important;
+          font-size: 2rem !important;
+          font-weight: 800 !important;
+        }
+
+        /* ── CARD TOTAL — troca indigo por warm gradient ── */
+        .metric-card[style*="#4f46e5"],
+        .metric-card[style*="4f46e5"],
+        .metric-card[style*="6366f1"] {
           background: linear-gradient(135deg,#ff9a56 0%,#ff6b9d 50%,#c44dff 100%) !important;
+          border: none !important;
+          box-shadow: 0 8px 24px rgba(255,107,157,0.3) !important;
+        }
+        /* Ícone dentro do card total */
+        .metric-card[style*="#4f46e5"] .rounded-2xl,
+        .metric-card[style*="4f46e5"] .rounded-2xl,
+        .metric-card[style*="6366f1"] .rounded-2xl {
+          background: rgba(255,255,255,0.2) !important;
+        }
+        /* Texto dentro do card total */
+        .metric-card[style*="#4f46e5"] p,
+        .metric-card[style*="#4f46e5"] span,
+        .metric-card[style*="4f46e5"] p,
+        .metric-card[style*="4f46e5"] span {
+          color: rgba(255,255,255,0.85) !important;
+          -webkit-text-fill-color: rgba(255,255,255,0.85) !important;
+        }
+
+        /* ── TEXT-GRADIENT — título do dashboard ── */
+        .text-gradient {
+          background: linear-gradient(135deg,#ff9a56 0%,#ff6b9d 50%,#c44dff 100%) !important;
+          -webkit-background-clip: text !important;
+          -webkit-text-fill-color: transparent !important;
+          background-clip: text !important;
+        }
+
+        /* ── LEGENDAS DO GRÁFICO — cores atualizadas via JS ── */
+        /* Dot amarelo → rosa */
+        .bg-amber-400.rounded-full { background-color: rgb(255,107,157) !important; }
+        /* Dot azul → roxo */
+        .bg-blue-500.rounded-full { background-color: rgb(162,155,254) !important; }
+
+        /* ── CHART CONTAINER — mais alto ── */
+        .h-48 { height: 14rem !important; }
+        canvas { filter: none !important; }
+
+        /* ── BOTÕES DE MODO (Semana/Mês) ── */
+        .chart-mode-btn {
+          color: #8a93b2 !important;
+          border-color: rgba(200,210,230,0.5) !important;
+          background: transparent !important;
+        }
+        .active-chart-btn {
+          background: linear-gradient(135deg,#ff9a56,#c44dff) !important;
           border-color: transparent !important;
           color: #fff !important;
         }
-        [id*="stat-total"] *, .stat-card.accent * { color: #fff !important; }
 
-        /* Chart.js — cores overridadas via JS (veja onApply) */
-        /* Grid lines do chart no modo light */
-        canvas { filter: none !important; }
+        /* ── BOTÕES DE LAYOUT ── */
+        .layout-btn {
+          color: #8a93b2 !important;
+          border-color: rgba(200,210,230,0.35) !important;
+          background: transparent !important;
+        }
+        .layout-btn:hover {
+          border-color: rgba(196,77,255,0.4) !important;
+          color: #c44dff !important;
+          background: rgba(196,77,255,0.08) !important;
+        }
+        .layout-btn.active-layout {
+          background: rgba(196,77,255,0.1) !important;
+          border-color: rgba(196,77,255,0.4) !important;
+          color: #c44dff !important;
+        }
+
+        /* ── METRIC CARDS ── */
+        .metric-card {
+          background: #ffffff !important;
+          border: 1px solid rgba(200,210,230,0.5) !important;
+          box-shadow: 0 2px 12px rgba(100,120,180,0.07) !important;
+        }
+        .metric-card:hover {
+          box-shadow: 0 8px 24px rgba(100,120,180,0.13) !important;
+        }
+
+        /* ── TÍTULOS E TEXTOS NOS CARDS ── */
+        .metric-card p.text-xs { color: #8a93b2 !important; }
+        .metric-card .text-slate-400 { color: #8a93b2 !important; }
+
+        /* ── AÇÕES RÁPIDAS ── */
+        .bg-primary-100, [class*="bg-primary-100"] { background: rgba(196,77,255,0.1) !important; }
+        .text-primary-600, [class*="text-primary-600"] { color: #c44dff !important; }
+        .text-primary-600:hover { color: #a855f7 !important; }
+        button[onclick*="showPage"].text-primary-600 { color: #c44dff !important; }
+
+        /* ── CHART BACKGROUND ── */
+        #layout-classic .bg-white.rounded-2xl,
+        #layout-classic .dark\:bg-slate-900.rounded-2xl {
+          background: #ffffff !important;
+          border: 1px solid rgba(200,210,230,0.5) !important;
+        }
 
         /* ── VITO ── */
         #vito-panel {
@@ -1030,31 +1133,32 @@ const ThemeManager = (() => {
     console.log('🎨 Tema:', t.label);
   }
 
-  // Restaura cores padrão dos charts (ao sair de um tema com cores customizadas)
+  // Restaura cores padrão dos charts (ao sair do tema Light)
   function _restoreCharts() {
-    if (typeof Chart === 'undefined') return;
     try {
-      // Reseta paleta
-      if (Chart._tm_palette) Chart._tm_palette = null;
       // Desconecta observer
       if (window._tm_obs) { window._tm_obs.disconnect(); window._tm_obs = null; }
+      window._tm_patchFn = null;
+
+      // Restaura buildWeekChart / buildAnalyticsChart originais
+      if (window._tm_origBWC) { window.buildWeekChart = window._tm_origBWC; window._tm_origBWC = null; }
+      if (window._tm_origBAC) { window.buildAnalyticsChart = window._tm_origBAC; window._tm_origBAC = null; }
+
+      if (typeof Chart === 'undefined') return;
+
       // Restaura defaults escuros
-      Chart.defaults.color = '#94a3b8';
+      Chart.defaults.color       = '#94a3b8';
       Chart.defaults.borderColor = 'rgba(148,163,184,0.12)';
       Chart.defaults.font.family = '"Plus Jakarta Sans", system-ui, sans-serif';
-      // Restaura datasets
-      Object.values(Chart.instances || {}).forEach(chart => {
-        const orig = chart._tm_original;
-        if (!orig) return;
-        chart.data.datasets.forEach((ds, i) => {
-          if (orig[i]) {
-            ds.borderColor     = orig[i].borderColor;
-            ds.backgroundColor = orig[i].backgroundColor;
-            ds.pointBackgroundColor = orig[i].pointBackgroundColor;
-          }
-        });
-        chart.update('none');
-      });
+
+      // Restaura cores originais dos datasets e rebuilda
+      if (typeof buildWeekChart    === 'function') buildWeekChart();
+      if (typeof buildPieChart     === 'function') buildPieChart();
+      if (typeof buildAnalyticsChart === 'function') buildAnalyticsChart();
+
+      // Restaura dots de legenda HTML
+      document.querySelectorAll('.bg-amber-400').forEach(el => { el.style.backgroundColor = ''; });
+      document.querySelectorAll('.bg-blue-500').forEach(el  => { el.style.backgroundColor = ''; });
     } catch(e) {}
   }
 
