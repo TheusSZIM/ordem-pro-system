@@ -1,676 +1,607 @@
 /* ============================================================
-   TEMA EMBER — Ordem Pro · Vetore Movimentação
-   Estilo: Ultra Dark + Orange Glow
+   TEMA EMBER v2 — Ordem Pro · Vetore Movimentação
+   Estilo: Ultra Dark Matte + Amber Glow Cinematográfico
    Referência: dash4.jpeg
-   
-   USO:
-   Adicione no <head> do index.html APÓS o seu CSS principal:
-   <link rel="stylesheet" href="css/theme-ember.css">
    ============================================================ */
 
-/* ── Variáveis Globais ─────────────────────────────────────── */
+/* ── Fonte técnica/industrial ──────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;500;600;700;800&display=swap');
+
 :root {
-  --em-bg-0:     #060604;   /* fundo base, quase preto */
-  --em-bg-1:     #0e0d0a;   /* sidebar */
-  --em-bg-2:     #141210;   /* cards */
-  --em-bg-3:     #1c1a15;   /* cards hover / inputs */
-  --em-bg-4:     #242018;   /* bordas de card */
+  --em-bg-0:      #070706;
+  --em-bg-1:      #0c0b09;
+  --em-bg-2:      #111009;
+  --em-bg-3:      #181610;
+  --em-bg-4:      #1f1c14;
 
-  --em-orange-1: #f97316;   /* laranja principal */
-  --em-orange-2: #ea580c;   /* laranja escuro */
-  --em-orange-3: #fb923c;   /* laranja claro */
-  --em-orange-glow: rgba(249,115,22,0.18);
-  --em-orange-glow-sm: rgba(249,115,22,0.08);
+  --em-orange:    #f97316;
+  --em-orange-d:  #c2540a;
+  --em-orange-l:  #fdba74;
+  --em-glow:      rgba(249,115,22,0.12);
+  --em-glow-sm:   rgba(249,115,22,0.05);
+  --em-glow-lg:   rgba(249,115,22,0.22);
 
-  --em-text-1:   #f5f0e8;   /* texto principal */
-  --em-text-2:   #a89880;   /* texto secundário */
-  --em-text-3:   #5c5040;   /* texto fraco */
+  --em-text-1:    #ede8de;
+  --em-text-2:    #8c7e68;
+  --em-text-3:    #403828;
 
-  --em-border:   rgba(249,115,22,0.12);
-  --em-border-md: rgba(249,115,22,0.22);
-  --em-border-lg: rgba(249,115,22,0.38);
+  --em-border:    rgba(249,115,22,0.09);
+  --em-border-md: rgba(249,115,22,0.18);
+  --em-border-lg: rgba(249,115,22,0.32);
 
-  --em-green:    #22c55e;
-  --em-red:      #ef4444;
-  --em-amber:    #fbbf24;
+  --em-green:  #22c55e;
+  --em-red:    #ef4444;
+  --em-amber:  #fbbf24;
+}
+
+/* ── Fonte global ──────────────────────────────────────────── */
+body, * {
+  font-family: 'Exo 2', 'Plus Jakarta Sans', sans-serif !important;
+}
+h1, h2, h3, h4, h5,
+.text-2xl, .text-3xl, .text-4xl,
+.font-bold, .font-extrabold, .font-black,
+.page-title, [class*="page-title"],
+.stat-value, [class*="stat-value"],
+.text-4xl, .text-5xl {
+  font-family: 'Rajdhani', 'Exo 2', sans-serif !important;
+  letter-spacing: 0.02em !important;
 }
 
 /* ── Reset base ────────────────────────────────────────────── */
-body,
-#app,
-.min-h-screen {
+body, #app, .min-h-screen, html {
   background-color: var(--em-bg-0) !important;
   color: var(--em-text-1) !important;
 }
 
-/* ── Scrollbar ─────────────────────────────────────────────── */
-* {
-  scrollbar-color: var(--em-orange-2) var(--em-bg-1);
-  scrollbar-width: thin;
+/* Grade de fundo sutil */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(249,115,22,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(249,115,22,0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
 }
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track  { background: var(--em-bg-1); }
-::-webkit-scrollbar-thumb  { background: var(--em-orange-2); border-radius: 4px; }
+
+/* Glow radial central */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 900px; height: 400px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(249,115,22,0.06) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────── */
+* { scrollbar-color: rgba(249,115,22,0.3) transparent; scrollbar-width: thin; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(249,115,22,0.25); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(249,115,22,0.45); }
 
 /* ══════════════════════════════════════════════════════════════
-   SIDEBAR / NAV LATERAL
+   SIDEBAR
 ══════════════════════════════════════════════════════════════ */
-#sidebar,
-aside,
-nav.sidebar,
-[id*="sidebar"],
-.sidebar {
+#sidebar, aside, nav.sidebar, [id*="sidebar"], .sidebar {
   background: var(--em-bg-1) !important;
   border-right: 1px solid var(--em-border) !important;
-  box-shadow: 4px 0 24px rgba(0,0,0,0.5) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
 }
 
-/* Logo / header do sidebar */
-.sidebar-header,
-#sidebar-header {
-  border-bottom: 1px solid var(--em-border) !important;
-  background: var(--em-bg-1) !important;
-}
-
-/* Ícones do sidebar */
-.sidebar-icon,
-#sidebar a,
-#sidebar button,
-aside a,
-aside button {
+/* Ícones sidebar — neutros, sem laranja gritante */
+#sidebar a, #sidebar button, aside a, aside button,
+.nav-item, [class*="nav-item"] {
   color: var(--em-text-3) !important;
+  background: transparent !important;
   transition: color .2s, background .2s !important;
 }
-#sidebar a:hover,
-#sidebar button:hover,
-#sidebar a.active,
-#sidebar button.active,
-aside a:hover,
-aside a.active {
-  color: var(--em-orange-1) !important;
-  background: var(--em-orange-glow-sm) !important;
+#sidebar a:hover, #sidebar button:hover,
+#sidebar a.active, #sidebar button.active,
+.nav-item:hover, .nav-item.active,
+.nav-item.active-nav, [class*="nav-item"].active {
+  color: var(--em-orange) !important;
+  background: var(--em-glow-sm) !important;
+}
+/* Ícone material dentro do nav */
+#sidebar .material-symbols-rounded,
+aside .material-symbols-rounded {
+  color: inherit !important;
 }
 
-/* Botão de expandir sidebar */
-#sidebar-toggle,
-.sidebar-toggle {
+/* Tab do sidebar */
+#sb-tab, .sidebar-toggle, #sidebar-toggle {
   background: var(--em-bg-2) !important;
   border: 1px solid var(--em-border) !important;
-  color: var(--em-orange-1) !important;
+  color: var(--em-text-2) !important;
+  box-shadow: none !important;
 }
 
 /* ══════════════════════════════════════════════════════════════
    TOPBAR / HEADER
 ══════════════════════════════════════════════════════════════ */
-header,
-#topbar,
-.topbar,
-[class*="top-bar"],
-[class*="header"] {
-  background: var(--em-bg-1) !important;
+header, #topbar, .topbar, [id*="header"] {
+  background: rgba(7,7,6,0.92) !important;
   border-bottom: 1px solid var(--em-border) !important;
-  box-shadow: 0 2px 20px rgba(0,0,0,0.4) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  box-shadow: none !important;
 }
 
-/* Busca global */
-#search-input,
-input[type="search"],
-.search-input {
-  background: var(--em-bg-2) !important;
+/* Logo texto */
+#logo-name, [id*="logo"] { color: var(--em-text-1) !important; }
+#logo-sub, .logo-sub      { color: var(--em-text-3) !important; }
+
+/* Busca */
+#global-search, #search-input, input[placeholder*="Buscar"] {
+  background: rgba(255,255,255,0.03) !important;
   border: 1px solid var(--em-border) !important;
   color: var(--em-text-1) !important;
+  backdrop-filter: blur(8px) !important;
 }
-#search-input:focus,
-.search-input:focus {
-  border-color: var(--em-orange-1) !important;
-  box-shadow: 0 0 0 3px var(--em-orange-glow) !important;
-}
-#search-input::placeholder { color: var(--em-text-3) !important; }
-
-/* Badge de notificação */
-#notification-badge,
-.notification-badge {
-  background: var(--em-orange-1) !important;
-}
-
-/* Avatar do usuário */
-#user-avatar,
-.user-avatar {
-  border: 2px solid var(--em-orange-1) !important;
-  box-shadow: 0 0 10px var(--em-orange-glow) !important;
-}
-
-/* ══════════════════════════════════════════════════════════════
-   CARDS GENÉRICOS
-══════════════════════════════════════════════════════════════ */
-.card,
-[class*="card"],
-.rounded-xl,
-.rounded-2xl {
-  background: var(--em-bg-2) !important;
-  border: 1px solid var(--em-border) !important;
-  color: var(--em-text-1) !important;
-}
-.card:hover,
-[class*="card"]:hover {
+#global-search:focus, #search-input:focus {
   border-color: var(--em-border-md) !important;
-  box-shadow: 0 4px 24px rgba(249,115,22,0.08) !important;
+  box-shadow: 0 0 0 3px var(--em-glow) !important;
+}
+#global-search::placeholder { color: var(--em-text-3) !important; }
+
+/* Ícones do header */
+header .material-symbols-rounded { color: var(--em-text-2) !important; }
+header button:hover .material-symbols-rounded { color: var(--em-orange) !important; }
+
+/* Avatar */
+#user-avatar, [id*="user-avatar"], [class*="user-avatar"] {
+  background: var(--em-orange-d) !important;
+  border: 1.5px solid var(--em-border-md) !important;
+  box-shadow: 0 0 12px var(--em-glow) !important;
+  color: #fff !important;
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: .04em !important;
+}
+
+/* Badge notificação */
+[id*="notification-badge"], [class*="notification-badge"] {
+  background: var(--em-orange) !important;
+}
+
+/* Botão de tema claro/escuro */
+#theme-toggle, [id*="theme-toggle"] {
+  background: rgba(255,255,255,0.03) !important;
+  border: 1px solid var(--em-border) !important;
+  color: var(--em-orange-l) !important;
 }
 
 /* ══════════════════════════════════════════════════════════════
-   DASHBOARD — CARDS DE MÉTRICAS
+   CARDS GENÉRICOS — efeito fosco
 ══════════════════════════════════════════════════════════════ */
-/* Total de ordens */
-#stat-total,
-[id*="stat-total"] {
-  background: linear-gradient(135deg, #1a1200, #0e0d0a) !important;
-  border: 1px solid var(--em-border-md) !important;
-  box-shadow: 0 0 30px rgba(249,115,22,0.06) !important;
+.card, [class*="card"],
+.rounded-xl, .rounded-2xl,
+[class*="bg-white"], [class*="bg-slate"] {
+  background: rgba(17,16,9,0.85) !important;
+  border: 1px solid var(--em-border) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  color: var(--em-text-1) !important;
+  box-shadow: none !important;
 }
-#stat-total .stat-value,
-[id*="stat-total"] .stat-value {
-  color: var(--em-orange-1) !important;
-  text-shadow: 0 0 20px rgba(249,115,22,0.4) !important;
-}
-
-/* Badge FILA */
-.badge-fila,
-[class*="badge"][class*="fila"],
-.status-pending {
-  background: rgba(249,115,22,0.15) !important;
-  color: var(--em-orange-3) !important;
-  border: 1px solid rgba(249,115,22,0.3) !important;
+.card:hover, [class*="card"]:hover {
+  border-color: var(--em-border-md) !important;
+  box-shadow: 0 0 24px var(--em-glow-sm) !important;
 }
 
-/* Badge ATIVO */
-.badge-ativo,
-[class*="badge"][class*="ativo"],
-.status-progress {
-  background: rgba(251,191,36,0.12) !important;
+/* ══════════════════════════════════════════════════════════════
+   DASHBOARD — STATS CARDS
+══════════════════════════════════════════════════════════════ */
+.stat-value, [class*="stat-value"],
+[id*="stat-total"], [id*="stat-value"],
+[id*="-pending"], [id*="-progress"], [id*="-completed"] {
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: .01em !important;
+}
+
+/* Número principal laranja */
+[id*="stat-total"] .text-4xl,
+[id*="stat-total"] .text-5xl,
+[id*="stat-total"] [class*="text-4"],
+[id*="total-count"] {
+  color: var(--em-orange) !important;
+  text-shadow: 0 0 30px rgba(249,115,22,0.3) !important;
+}
+
+/* Labels de seção */
+[class*="stat-label"], .label-sm,
+[class*="card-label"], .text-xs.uppercase {
+  font-family: 'Exo 2', sans-serif !important;
+  font-weight: 600 !important;
+  letter-spacing: .1em !important;
+  color: var(--em-text-3) !important;
+}
+
+/* Badges de status */
+.badge, [class*="badge"] {
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: .08em !important;
+}
+
+/* FILA */
+[class*="fila"], [class*="pending"], .badge-fila,
+[class*="bg-amber"], [class*="bg-yellow"] {
+  background: rgba(249,115,22,0.1) !important;
+  color: var(--em-orange-l) !important;
+  border: 1px solid rgba(249,115,22,0.22) !important;
+}
+/* ATIVO */
+[class*="ativo"], [class*="progress"], .badge-ativo {
+  background: rgba(251,191,36,0.08) !important;
   color: var(--em-amber) !important;
-  border: 1px solid rgba(251,191,36,0.25) !important;
+  border: 1px solid rgba(251,191,36,0.2) !important;
 }
-
-/* Badge PRONTO/CONCLUÍDO */
-.badge-pronto,
-.badge-done,
-[class*="badge"][class*="pronto"],
-.status-completed {
-  background: rgba(34,197,94,0.1) !important;
+/* PRONTO */
+[class*="pronto"], [class*="completed"], .badge-pronto,
+[class*="bg-emerald"], [class*="bg-green"] {
+  background: rgba(34,197,94,0.08) !important;
   color: var(--em-green) !important;
-  border: 1px solid rgba(34,197,94,0.2) !important;
+  border: 1px solid rgba(34,197,94,0.18) !important;
+}
+/* ENTREGUE */
+[class*="entregue"], [class*="delivered"], .badge-entregue {
+  background: rgba(139,92,246,0.08) !important;
+  color: #a78bfa !important;
+  border: 1px solid rgba(139,92,246,0.18) !important;
 }
 
-/* Badge ENTREGUE */
-.badge-entregue,
-[class*="badge"][class*="entregue"],
-.status-delivered {
-  background: rgba(99,102,241,0.1) !important;
-  color: #a5b4fc !important;
-  border: 1px solid rgba(99,102,241,0.2) !important;
-}
-
-/* Números grandes dos cards */
-.stat-value,
-[class*="stat-value"],
-[id*="stat-value"],
-[id*="-total"],
-[id*="-pending"],
-[id*="-progress"],
-[id*="-completed"] {
+/* ══════════════════════════════════════════════════════════════
+   TÍTULO DO DASHBOARD
+══════════════════════════════════════════════════════════════ */
+#dashboard-title, .page-title, [class*="page-title"],
+h1[class*="text-4xl"], h1[class*="text-3xl"] {
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: .04em !important;
   color: var(--em-text-1) !important;
 }
-
-/* ── Gráfico de linha (chart area) ─── */
-.chart-container,
-[id*="chart"],
-canvas {
-  filter: drop-shadow(0 0 8px rgba(249,115,22,0.15)) !important;
-}
-
-/* ── Eficiência donut ─── */
-#efficiency-arc,
-[id*="efficiency"],
-[id*="distribution"] {
-  filter: drop-shadow(0 0 12px rgba(249,115,22,0.2)) !important;
+/* "Controle de Ordens" em laranja */
+#dashboard-title span, .page-title span, .title-accent,
+h1 span[class*="text-primary"], h1 span[class*="indigo"],
+h1 span[class*="blue"] {
+  color: var(--em-orange) !important;
+  text-shadow: 0 0 24px rgba(249,115,22,0.25) !important;
 }
 
 /* ══════════════════════════════════════════════════════════════
    BOTÕES
 ══════════════════════════════════════════════════════════════ */
-/* Botão primário (Nova Ordem, etc.) */
-button.btn-primary,
-.btn-primary,
-[class*="btn-primary"],
-button[class*="bg-indigo"],
-button[class*="bg-blue"],
-a[class*="bg-indigo"],
+/* Nova Ordem — laranja sólido */
 #nova-ordem-btn,
-button:has(.material-symbols-rounded):not([class*="ghost"]):not([id*="close"]):not([id*="cancel"]) {
-  background: var(--em-orange-1) !important;
-  color: #000 !important;
-  border: none !important;
+button[onclick*="nova"],
+button[onclick*="Nova"],
+.btn-primary, [class*="btn-primary"] {
+  background: var(--em-orange-d) !important;
+  color: #fff !important;
+  border: 1px solid rgba(249,115,22,0.4) !important;
+  box-shadow: 0 0 20px rgba(249,115,22,0.2) !important;
+  font-family: 'Rajdhani', sans-serif !important;
   font-weight: 700 !important;
-  box-shadow: 0 0 20px rgba(249,115,22,0.3) !important;
-  transition: box-shadow .2s, transform .15s !important;
+  letter-spacing: .06em !important;
+  transition: all .2s !important;
 }
-button.btn-primary:hover,
-.btn-primary:hover,
-#nova-ordem-btn:hover {
-  background: var(--em-orange-3) !important;
-  box-shadow: 0 0 30px rgba(249,115,22,0.5) !important;
-  transform: translateY(-1px) !important;
+#nova-ordem-btn:hover, .btn-primary:hover {
+  background: var(--em-orange) !important;
+  box-shadow: 0 0 32px rgba(249,115,22,0.35) !important;
 }
 
-/* Botão ghost / outline */
-button.btn-ghost,
-.btn-ghost,
-[class*="btn-ghost"] {
-  background: transparent !important;
+/* Ações rápidas — ghost escuro com borda */
+.quick-action, [class*="quick-action"],
+[id*="quick-action"], [id*="acao-rapida"],
+button[onclick*="showPage"],
+a[onclick*="showPage"] {
+  background: rgba(255,255,255,0.02) !important;
   border: 1px solid var(--em-border-md) !important;
   color: var(--em-text-2) !important;
+  backdrop-filter: blur(4px) !important;
+  font-family: 'Exo 2', sans-serif !important;
+  font-weight: 500 !important;
+  box-shadow: none !important;
+  transition: all .2s !important;
 }
-button.btn-ghost:hover,
-.btn-ghost:hover {
-  border-color: var(--em-orange-1) !important;
-  color: var(--em-orange-1) !important;
-  background: var(--em-orange-glow-sm) !important;
+.quick-action:hover, [class*="quick-action"]:hover,
+button[onclick*="showPage"]:hover {
+  background: var(--em-glow) !important;
+  border-color: var(--em-border-lg) !important;
+  color: var(--em-orange-l) !important;
+  box-shadow: 0 0 20px var(--em-glow-sm) !important;
+}
+.quick-action .material-symbols-rounded,
+[class*="quick-action"] .material-symbols-rounded {
+  color: var(--em-orange) !important;
 }
 
-/* Switcher de layout (1/2/3/4) */
-#layout-switcher button,
-[id*="layout"] button {
-  background: var(--em-bg-3) !important;
+/* Switcher de layout */
+#layout-switcher button, [id*="layout"] button,
+[id*="btn-layout"] {
+  background: rgba(255,255,255,0.02) !important;
+  border: 1px solid var(--em-border) !important;
+  color: var(--em-text-3) !important;
+}
+#layout-switcher button.active,
+[id*="layout"] button.active,
+[id*="btn-layout"].active {
+  background: var(--em-orange-d) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 0 12px rgba(249,115,22,0.25) !important;
+}
+
+/* Botão refresh */
+button[onclick*="refresh"], button[onclick*="Refresh"],
+button[title*="Atualizar"], button[title*="refresh"] {
+  background: rgba(255,255,255,0.03) !important;
   border: 1px solid var(--em-border) !important;
   color: var(--em-text-2) !important;
 }
-#layout-switcher button.active,
-#layout-switcher button[class*="active"],
-[id*="layout"] button.active {
-  background: var(--em-orange-1) !important;
-  color: #000 !important;
-  border-color: var(--em-orange-1) !important;
-  box-shadow: 0 0 12px rgba(249,115,22,0.35) !important;
+
+/* Ghost genérico */
+.btn-ghost, [class*="btn-ghost"],
+button.rounded-xl:not([class*="primary"]):not(#nova-ordem-btn) {
+  background: rgba(255,255,255,0.02) !important;
+  border: 1px solid var(--em-border) !important;
+  color: var(--em-text-2) !important;
 }
 
+/* Tailwind indigo → laranja */
+.bg-indigo-500, .bg-indigo-600, .bg-indigo-700, .bg-primary-600 {
+  background-color: var(--em-orange-d) !important;
+}
+.text-indigo-400, .text-indigo-500, .text-primary-500 {
+  color: var(--em-orange) !important;
+}
+.border-indigo-500, .border-primary-500 {
+  border-color: var(--em-border-md) !important;
+}
+.ring-indigo-500 { --tw-ring-color: rgba(249,115,22,0.3) !important; }
+
 /* ══════════════════════════════════════════════════════════════
-   INPUTS E FORMULÁRIOS
+   INPUTS
 ══════════════════════════════════════════════════════════════ */
-input,
-select,
-textarea {
-  background: var(--em-bg-2) !important;
+input:not([type="range"]), select, textarea {
+  background: rgba(255,255,255,0.03) !important;
   border: 1px solid var(--em-border) !important;
   color: var(--em-text-1) !important;
-  transition: border-color .2s, box-shadow .2s !important;
+  font-family: 'Exo 2', sans-serif !important;
+  backdrop-filter: blur(4px) !important;
 }
-input:focus,
-select:focus,
-textarea:focus {
-  border-color: var(--em-orange-1) !important;
-  box-shadow: 0 0 0 3px var(--em-orange-glow) !important;
+input:focus, select:focus, textarea:focus {
+  border-color: var(--em-border-md) !important;
+  box-shadow: 0 0 0 3px var(--em-glow) !important;
   outline: none !important;
 }
-input::placeholder,
-textarea::placeholder { color: var(--em-text-3) !important; }
+input::placeholder, textarea::placeholder { color: var(--em-text-3) !important; }
+label { color: var(--em-text-2) !important; font-family: 'Exo 2', sans-serif !important; }
 option { background: var(--em-bg-2) !important; }
 
-/* Labels */
-label { color: var(--em-text-2) !important; }
-
 /* ══════════════════════════════════════════════════════════════
-   TABELAS / LISTA DE ORDENS
+   TABELAS
 ══════════════════════════════════════════════════════════════ */
-table {
-  background: transparent !important;
-  border-collapse: separate !important;
-  border-spacing: 0 !important;
-}
-thead,
-th {
-  background: var(--em-bg-3) !important;
+table { background: transparent !important; }
+thead, th {
+  background: rgba(255,255,255,0.02) !important;
   color: var(--em-text-3) !important;
   border-bottom: 1px solid var(--em-border) !important;
-  font-size: 11px !important;
-  letter-spacing: .06em !important;
+  font-family: 'Exo 2', sans-serif !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  letter-spacing: .1em !important;
   text-transform: uppercase !important;
 }
-tr {
-  border-bottom: 1px solid rgba(249,115,22,0.06) !important;
-  transition: background .15s !important;
-}
-tr:hover td {
-  background: var(--em-bg-3) !important;
-}
+tr { border-bottom: 1px solid rgba(249,115,22,0.04) !important; transition: background .15s !important; }
+tr:hover td { background: rgba(249,115,22,0.025) !important; }
 td {
   background: transparent !important;
   color: var(--em-text-2) !important;
-  border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.03) !important;
+  font-family: 'Exo 2', sans-serif !important;
 }
-td strong, td b {
-  color: var(--em-text-1) !important;
+td strong, td b, td .font-bold { color: var(--em-text-1) !important; }
+
+/* Número de lote */
+td:first-child, [class*="lote"], [class*="order-number"] {
+  color: var(--em-orange) !important;
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 600 !important;
 }
 
-/* ── Linha destacada (ordem selecionada) ─── */
-tr.selected td,
-tr[class*="selected"] td,
-tr[class*="active"] td {
-  background: rgba(249,115,22,0.06) !important;
+/* ══════════════════════════════════════════════════════════════
+   GRÁFICO — area / linha
+══════════════════════════════════════════════════════════════ */
+canvas {
+  filter: drop-shadow(0 0 12px rgba(249,115,22,0.1)) !important;
+}
+.chart-container, [class*="chart"] {
+  background: transparent !important;
 }
 
 /* ══════════════════════════════════════════════════════════════
    KANBAN
 ══════════════════════════════════════════════════════════════ */
-/* Colunas */
-.kanban-col,
-[class*="kanban-col"],
-[id*="kanban-col"] {
-  background: var(--em-bg-2) !important;
+.kanban-col, [class*="kanban-col"], [id*="kanban-col"] {
+  background: rgba(17,16,9,0.7) !important;
   border: 1px solid var(--em-border) !important;
+  backdrop-filter: blur(6px) !important;
 }
-
-/* Header das colunas */
-.kanban-col-header,
-[class*="kanban-header"] {
+.kanban-col-header, [class*="kanban-header"] {
   border-bottom: 1px solid var(--em-border) !important;
-  color: var(--em-text-1) !important;
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 600 !important;
+  letter-spacing: .05em !important;
+  color: var(--em-text-2) !important;
 }
-
-/* Cards Kanban */
-.kanban-card,
-[class*="kanban-card"],
-[class*="order-card"] {
-  background: var(--em-bg-3) !important;
-  border: 1px solid rgba(249,115,22,0.1) !important;
+.kanban-card, [class*="kanban-card"], [class*="order-card"] {
+  background: rgba(24,22,16,0.8) !important;
+  border: 1px solid rgba(249,115,22,0.08) !important;
+  backdrop-filter: blur(4px) !important;
   color: var(--em-text-1) !important;
   box-shadow: none !important;
   transition: all .2s !important;
 }
-.kanban-card:hover,
-[class*="kanban-card"]:hover {
+.kanban-card:hover, [class*="kanban-card"]:hover {
   border-color: var(--em-border-md) !important;
-  box-shadow: 0 4px 16px rgba(249,115,22,0.1) !important;
+  box-shadow: 0 4px 20px var(--em-glow-sm) !important;
   transform: translateY(-1px) !important;
 }
 
 /* ══════════════════════════════════════════════════════════════
-   MODAIS
+   MODAIS — fosco/glass escuro
 ══════════════════════════════════════════════════════════════ */
-/* Overlay */
-.modal-overlay,
-[id*="modal-overlay"],
-[class*="overlay"] {
-  background: rgba(0,0,0,0.75) !important;
-  backdrop-filter: blur(4px) !important;
+.modal-overlay, [id*="modal-overlay"], [class*="overlay"],
+.fixed.inset-0[class*="bg-"] {
+  background: rgba(4,4,3,0.8) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
 }
-
-/* Container do modal */
-.modal,
-[class*="modal-container"],
-[class*="modal-box"],
-[id*="-modal"] {
-  background: var(--em-bg-2) !important;
+.modal, [class*="modal-container"], [class*="modal-box"],
+[id*="-modal"] > div > div {
+  background: rgba(15,14,9,0.94) !important;
   border: 1px solid var(--em-border-lg) !important;
-  box-shadow: 0 0 60px rgba(249,115,22,0.12), 0 24px 64px rgba(0,0,0,0.7) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  box-shadow:
+    0 0 0 1px rgba(249,115,22,0.06),
+    0 30px 80px rgba(0,0,0,0.8),
+    0 0 60px rgba(249,115,22,0.04) !important;
 }
-
-/* Header do modal */
-[class*="modal-header"],
-[id*="modal-header"] {
+[class*="modal-header"], [id*="modal-header"] {
   border-bottom: 1px solid var(--em-border) !important;
-  background: linear-gradient(135deg, rgba(249,115,22,0.08), transparent) !important;
+  background: linear-gradient(135deg, rgba(249,115,22,0.05), transparent) !important;
 }
-
-/* Footer do modal */
-[class*="modal-footer"],
-[id*="modal-footer"] {
+[class*="modal-title"], [id*="modal-title"] {
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: .04em !important;
+  color: var(--em-text-1) !important;
+}
+[class*="modal-footer"], [id*="modal-footer"] {
   border-top: 1px solid var(--em-border) !important;
 }
 
-/* Título do modal */
-[class*="modal-title"],
-[id*="modal-title"] {
-  color: var(--em-text-1) !important;
-}
-
-/* ── Botão fechar modal ─── */
-[class*="modal-close"],
-[id*="modal-close"],
-button[aria-label="close"],
-button[aria-label="fechar"] {
-  color: var(--em-text-3) !important;
-  background: transparent !important;
-}
-[class*="modal-close"]:hover { color: var(--em-orange-1) !important; }
-
 /* ══════════════════════════════════════════════════════════════
-   DROPDOWNS / MENUS
+   DROPDOWNS
 ══════════════════════════════════════════════════════════════ */
-.dropdown,
-[class*="dropdown-menu"],
-[id*="dropdown"] {
-  background: var(--em-bg-2) !important;
+.dropdown, [class*="dropdown-menu"], [id*="dropdown"],
+[class*="user-menu"], [id*="user-menu"] {
+  background: rgba(12,11,8,0.96) !important;
   border: 1px solid var(--em-border-md) !important;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(249,115,22,0.08) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.7) !important;
 }
-.dropdown-item,
-[class*="dropdown-item"] {
+.dropdown-item, [class*="dropdown-item"] {
   color: var(--em-text-2) !important;
+  font-family: 'Exo 2', sans-serif !important;
 }
-.dropdown-item:hover,
-[class*="dropdown-item"]:hover {
-  background: var(--em-orange-glow-sm) !important;
-  color: var(--em-orange-1) !important;
+.dropdown-item:hover { background: var(--em-glow-sm) !important; color: var(--em-orange-l) !important; }
+[class*="dropdown-divider"] { border-color: var(--em-border) !important; }
+#user-name, [id*="user-name"] {
+  color: var(--em-text-1) !important;
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 600 !important;
 }
-[class*="dropdown-divider"] {
-  border-color: var(--em-border) !important;
+#user-role, [id*="user-role"] {
+  color: var(--em-orange) !important;
+  font-family: 'Exo 2', sans-serif !important;
 }
 
 /* ══════════════════════════════════════════════════════════════
    NOTIFICAÇÕES / TOASTS
 ══════════════════════════════════════════════════════════════ */
-.toast,
-[class*="toast"],
-[class*="notification-panel"],
-[id*="notification"] {
-  background: var(--em-bg-2) !important;
+.toast, [class*="toast"], [id*="notification-panel"],
+[class*="alert"], [id*="alert"] {
+  background: rgba(15,14,9,0.95) !important;
   border: 1px solid var(--em-border-md) !important;
-  color: var(--em-text-1) !important;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
-}
-.toast-success { border-left: 3px solid var(--em-green) !important; }
-.toast-error   { border-left: 3px solid var(--em-red) !important; }
-.toast-info    { border-left: 3px solid var(--em-orange-1) !important; }
-
-/* ══════════════════════════════════════════════════════════════
-   TÍTULOS E TIPOGRAFIA
-══════════════════════════════════════════════════════════════ */
-h1, h2, h3, h4 {
+  backdrop-filter: blur(12px) !important;
   color: var(--em-text-1) !important;
 }
-p, span, div {
-  color: inherit;
+
+/* ══════════════════════════════════════════════════════════════
+   EFICIÊNCIA DONUT — glow
+══════════════════════════════════════════════════════════════ */
+#efficiency-card, [id*="efficiency-card"] {
+  box-shadow: 0 0 40px rgba(249,115,22,0.06) !important;
 }
 
-/* Título do dashboard */
-#dashboard-title,
-.page-title,
-[class*="page-title"] {
-  color: var(--em-text-1) !important;
-}
-/* Destaque laranja no título */
-#dashboard-title span,
-.page-title span,
-.title-accent {
-  color: var(--em-orange-1) !important;
-}
-
-/* Textos de label pequenos */
-.label-sm,
-[class*="stat-label"],
-[class*="card-label"] {
+/* ══════════════════════════════════════════════════════════════
+   TABS / PÁGINAS
+══════════════════════════════════════════════════════════════ */
+.tab, [class*="tab-btn"] {
   color: var(--em-text-3) !important;
-  text-transform: uppercase !important;
-  letter-spacing: .08em !important;
-  font-size: 10px !important;
+  font-family: 'Exo 2', sans-serif !important;
+  font-weight: 500 !important;
+}
+.tab.active, [class*="tab-btn"].active {
+  color: var(--em-orange) !important;
+  border-bottom-color: var(--em-orange) !important;
 }
 
 /* ══════════════════════════════════════════════════════════════
-   AÇÕES RÁPIDAS (cards do dashboard)
+   HR / DIVISORES
 ══════════════════════════════════════════════════════════════ */
-.quick-action,
-[class*="quick-action"],
-[id*="quick-action"] {
-  background: var(--em-bg-3) !important;
-  border: 1px solid var(--em-border) !important;
-  color: var(--em-text-2) !important;
-  transition: all .2s !important;
-}
-.quick-action:hover,
-[class*="quick-action"]:hover {
-  background: var(--em-orange-glow) !important;
-  border-color: var(--em-border-lg) !important;
-  color: var(--em-orange-1) !important;
-  box-shadow: 0 0 20px rgba(249,115,22,0.1) !important;
-}
-.quick-action .material-symbols-rounded,
-[class*="quick-action"] .material-symbols-rounded {
-  color: var(--em-orange-1) !important;
-}
+hr, [class*="divider"] { border-color: var(--em-border) !important; }
 
 /* ══════════════════════════════════════════════════════════════
-   PAGINAÇÃO / TABS
-══════════════════════════════════════════════════════════════ */
-.tab,
-[class*="tab-btn"],
-[id*="tab-"] {
-  color: var(--em-text-3) !important;
-  border-bottom: 2px solid transparent !important;
-  transition: all .2s !important;
-}
-.tab.active,
-[class*="tab-btn"].active,
-[id*="tab-"].active {
-  color: var(--em-orange-1) !important;
-  border-bottom-color: var(--em-orange-1) !important;
-}
-.tab:hover { color: var(--em-text-2) !important; }
-
-/* ══════════════════════════════════════════════════════════════
-   SWITCH DE MODO CLARO/ESCURO
-══════════════════════════════════════════════════════════════ */
-#theme-toggle,
-[id*="theme-toggle"] {
-  color: var(--em-orange-1) !important;
-}
-
-/* ══════════════════════════════════════════════════════════════
-   DIVISORES E SEPARADORES
-══════════════════════════════════════════════════════════════ */
-hr,
-[class*="divider"] {
-  border-color: var(--em-border) !important;
-}
-
-/* ══════════════════════════════════════════════════════════════
-   PERFIL DO USUÁRIO
-══════════════════════════════════════════════════════════════ */
-#user-menu,
-[id*="user-menu"],
-[id*="profile-dropdown"] {
-  background: var(--em-bg-2) !important;
-  border: 1px solid var(--em-border-md) !important;
-}
-#user-name,
-[id*="user-name"] { color: var(--em-text-1) !important; }
-#user-role,
-[id*="user-role"] { color: var(--em-orange-1) !important; }
-
-/* ══════════════════════════════════════════════════════════════
-   CHIP / TAGS
-══════════════════════════════════════════════════════════════ */
-.chip, .tag, [class*="chip"], [class*="tag"] {
-  background: var(--em-bg-3) !important;
-  border: 1px solid var(--em-border) !important;
-  color: var(--em-text-2) !important;
-}
-
-/* ══════════════════════════════════════════════════════════════
-   PÁGINA DE ORDENS RECENTES (tabela no dashboard)
-══════════════════════════════════════════════════════════════ */
-#recent-orders,
-[id*="recent-orders"] {
-  background: var(--em-bg-2) !important;
-  border: 1px solid var(--em-border) !important;
-}
-#recent-orders thead th {
-  background: var(--em-bg-3) !important;
-  color: var(--em-text-3) !important;
-}
-
-/* ══════════════════════════════════════════════════════════════
-   LOADING / SKELETON
-══════════════════════════════════════════════════════════════ */
-@keyframes ember-shimmer {
-  0%   { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
-}
-.skeleton,
-[class*="skeleton"],
-[class*="loading-placeholder"] {
-  background: linear-gradient(
-    90deg,
-    var(--em-bg-2) 25%,
-    var(--em-bg-3) 50%,
-    var(--em-bg-2) 75%
-  ) !important;
-  background-size: 800px 100% !important;
-  animation: ember-shimmer 1.5s infinite !important;
-}
-
-/* ══════════════════════════════════════════════════════════════
-   GLOW ESPECIAL — card de eficiência
-══════════════════════════════════════════════════════════════ */
-#efficiency-card,
-[id*="efficiency-card"] {
-  box-shadow: 0 0 40px rgba(249,115,22,0.08), inset 0 0 60px rgba(249,115,22,0.03) !important;
-}
-
-/* ══════════════════════════════════════════════════════════════
-   TEXTO COLORIDO — indigo → orange
-══════════════════════════════════════════════════════════════ */
-.text-indigo-400, .text-indigo-500, .text-indigo-600 { color: var(--em-orange-1) !important; }
-.text-blue-400,   .text-blue-500                      { color: var(--em-orange-3) !important; }
-.bg-indigo-500,   .bg-indigo-600, .bg-indigo-700      { background: var(--em-orange-1) !important; }
-.border-indigo-500, .border-indigo-600                 { border-color: var(--em-border-md) !important; }
-.ring-indigo-500  { --tw-ring-color: rgba(249,115,22,0.4) !important; }
-
-/* ══════════════════════════════════════════════════════════════
-   VITO — adaptar ao tema Ember
+   VITO — tema Ember
 ══════════════════════════════════════════════════════════════ */
 #vito-panel {
-  background: #0e0d0a !important;
-  border-color: rgba(249,115,22,0.3) !important;
-  box-shadow: 0 24px 64px rgba(0,0,0,0.7), 0 0 0 1px rgba(249,115,22,0.08) !important;
+  background: rgba(10,9,6,0.96) !important;
+  border-color: var(--em-border-md) !important;
+  backdrop-filter: blur(20px) !important;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.8), 0 0 0 1px rgba(249,115,22,0.06) !important;
 }
 #vito-head {
-  background: linear-gradient(135deg, rgba(249,115,22,0.12), rgba(234,88,12,0.06)) !important;
-  border-bottom-color: rgba(249,115,22,0.15) !important;
+  background: linear-gradient(135deg, rgba(249,115,22,0.08), transparent) !important;
+  border-bottom-color: var(--em-border) !important;
 }
-#vito-head-sub  { color: var(--em-orange-1) !important; }
-#vito-head-dot  { background: var(--em-green) !important; box-shadow: 0 0 5px var(--em-green) !important; }
-.vbub.bot       { background: rgba(249,115,22,0.08) !important; border-color: rgba(249,115,22,0.18) !important; color: #e8d8c0 !important; }
-.vbub.usr       { background: var(--em-orange-2) !important; color: #fff !important; }
-.vdot           { background: var(--em-orange-1) !important; }
-.vhint          { border-color: rgba(249,115,22,0.25) !important; color: var(--em-orange-3) !important; background: rgba(249,115,22,0.05) !important; }
-.vhint:hover    { background: rgba(249,115,22,0.18) !important; }
-#vito-hints     { border-top-color: rgba(249,115,22,0.1) !important; }
-#vito-foot      { border-top-color: rgba(249,115,22,0.12) !important; }
-#vito-inp       { background: rgba(249,115,22,0.05) !important; border-color: rgba(249,115,22,0.2) !important; color: var(--em-text-1) !important; }
-#vito-inp:focus { border-color: var(--em-orange-1) !important; box-shadow: 0 0 0 3px var(--em-orange-glow) !important; }
-#vito-send      { background: var(--em-orange-2) !important; color: #fff !important; }
-#vito-send:hover { background: var(--em-orange-1) !important; }
-#vito-fab       { filter: drop-shadow(0 6px 18px rgba(249,115,22,0.45)) !important; }
+#vito-head-name { color: var(--em-text-1) !important; font-family: 'Rajdhani', sans-serif !important; font-weight: 700 !important; }
+#vito-head-sub  { color: var(--em-orange) !important; font-family: 'Exo 2', sans-serif !important; }
+#vito-head-dot  { background: var(--em-green) !important; box-shadow: 0 0 6px var(--em-green) !important; }
+.vbub.bot { background: rgba(249,115,22,0.06) !important; border-color: rgba(249,115,22,0.14) !important; color: var(--em-text-2) !important; font-family: 'Exo 2', sans-serif !important; }
+.vbub.usr { background: var(--em-orange-d) !important; color: #fff !important; font-family: 'Exo 2', sans-serif !important; }
+.vdot { background: var(--em-orange) !important; }
+.vhint { border-color: var(--em-border-md) !important; color: var(--em-orange-l) !important; background: var(--em-glow-sm) !important; font-family: 'Exo 2', sans-serif !important; }
+.vhint:hover { background: var(--em-glow) !important; }
+#vito-inp { background: rgba(255,255,255,0.03) !important; border-color: var(--em-border) !important; color: var(--em-text-1) !important; font-family: 'Exo 2', sans-serif !important; }
+#vito-inp:focus { border-color: var(--em-border-md) !important; box-shadow: 0 0 0 3px var(--em-glow) !important; }
+#vito-send { background: var(--em-orange-d) !important; }
+#vito-send:hover { background: var(--em-orange) !important; }
+#vito-fab { filter: drop-shadow(0 4px 16px rgba(249,115,22,0.35)) !important; }
+#vito-setup { background: transparent !important; border: none !important; }
+#vito-setup p { color: var(--em-text-2) !important; font-family: 'Exo 2', sans-serif !important; }
+#vito-key-inp { background: rgba(255,255,255,0.03) !important; border-color: var(--em-border) !important; color: var(--em-text-1) !important; }
+#vito-save-key { background: var(--em-orange-d) !important; font-family: 'Rajdhani', sans-serif !important; font-weight: 700 !important; }
+#vito-save-key:hover { background: var(--em-orange) !important; }
+#vito-hints { border-top-color: var(--em-border) !important; }
+#vito-foot  { border-top-color: var(--em-border) !important; }
+
+/* ══════════════════════════════════════════════════════════════
+   SKELETONS
+══════════════════════════════════════════════════════════════ */
+@keyframes ember-shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+.skeleton, [class*="skeleton"], [class*="loading-placeholder"] {
+  background: linear-gradient(90deg, var(--em-bg-2) 25%, var(--em-bg-3) 50%, var(--em-bg-2) 75%) !important;
+  background-size: 1200px 100% !important;
+  animation: ember-shimmer 1.8s infinite !important;
+}
 
 /* ══════════════════════════════════════════════════════════════
    RESPONSIVO
