@@ -345,6 +345,7 @@ Ajude com: busca/explicação de ordens, status, funcionalidades, operações de
       console.log('[Vito] Modelo OK:', model);
       return reply;
     }
+    if (lastStatus === 429) throw new Error('RATE_LIMIT');
     throw new Error(`ALL_FAILED_${lastStatus}`);
   }
 
@@ -412,15 +413,38 @@ Ajude com: busca/explicação de ordens, status, funcionalidades, operações de
       _addMsg('bot', await _ask(text));
     } catch(e) {
       console.error('[Vito]', e);
+      if (e.message === 'RATE_LIMIT') {
+        // auto-retry com countdown
+        let secs = 15;
+        const box = document.getElementById('vito-msgs');
+        const el  = document.createElement('div');
+        el.className = 'vmsg'; el.id = 'vito-retry';
+        el.innerHTML = `<div class="vico">${_svg(28,false)}</div>
+          <div class="vbub bot">⏳ Limite atingido. Tentando novamente em <strong id="vito-cd">${secs}s</strong>...</div>`;
+        box.appendChild(el); box.scrollTop = box.scrollHeight;
+        _hideTyping();
+        const interval = setInterval(() => {
+          secs--;
+          const cd = document.getElementById('vito-cd');
+          if (cd) cd.textContent = secs + 's';
+          if (secs <= 0) {
+            clearInterval(interval);
+            document.getElementById('vito-retry')?.remove();
+            _showTyping();
+            _ask(text).then(r => { _hideTyping(); _addMsg('bot', r); })
+              .catch(() => { _hideTyping(); _addMsg('bot', 'Ainda com limite. Aguarda 1 minuto e tenta. 😅'); })
+              .finally(() => { _busy = false; if (btn) btn.disabled = false; });
+          }
+        }, 1000);
+        return; // não cai no finally ainda
+      }
       let msg;
       if (CFG.key === 'SUA_CHAVE_GEMINI_AQUI')
         msg = '⚠️ Chave não configurada!\n\nVá em **aistudio.google.com** → "Get API Key" e cole em CFG.key no arquivo `js/ai.js`.';
-      else if (e.message === 'RATE_LIMIT')
-        msg = '⏳ Muitas requisições! Aguarda uns segundos e tenta de novo. 😅';
       else if (e.message === 'FORBIDDEN')
         msg = '🔑 Permissão negada. Verifique se a chave está ativa em **aistudio.google.com**.';
       else if (e.message?.startsWith('ALL_FAILED_404'))
-        msg = '⚠️ Nenhum modelo encontrado (404).\n\n**Possíveis causas:**\n• Chave criada há menos de 5 min — aguarde um pouco\n• Chave do Google Cloud (não do AI Studio)\n\nTeste sua chave em:\naistudio.google.com → My API Keys';
+        msg = '⚠️ Nenhum modelo disponível (404).\n\nVerifique sua chave em aistudio.google.com → My API Keys';
       else
         msg = 'Ops, não consegui conectar agora. 😅 Tenta em instantes!';
       _addMsg('bot', msg);
@@ -432,6 +456,7 @@ Ajude com: busca/explicação de ordens, status, funcionalidades, operações de
   }
 
   function suggest(text) {
+    if (_busy) return; // ignora cliques duplos
     const inp = document.getElementById('vito-inp');
     if (inp) { inp.value = text; inp.focus(); }
     send();
