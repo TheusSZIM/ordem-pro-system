@@ -16,8 +16,9 @@ const VetoAI = (() => {
   let _cooldownUntil = 0;
 
   const CFG = {
-    key:      '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', // console.groq.com → Create API Key
-    model:    'llama-3.1-8b-instant', // rápido e gratuito
+    // Chave lida do localStorage — nunca no código-fonte!
+    get key() { return localStorage.getItem('vito_groq_key') || ''; },
+    model:    'llama-3.1-8b-instant',
     maxTokens: 600,
     histMax:   16,
   };
@@ -267,6 +268,26 @@ Ajude com: busca/explicação de ordens, status, funcionalidades, operações de
 }
 #vito-send:hover{background:#6366f1}
 #vito-send:disabled{background:#374151;cursor:not-allowed}
+#vito-setup{padding:16px;display:flex;flex-direction:column;gap:10px}
+#vito-setup p{font-size:12px;color:#94a3b8;margin:0;line-height:1.5}
+#vito-setup a{color:#818cf8;text-decoration:none}
+#vito-setup a:hover{text-decoration:underline}
+#vito-key-inp{
+  width:100%;background:rgba(255,255,255,.05);
+  border:1px solid rgba(99,102,241,.3);border-radius:10px;
+  padding:9px 12px;color:#e2e8f0;font-size:12px;
+  font-family:monospace;outline:none;
+  transition:border-color .2s;
+}
+#vito-key-inp:focus{border-color:rgba(99,102,241,.6)}
+#vito-key-inp::placeholder{color:#475569}
+#vito-save-key{
+  background:#4338ca;border:none;border-radius:10px;
+  padding:9px 0;color:white;font-size:13px;font-weight:700;
+  cursor:pointer;width:100%;transition:background .2s;
+  font-family:inherit;
+}
+#vito-save-key:hover{background:#6366f1}
 `;
 
   // ── HTML ───────────────────────────────────────────────────────
@@ -299,6 +320,17 @@ Ajude com: busca/explicação de ordens, status, funcionalidades, operações de
       <span class="vhint" onclick="VetoAI.suggest('Como iniciar uma separação?')">🚀 Separação</span>
       <span class="vhint" onclick="VetoAI.suggest('Como imprimir etiquetas ZLP?')">🏷️ Etiquetas</span>
       <span class="vhint" onclick="VetoAI.suggest('Explica o Kanban da prateleira F')">📦 Kanban</span>
+    </div>
+
+    <!-- Setup da chave (mostrado quando não configurada) -->
+    <div id="vito-setup" style="display:none">
+      <p>Para usar o Vito, informe sua chave da API Groq.<br>
+        Obtenha gratuitamente em <a href="https://console.groq.com" target="_blank">console.groq.com</a>
+        → <strong>API Keys</strong> → <strong>Create API Key</strong>.<br><br>
+        A chave é salva apenas no seu navegador (localStorage) e nunca vai para o código.
+      </p>
+      <input id="vito-key-inp" type="password" placeholder="gsk_..." autocomplete="off"/>
+      <button id="vito-save-key" onclick="VetoAI.saveKey()">Salvar chave e começar</button>
     </div>
 
     <div id="vito-foot">
@@ -438,7 +470,7 @@ Ajude com: busca/explicação de ordens, status, funcionalidades, operações de
         }, 1000);
       }
       let msg;
-      if (CFG.key === 'SUA_CHAVE_GROQ_AQUI')
+      if (!CFG.key)
         msg = '⚠️ Chave não configurada!\n\nVá em **console.groq.com** → 'Create API Key' e cole em CFG.key no arquivo `js/ai.js`.';
       else if (e.message === 'FORBIDDEN')
         msg = '🔑 Chave inválida. Verifique em **console.groq.com** → API Keys.';
@@ -471,7 +503,34 @@ Ajude com: busca/explicação de ordens, status, funcionalidades, operações de
     });
   }
 
-  return { init, toggle, send, suggest };
+  function _showSetup() {
+    document.getElementById('vito-setup').style.display = 'flex';
+    document.getElementById('vito-setup').style.flexDirection = 'column';
+    document.getElementById('vito-hints').style.display = 'none';
+    document.getElementById('vito-foot').style.display  = 'none';
+    setTimeout(() => document.getElementById('vito-key-inp')?.focus(), 100);
+  }
+
+  function _hideSetup() {
+    document.getElementById('vito-setup').style.display = 'none';
+    document.getElementById('vito-hints').style.display = '';
+    document.getElementById('vito-foot').style.display  = '';
+  }
+
+  function saveKey() {
+    const inp = document.getElementById('vito-key-inp');
+    const key = (inp?.value || '').trim();
+    if (!key.startsWith('gsk_')) {
+      inp.style.borderColor = '#ef4444';
+      inp.placeholder = 'Chave inválida — deve começar com gsk_';
+      return;
+    }
+    localStorage.setItem('vito_groq_key', key);
+    _hideSetup();
+    _addMsg('bot', '✅ Chave salva! Agora pode me perguntar o que quiser. 😄');
+  }
+
+  return { init, toggle, send, suggest, saveKey };
 })();
 
 if (document.readyState === 'loading') {
