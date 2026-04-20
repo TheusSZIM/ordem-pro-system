@@ -331,8 +331,14 @@ const ThemeManager = (() => {
         .bg-white, .bg-white.rounded-2xl, .bg-white.rounded-xl { background-color:var(--clsurf)!important; }
         .rounded-2xl, .rounded-xl { border-color:var(--clbdr)!important; }
 
-        /* ── Tabela ── */
-        td:first-child { background:var(--clgrad)!important; -webkit-background-clip:text!important; -webkit-text-fill-color:transparent!important; font-weight:700!important; }
+        /* ── Tabela — lote em cor sólida (gradient-clip falha em alguns browsers) ── */
+        td:first-child {
+          background: none !important;
+          -webkit-background-clip: unset !important;
+          -webkit-text-fill-color: #c44dff !important;
+          color: #c44dff !important;
+          font-weight: 700 !important;
+        }
 
         /* ── Cmd cards (layout command) ── */
         #layout-command .cmd-card { background:var(--clsurf)!important; border:1px solid var(--clbdr)!important; box-shadow:var(--clsh)!important; }
@@ -361,46 +367,139 @@ const ThemeManager = (() => {
           Chart.defaults.font.family = "'DM Sans', sans-serif";
         }
 
-        // Patch cores dos charts — rosa/roxo
+        // Cores
         const PINK='#ff6b9d', PINK_A='rgba(255,107,157,0.15)';
         const PURP='#a29bfe', PURP_A='rgba(162,155,254,0.14)';
-        let _t=0;
+
+        // ── Patch donut (distributionChart) ──────────────────────
+        function patchDonut() {
+          if (typeof Chart === 'undefined') return false;
+          const getChart = id => typeof Chart.getChart === 'function'
+            ? Chart.getChart(id)
+            : Object.values(Chart.instances||{}).find(c=>c.canvas&&c.canvas.id===id);
+
+          const pie = getChart('distributionChart');
+          if (!pie) return false;
+
+          // Remove bordas pretas entre segmentos
+          if (pie.data.datasets[0]) {
+            pie.data.datasets[0].borderColor  = '#ffffff';
+            pie.data.datasets[0].borderWidth  = 3;
+            pie.data.datasets[0].hoverOffset  = 6;
+          }
+
+          // Substitui o plugin centerText para texto escuro no light
+          const pluginIdx = pie.config.plugins?.findIndex?.(p=>p.id==='centerText');
+          const newPlugin = {
+            id: 'centerText',
+            beforeDraw(chart) {
+              const { width, height, ctx: c } = chart;
+              c.save();
+              const cx = width / 2, cy = height / 2 - 10;
+              c.font = "bold 28px 'DM Sans', sans-serif";
+              c.fillStyle  = '#1a1f36'; // escuro no light
+              c.textAlign  = 'center'; c.textBaseline = 'middle';
+              const orders = window.state?.orders || [];
+              c.fillText(orders.length || pie.data.datasets[0].data.reduce((a,b)=>a+b,0), cx, cy);
+              c.font = "12px 'DM Sans', sans-serif"; c.fillStyle = '#8a93b2';
+              c.fillText('Total', cx, cy + 22);
+              c.restore();
+            }
+          };
+          if (pluginIdx >= 0) pie.config.plugins[pluginIdx] = newPlugin;
+          // Atualiza cores legend
+          if (pie.options.plugins?.legend?.labels) pie.options.plugins.legend.labels.color = '#8a93b2';
+          if (pie.options.plugins?.tooltip) {
+            pie.options.plugins.tooltip.backgroundColor = 'rgba(255,255,255,.96)';
+            pie.options.plugins.tooltip.titleColor = '#1a1f36';
+            pie.options.plugins.tooltip.bodyColor  = '#8a93b2';
+            pie.options.plugins.tooltip.borderColor = 'rgba(200,210,230,.6)';
+            pie.options.plugins.tooltip.borderWidth = 1;
+          }
+          pie.update('none');
+          return true;
+        }
+
+        // ── Patch line charts ─────────────────────────────────────
+        let _t = 0;
         function patch() {
-          if (typeof Chart==='undefined') return;
-          let ok=false;
-          ['performanceChart','performanceChart2','performanceChart3'].forEach(id=>{
-            const ch=typeof Chart.getChart==='function'
-              ?Chart.getChart(id)
-              :Object.values(Chart.instances||{}).find(c=>c.canvas&&c.canvas.id===id);
-            if(!ch||!ch.data||!ch.data.datasets||!ch.data.datasets.length)return;
-            const ds=ch.data.datasets;
+          if (typeof Chart === 'undefined') return;
+          const getChart = id => typeof Chart.getChart === 'function'
+            ? Chart.getChart(id)
+            : Object.values(Chart.instances||{}).find(c=>c.canvas&&c.canvas.id===id);
+
+          let ok = false;
+          ['performanceChart','performanceChart2','performanceChart3'].forEach(id => {
+            const ch = getChart(id);
+            if (!ch||!ch.data||!ch.data.datasets||!ch.data.datasets.length) return;
+            const ds = ch.data.datasets;
             if(ds[0]){ds[0].borderColor=PINK;ds[0].backgroundColor=PINK_A;ds[0].pointBackgroundColor=PINK;ds[0].pointBorderColor='#fff';ds[0].pointBorderWidth=2;}
             if(ds[1]){ds[1].borderColor=PURP;ds[1].backgroundColor=PURP_A;ds[1].pointBackgroundColor=PURP;ds[1].pointBorderColor='#fff';ds[1].pointBorderWidth=2;}
-            try{
+            try {
               ['x','y'].forEach(ax=>{if(ch.options.scales&&ch.options.scales[ax]){ch.options.scales[ax].grid.color='rgba(200,210,230,0.2)';ch.options.scales[ax].ticks.color='#8a93b2';}});
-              if(ch.options.plugins){if(ch.options.plugins.legend?.labels)ch.options.plugins.legend.labels.color='#8a93b2';if(ch.options.plugins.tooltip){ch.options.plugins.tooltip.backgroundColor='rgba(255,255,255,.96)';ch.options.plugins.tooltip.titleColor='#1a1f36';ch.options.plugins.tooltip.bodyColor='#8a93b2';ch.options.plugins.tooltip.borderColor='rgba(200,210,230,.6)';ch.options.plugins.tooltip.borderWidth=1;}}
-            }catch(e){}
-            ch.update('none');ok=true;
+              if(ch.options.plugins){
+                if(ch.options.plugins.legend?.labels) ch.options.plugins.legend.labels.color='#8a93b2';
+                if(ch.options.plugins.tooltip){
+                  ch.options.plugins.tooltip.backgroundColor='rgba(255,255,255,.96)';
+                  ch.options.plugins.tooltip.titleColor='#1a1f36';
+                  ch.options.plugins.tooltip.bodyColor='#8a93b2';
+                  ch.options.plugins.tooltip.borderColor='rgba(200,210,230,.6)';
+                  ch.options.plugins.tooltip.borderWidth=1;
+                }
+              }
+            } catch(e) {}
+            ch.update('none'); ok = true;
           });
+
+          // Sempre tenta o donut também
+          patchDonut();
+
+          // Dots legenda HTML
           document.querySelectorAll('.bg-amber-400.rounded-full,span.bg-amber-400').forEach(el=>el.style.setProperty('background-color',PINK,'important'));
           document.querySelectorAll('.bg-blue-500.rounded-full,span.bg-blue-500').forEach(el=>el.style.setProperty('background-color',PURP,'important'));
-          if(!ok&&_t++<15)setTimeout(patch,350);
+
+          // ── Fix lotes invisíveis na tabela ──────────────────────
+          // Remove o gradiente de texto do td:first-child que torna o skeleton visível
+          document.querySelectorAll('#recent-orders-table td:first-child').forEach(el => {
+            el.style.setProperty('background','none','important');
+            el.style.setProperty('-webkit-background-clip','unset','important');
+            el.style.setProperty('-webkit-text-fill-color','#c44dff','important');
+            el.style.setProperty('color','#c44dff','important');
+            el.style.setProperty('font-weight','700','important');
+          });
+
+          if (!ok && _t++ < 15) setTimeout(patch, 350);
         }
-        if(window.buildWeekChart&&!window._tm_origBWC){window._tm_origBWC=window.buildWeekChart;window.buildWeekChart=function(){window._tm_origBWC();_t=0;setTimeout(patch,100);};}
-        if(window.updateCharts&&!window._tm_origUC){window._tm_origUC=window.updateCharts;window.updateCharts=function(){window._tm_origUC();_t=0;setTimeout(patch,120);};}
-        [200,600,1400,3000].forEach(d=>setTimeout(patch,d));
-        if(window._tm_obs)window._tm_obs.disconnect();
-        window._tm_obs=new MutationObserver(()=>{_t=0;setTimeout(patch,150);});
+
+        // Intercepta buildWeekChart e buildPieChart
+        if (window.buildWeekChart && !window._tm_origBWC) {
+          window._tm_origBWC = window.buildWeekChart;
+          window.buildWeekChart = function() { window._tm_origBWC(); _t=0; setTimeout(patch,100); };
+        }
+        if (window.buildPieChart && !window._tm_origBPC) {
+          window._tm_origBPC = window.buildPieChart;
+          window.buildPieChart = function() { window._tm_origBPC(); setTimeout(patchDonut,80); };
+        }
+        if (window.updateCharts && !window._tm_origUC) {
+          window._tm_origUC = window.updateCharts;
+          window.updateCharts = function() { window._tm_origUC(); _t=0; setTimeout(patch,120); };
+        }
+
+        [200,600,1400,3000].forEach(d => setTimeout(patch,d));
+
+        // Observer DOM
+        if (window._tm_obs) window._tm_obs.disconnect();
+        window._tm_obs = new MutationObserver(() => { _t=0; setTimeout(patch,150); });
         window._tm_obs.observe(document.getElementById('dashboard-container')||document.body,{childList:true,subtree:true});
 
         // Sidebar fix
-        function fixSidebar(){
-          const sb=document.getElementById('sidebar');
-          const main=document.getElementById('main-content');
+        function fixSidebar() {
+          const sb   = document.getElementById('sidebar');
+          const main = document.getElementById('main-content');
           if(sb){sb.style.setProperty('width','72px','important');sb.style.setProperty('min-width','72px','important');sb.style.setProperty('max-width','72px','important');}
-          if(main)main.style.setProperty('margin-left','72px','important');
+          if(main) main.style.setProperty('margin-left','72px','important');
         }
-        fixSidebar();setTimeout(fixSidebar,500);
+        fixSidebar(); setTimeout(fixSidebar,500);
       },
     },
   };
@@ -516,6 +615,7 @@ const ThemeManager = (() => {
       // Restaura funções de chart interceptadas
       if (window._tm_origBWC) { window.buildWeekChart = window._tm_origBWC; window._tm_origBWC = null; }
       if (window._tm_origBAC) { window.buildAnalyticsChart = window._tm_origBAC; window._tm_origBAC = null; }
+      if (window._tm_origBPC) { window.buildPieChart = window._tm_origBPC; window._tm_origBPC = null; }
       if (window._tm_origUC)  { window.updateCharts = window._tm_origUC; window._tm_origUC = null; }
 
       if (typeof Chart !== 'undefined') {
