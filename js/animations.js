@@ -95,17 +95,7 @@ const CSS = `
 ${[...Array(10)].map((_,i)=>`
 .vt-d${i+1}{ animation-delay:${(i+1)*60}ms; }`).join('')}
 
-/* Cards: tilt ao hover via JS (adicionado inline) */
-.vt-tilt {
-  transform-style: preserve-3d;
-  transition: transform .4s cubic-bezier(.03,.98,.52,.99), box-shadow .4s ease !important;
-  will-change: transform;
-}
-.vt-tilt:hover {
-  box-shadow:
-    0 20px 40px rgba(0,0,0,.25),
-    0 8px 16px rgba(0,0,0,.15) !important;
-}
+/* Card tilt desativado */
 
 /* Botão primário */
 .vt-btn-primary {
@@ -175,15 +165,11 @@ ${[...Array(10)].map((_,i)=>`
 .vt-glow       { animation:vt-glow 4s ease-in-out infinite; }
 .vt-glow-ora   { animation:vt-glow-orange 3.5s ease-in-out infinite; }
 
-/* Kanban cell hover */
+/* Kanban cell hover — sutil */
 .vaga.ocupada {
-  transition:
-    transform .2s cubic-bezier(.34,1.56,.64,1),
-    box-shadow .2s ease,
-    filter .2s ease !important;
+  transition: box-shadow .2s ease, filter .2s ease !important;
 }
 .vaga.ocupada:hover {
-  transform:scale(1.07) translateY(-2px) !important;
   filter:brightness(1.08) !important;
 }
 
@@ -212,49 +198,7 @@ function once(el, key, fn) {
   fn(el);
 }
 
-// ══════════════════════════════════════════════════════════════
-// 1. CARD TILT — efeito 3D ao mover o mouse sobre o card
-// ══════════════════════════════════════════════════════════════
-function setupCardTilt() {
-  const MAX = 10; // graus máximos
-
-  function attach(card) {
-    once(card, '_vtTilt', el => {
-      el.classList.add('vt-tilt');
-
-      el.addEventListener('mousemove', e => {
-        const r    = el.getBoundingClientRect();
-        const x    = (e.clientX - r.left) / r.width  - .5;
-        const y    = (e.clientY - r.top)  / r.height - .5;
-        const rotX = -(y * MAX).toFixed(2);
-        const rotY =  (x * MAX).toFixed(2);
-        el.style.transform =
-          `perspective(700px) rotateX(${rotX}deg) rotateY(${rotY}deg) scale(1.03) translateY(-3px)`;
-      });
-
-      el.addEventListener('mouseleave', () => {
-        el.style.transition = 'transform .5s cubic-bezier(.03,.98,.52,.99)';
-        el.style.transform  = 'perspective(700px) rotateX(0) rotateY(0) scale(1) translateY(0)';
-      });
-
-      el.addEventListener('mouseenter', () => {
-        el.style.transition = 'transform .1s linear';
-      });
-    });
-  }
-
-  function scan() {
-    document.querySelectorAll(
-      '.metric-card, .bg-white.rounded-2xl, .dark\\:bg-slate-900.rounded-2xl, ' +
-      '.rounded-2xl.border, .rounded-xl.border, .cmd-card, .card-neomorph'
-    ).forEach(attach);
-  }
-
-  scan();
-  setTimeout(scan, 1200);
-  const obs = new MutationObserver(scan);
-  obs.observe(document.body, { childList: true, subtree: true });
-}
+// 1. Card Tilt removido a pedido do usuário
 
 // ══════════════════════════════════════════════════════════════
 // 2. RIPPLE — onda ao clicar em qualquer botão
@@ -320,51 +264,7 @@ function setupButtons() {
   setInterval(scan, 3500);
 }
 
-// ══════════════════════════════════════════════════════════════
-// 4. CARD ENTRANCE — entrada em cascata ao carregar/trocar aba
-// ══════════════════════════════════════════════════════════════
-function animateCardEntrance(root) {
-  const sel =
-    '.metric-card, .rounded-2xl.border:not(.vt-entered), ' +
-    '.rounded-xl.border:not(.vt-entered), .cmd-card:not(.vt-entered), ' +
-    '.bg-white.rounded-2xl:not(.vt-entered)';
-
-  const els = (root || document).querySelectorAll(sel);
-  els.forEach((el, i) => {
-    if (el.classList.contains('vt-entered')) return;
-    el.classList.add('vt-entered');
-    el.style.opacity   = '0';
-    el.style.transform = 'translateY(18px)';
-    el.style.transition = 'none';
-    const d = Math.min(i * 60, 400);
-    setTimeout(() => {
-      el.style.transition = `opacity .5s cubic-bezier(.16,1,.3,1) ${d}ms, transform .5s cubic-bezier(.16,1,.3,1) ${d}ms`;
-      el.style.opacity    = '1';
-      el.style.transform  = 'translateY(0)';
-    }, 30);
-  });
-}
-
-function setupPageObserver() {
-  ['dashboard','kanban','ordens','entrega','equipe','estoque','configuracoes'].forEach(page => {
-    const el = document.getElementById(page + '-container');
-    if (!el) return;
-    new MutationObserver(muts => {
-      for (const m of muts) {
-        if (m.type === 'attributes') {
-          const visible = !el.classList.contains('hidden') && el.style.display !== 'none';
-          if (visible) setTimeout(() => animateCardEntrance(el), 80);
-        }
-      }
-    }).observe(el, { attributes: true, attributeFilter: ['class','style'] });
-  });
-
-  document.addEventListener('pageChanged', () => setTimeout(animateCardEntrance, 100));
-  document.addEventListener('themeChanged', () => {
-    document.querySelectorAll('.vt-entered').forEach(el => el.classList.remove('vt-entered'));
-    setTimeout(animateCardEntrance, 150);
-  });
-}
+// 4. Card Entrance e Page Observer removidos a pedido do usuário
 
 // ══════════════════════════════════════════════════════════════
 // 5. GRÁFICOS — ciclo dinâmico a cada 6 segundos
@@ -487,12 +387,7 @@ function setupLayoutButtons() {
           el.style.animation = 'vt-pop .35s cubic-bezier(.34,1.56,.64,1)';
           setTimeout(() => { el.style.animation = ''; }, 380);
 
-          // Re-anima os cards do layout
-          const dashEl = document.getElementById('dashboard-container');
-          if (dashEl) {
-            dashEl.querySelectorAll('.vt-entered').forEach(c => c.classList.remove('vt-entered'));
-            setTimeout(() => animateCardEntrance(dashEl), 80);
-          }
+
         });
       });
     });
@@ -534,39 +429,7 @@ function setupProgressBars() {
   new MutationObserver(scan).observe(document.body, { childList: true, subtree: true });
 }
 
-// ══════════════════════════════════════════════════════════════
-// 11. HOVER MAGNÉTICO nos cards de ação rápida
-// ══════════════════════════════════════════════════════════════
-function setupMagneticHover() {
-  function attach(el) {
-    once(el, '_vtMag', card => {
-      card.addEventListener('mousemove', e => {
-        const r  = card.getBoundingClientRect();
-        const cx = r.left + r.width  / 2;
-        const cy = r.top  + r.height / 2;
-        const dx = (e.clientX - cx) * .06;
-        const dy = (e.clientY - cy) * .06;
-        card.style.transform = `translate(${dx.toFixed(2)}px, ${dy.toFixed(2)}px) scale(1.02)`;
-        card.style.transition = 'transform .15s linear';
-      });
-      card.addEventListener('mouseleave', () => {
-        card.style.transition = 'transform .5s cubic-bezier(.16,1,.3,1)';
-        card.style.transform  = '';
-      });
-    });
-  }
-
-  function scan() {
-    document.querySelectorAll(
-      '[onclick*="showPage"], .rapid-action-card, ' +
-      '[class*="acao-rapida"], [class*="quick-action"]'
-    ).forEach(el => {
-      const card = el.closest('.rounded-xl, .rounded-2xl');
-      if (card) attach(card);
-    });
-  }
-  scan(); setTimeout(scan, 1500);
-}
+// 11. Hover magnético removido a pedido do usuário
 
 // ══════════════════════════════════════════════════════════════
 // 12. NOTIFICAÇÃO BADGE — shake quando há novos itens
@@ -661,29 +524,23 @@ function init() {
 
   // Após DOM estável
   setTimeout(() => {
-    animateCardEntrance();
-    setupCardTilt();
     setupButtons();
     setupNavAnimations();
     setupLayoutButtons();
     setupChartTabAnimations();
     setupNumberAnimations();
     setupProgressBars();
-    setupMagneticHover();
     setupBadgeAnimations();
     setupVitoFloat();
     setupKanbanCellGlow();
-    setupPageObserver();
     startChartCycle();
   }, 500);
 
   // Re-scan periódico
   setInterval(() => {
-    setupCardTilt();
     setupButtons();
     setupNavAnimations();
     setupKanbanCellGlow();
-    animateCardEntrance();
   }, 5000);
 
   console.log('✅ animations.js — 15 módulos ativos');
