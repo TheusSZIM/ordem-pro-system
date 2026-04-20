@@ -1730,35 +1730,35 @@ const ThemeManager = (() => {
     const style = document.createElement('style');
     style.textContent = `
       #tm-fab{
-        position:fixed;top:12px;right:340px;z-index:9300;
-        height:36px;padding:0 14px;border-radius:10px;border:none;cursor:pointer;
-        background:rgba(255,255,255,0.08);backdrop-filter:blur(12px);
-        border:1px solid rgba(255,255,255,0.12);
-        box-shadow:0 2px 12px rgba(0,0,0,0.2);
-        display:flex;align-items:center;gap:7px;
+        position:fixed;top:13px;right:220px;z-index:9300;
+        height:34px;padding:0 12px;border-radius:9px;border:none;cursor:pointer;
+        background:rgba(255,255,255,0.07);backdrop-filter:blur(12px);
+        border:1px solid rgba(255,255,255,0.1);
+        box-shadow:0 2px 8px rgba(0,0,0,0.15);
+        display:flex;align-items:center;gap:6px;
         transition:all .2s;
         font-family:system-ui,sans-serif;font-size:11px;font-weight:600;
-        color:rgba(255,255,255,0.7);letter-spacing:.02em;
+        color:rgba(255,255,255,0.65);letter-spacing:.02em;
         white-space:nowrap;
       }
-      #tm-fab:hover{background:rgba(255,255,255,0.14);color:rgba(255,255,255,0.95);box-shadow:0 4px 18px rgba(0,0,0,0.3)}
-      #tm-fab svg{width:14px;height:14px;stroke:currentColor;stroke-width:1.8;fill:none;flex-shrink:0}
-      #tm-fab-swatch{width:14px;height:14px;border-radius:4px;flex-shrink:0;border:1px solid rgba(255,255,255,0.2)}
+      #tm-fab:hover{background:rgba(255,255,255,0.13);color:rgba(255,255,255,0.95);box-shadow:0 4px 14px rgba(0,0,0,0.25)}
+      #tm-fab svg{width:13px;height:13px;stroke:currentColor;stroke-width:1.8;fill:none;flex-shrink:0}
+      #tm-fab-swatch{width:13px;height:13px;border-radius:3px;flex-shrink:0;border:1px solid rgba(255,255,255,0.18)}
 
       /* Versão light do FAB */
       body.tm-light #tm-fab{
-        background:rgba(255,255,255,0.9);
-        border:1px solid rgba(200,210,230,0.6);
+        background:rgba(255,255,255,0.92);
+        border:1px solid rgba(200,210,230,0.5);
         color:#1a1f36;
-        box-shadow:0 2px 12px rgba(100,120,180,0.12);
+        box-shadow:0 2px 8px rgba(100,120,180,0.1);
       }
       body.tm-light #tm-fab:hover{
         background:#ffffff;
-        box-shadow:0 4px 18px rgba(100,120,180,0.18);
+        box-shadow:0 4px 14px rgba(100,120,180,0.16);
       }
 
       #tm-panel{
-        position:fixed;top:56px;right:340px;z-index:9299;
+        position:fixed;top:55px;right:220px;z-index:9299;
         width:230px;background:rgba(12,10,24,0.98);
         border:1px solid rgba(255,255,255,0.1);border-radius:16px;
         padding:16px;backdrop-filter:blur(24px);
