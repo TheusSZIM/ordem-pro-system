@@ -72,17 +72,27 @@ const ThemeManager = (() => {
         body::before, body::after, .bg-grid { display:none!important; }
 
         /* ── SIDEBAR 280px com labels de seção ── */
-        #sidebar, #sidebar-container>*, aside {
+        #sidebar,
+        #sidebar-container,
+        #sidebar-container > *,
+        aside,
+        [id="sidebar"] {
           width: 280px !important; min-width: 280px !important; max-width: 280px !important;
           background: linear-gradient(180deg,#1a1a1a 0%,#151515 100%) !important;
-          border-right: 1px solid var(--pm-bdr) !important;
+          background-color: #1a1a1a !important;
+          border-right: 1px solid #3a3a3a !important;
           box-shadow: 8px 0 16px rgba(0,0,0,0.5) !important;
           overflow-y: auto !important; backdrop-filter: none !important;
           padding: 0 !important;
         }
+        /* Override Tailwind dark slate nas classes internas */
+        #sidebar [class*="bg-slate"], #sidebar [class*="dark:bg-slate"],
+        #sidebar-container [class*="bg-slate"],
+        aside [class*="bg-slate"] {
+          background-color: transparent !important;
+        }
         #main-content { margin-left: 280px !important; }
-        #main-content.sb-mini { margin-left: 280px !important; }
-        #sb-tab, [id*="sb-tab"] { display:none!important; }
+        #main-content.sb-mini { margin-left: 64px !important; }
 
         /* Logo */
         #sidebar header, #sidebar [class*="sidebar-header"], #sidebar > div:first-child {
@@ -356,9 +366,19 @@ const ThemeManager = (() => {
         /* ── Tab toggle da sidebar — mostra no Premium ── */
         #sb-tab, [id*="sb-tab"] {
           display: flex !important;
-          background: var(--pm-bg2) !important;
-          border: 1px solid var(--pm-bdr) !important;
-          color: var(--pm-acc) !important;
+          background: #252525 !important;
+          border: 1px solid #3a3a3a !important;
+          border-left: none !important;
+          color: #ff6b00 !important;
+        }
+        #sb-tab:hover { background: #2a2a2a !important; }
+
+        /* Sidebar em modo mini (recolhida) — mantém bg escuro */
+        #sidebar.sb-mini, [id="sidebar"].sb-mini,
+        aside.sb-mini {
+          background: linear-gradient(180deg,#1a1a1a 0%,#151515 100%) !important;
+          background-color: #1a1a1a !important;
+          border-right: 1px solid #3a3a3a !important;
         }
 
         /* ── Layout switcher — contraste alto ── */
@@ -455,6 +475,10 @@ const ThemeManager = (() => {
           sb.style.setProperty('width','280px','important');
           sb.style.setProperty('min-width','280px','important');
           sb.style.setProperty('max-width','280px','important');
+          // Força background correto via JS (Tailwind pode sobrescrever via className)
+          sb.style.setProperty('background','linear-gradient(180deg,#1a1a1a 0%,#151515 100%)','important');
+          sb.style.setProperty('background-color','#1a1a1a','important');
+          sb.style.setProperty('border-right','1px solid #3a3a3a','important');
           // Força todos os spans de texto a ficarem visíveis
           sb.querySelectorAll('span:not(.material-symbols-rounded), p, [class*="text-xs"], [class*="nav-section"]').forEach(el => {
             el.style.removeProperty('display');
@@ -462,6 +486,10 @@ const ThemeManager = (() => {
             el.style.removeProperty('max-height');
             el.style.removeProperty('line-height');
             el.style.removeProperty('overflow');
+          });
+          // Zera backgrounds internos que podem ser slate
+          sb.querySelectorAll('[class*="bg-slate"], [class*="dark:bg-slate"]').forEach(el => {
+            el.style.setProperty('background-color','transparent','important');
           });
           const main = document.getElementById('main-content');
           if (main) main.style.setProperty('margin-left','280px','important');
