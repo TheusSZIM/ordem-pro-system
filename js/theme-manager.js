@@ -353,6 +353,84 @@ const ThemeManager = (() => {
         #layout-command [style*="color:#e2e8f0"],[style*="color:#f1f5f9"] { color:var(--pm-t1)!important; }
         #layout-command [style*="color:#64748b"],[style*="color:#475569"] { color:var(--pm-t3)!important; }
 
+        /* ── Tab toggle da sidebar — mostra no Premium ── */
+        #sb-tab, [id*="sb-tab"] {
+          display: flex !important;
+          background: var(--pm-bg2) !important;
+          border: 1px solid var(--pm-bdr) !important;
+          color: var(--pm-acc) !important;
+        }
+
+        /* ── Layout switcher — contraste alto ── */
+        .layout-btn {
+          color: #888888 !important;
+          border-color: var(--pm-bdr) !important;
+          background: var(--pm-bg2) !important;
+        }
+        .layout-btn:hover {
+          border-color: var(--pm-acc) !important;
+          color: var(--pm-acc) !important;
+          background: rgba(255,107,0,0.1) !important;
+        }
+        .layout-btn.active-layout {
+          background: rgba(255,107,0,0.2) !important;
+          border-color: var(--pm-acc) !important;
+          color: var(--pm-acc) !important;
+        }
+
+        /* ── Botão Refresh ── */
+        #refresh-btn {
+          background: var(--pm-bg2) !important;
+          border: 1px solid var(--pm-bdr) !important;
+          color: #888888 !important;
+        }
+        #refresh-btn:hover { color: var(--pm-acc) !important; border-color: var(--pm-acc) !important; }
+
+        /* ── Seções e textos do nav — forçar visível ── */
+        /* (anula qualquer display:none de outros temas) */
+        #sidebar [class*="text-xs"],
+        #sidebar [class*="tracking-wider"],
+        #sidebar [class*="uppercase"],
+        #sidebar [class*="nav-section"],
+        #sidebar p,
+        #sidebar [class*="text-sm"] {
+          display: block !important;
+          visibility: visible !important;
+          max-height: unset !important;
+          overflow: visible !important;
+          line-height: normal !important;
+        }
+        /* Texto dos nav items */
+        #sidebar a > span:not(.material-symbols-rounded),
+        #sidebar button > span:not(.material-symbols-rounded),
+        .nav-item > span:not(.material-symbols-rounded),
+        .nav-item > p, .nav-item > div {
+          display: inline !important;
+          visibility: visible !important;
+          font-size: 14px !important;
+          line-height: normal !important;
+          max-height: unset !important;
+          color: inherit !important;
+        }
+
+        /* ── Section labels contraste ── */
+        #sidebar [class*="text-xs"][class*="uppercase"],
+        #sidebar [class*="tracking-wider"],
+        #sidebar .nav-section-title,
+        #sidebar [class*="nav-section"] > span,
+        #sidebar [class*="nav-section"] > p {
+          color: #666666 !important;
+          font-size: 10px !important;
+          font-weight: 700 !important;
+          letter-spacing: 0.1em !important;
+          text-transform: uppercase !important;
+          padding: 0.75rem 1rem 0.5rem !important;
+        }
+
+        /* ── Nome do usuário e role na sidebar ── */
+        #user-name { color: #ffffff !important; font-weight: 600 !important; font-size: 12px !important; }
+        #user-role { color: #888888 !important; font-size: 10px !important; background:none!important; -webkit-text-fill-color:#888888!important; }
+
         /* ── Scrollbar ── */
         *{scrollbar-color:rgba(255,107,0,.25) transparent;}
         ::-webkit-scrollbar{width:8px;height:8px;}
@@ -370,17 +448,28 @@ const ThemeManager = (() => {
           Chart.defaults.font.family = "'Inter', sans-serif";
         }
 
-        // Sidebar: exibe textos dos nav items
+        // Sidebar: exibe textos e labels de seção
         function fixSidebar() {
           const sb = document.getElementById('sidebar');
           if (!sb) return;
           sb.style.setProperty('width','280px','important');
           sb.style.setProperty('min-width','280px','important');
           sb.style.setProperty('max-width','280px','important');
+          // Força todos os spans de texto a ficarem visíveis
+          sb.querySelectorAll('span:not(.material-symbols-rounded), p, [class*="text-xs"], [class*="nav-section"]').forEach(el => {
+            el.style.removeProperty('display');
+            el.style.removeProperty('font-size');
+            el.style.removeProperty('max-height');
+            el.style.removeProperty('line-height');
+            el.style.removeProperty('overflow');
+          });
           const main = document.getElementById('main-content');
           if (main) main.style.setProperty('margin-left','280px','important');
+          // Mostra o tab toggle
+          const tab = document.getElementById('sb-tab') || document.querySelector('[id*="sb-tab"]');
+          if (tab) tab.style.removeProperty('display');
         }
-        fixSidebar(); [300,800].forEach(d=>setTimeout(fixSidebar,d));
+        fixSidebar(); [300,800,1500].forEach(d=>setTimeout(fixSidebar,d));
 
         // Patch charts — laranja com área preenchida
         const ORA='#ff6b00', ORA_A='rgba(255,107,0,0.15)';
