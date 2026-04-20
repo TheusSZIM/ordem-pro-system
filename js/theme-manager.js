@@ -71,27 +71,58 @@ const ThemeManager = (() => {
         html, body { background: linear-gradient(135deg,#0f0f0f 0%,#1a1a1a 100%) !important; color: var(--pm-t1) !important; }
         body::before, body::after, .bg-grid { display:none!important; }
 
-        /* ── SIDEBAR — fundo escuro Manus ── */
-        /* Apenas o sidebar, não o container (que pode ter largura dinâmica) */
-        #sidebar {
+        /* ═══ SIDEBAR — override exato do sidebar.html ══════════════ */
+        /* Usa mesma especificidade do sidebar.html: html.dark #sidebar */
+        html.dark #sidebar,
+        html.dark #sidebar.sb-mini,
+        html body #sidebar,
+        html body #sidebar.sb-mini {
           background: linear-gradient(180deg,#1a1a1a 0%,#151515 100%) !important;
           background-color: #1a1a1a !important;
           border-right: 1px solid #3a3a3a !important;
           box-shadow: 8px 0 16px rgba(0,0,0,0.5) !important;
           backdrop-filter: none !important;
         }
-        /* Expanded — 280px */
-        #sidebar:not(.sb-mini):not([style*="width: 4rem"]):not([style*="width:4rem"]):not(.w-16) {
-          width: 280px !important; min-width: 280px !important;
+
+        /* Sb-tab pill — dark Manus */
+        html.dark #sb-pill {
+          background: #252525 !important;
+          border-color: rgba(255,107,0,0.3) !important;
+          box-shadow: 4px 0 14px rgba(0,0,0,0.5) !important;
+        }
+        html.dark #sb-tab:hover #sb-pill {
+          background: rgba(255,107,0,0.15) !important;
+          border-color: rgba(255,107,0,0.6) !important;
+        }
+        html.dark #sb-pill .material-symbols-rounded {
+          color: #ff6b00 !important;
         }
 
-        /* Zera bg-slate dentro do sidebar */
-        #sidebar [class*="bg-slate"],
-        #sidebar [class*="dark:bg-slate"] {
-          background-color: transparent !important;
-          background: transparent !important;
+        /* Nav items — cores Manus no dark */
+        html.dark .nav-item { color: #888888 !important; }
+        html.dark .nav-item:hover {
+          background: rgba(255,107,0,0.1) !important;
+          color: #ff6b00 !important;
+        }
+        html.dark .nav-item.active-nav {
+          background: linear-gradient(135deg,rgba(255,107,0,0.2),rgba(255,107,0,0.05)) !important;
+          color: #ff6b00 !important;
+        }
+        html.dark .nav-item.active-nav::before {
+          background: #ff6b00 !important;
+          box-shadow: none !important;
         }
 
+        /* Labels de seção */
+        html.dark .sb-label { color: #666666 !important; }
+
+        /* Badge "Novo" */
+        html.dark .nav-badge {
+          background: rgba(255,107,0,0.15) !important;
+          color: #ff6b00 !important;
+        }
+
+        /* Main content margin */
         #main-content { margin-left: 280px !important; }
 
         /* Logo */
@@ -475,17 +506,11 @@ const ThemeManager = (() => {
           sb.style.setProperty('width','280px','important');
           sb.style.setProperty('min-width','280px','important');
           sb.style.setProperty('max-width','280px','important');
-          // Força background apenas no sidebar (não no container)
+          // Força background via inline style (maior prioridade que qualquer CSS)
           sb.style.setProperty('background','linear-gradient(180deg,#1a1a1a 0%,#151515 100%)','important');
           sb.style.setProperty('background-color','#1a1a1a','important');
           sb.style.setProperty('border-right','1px solid #3a3a3a','important');
-          // Só expande largura se não estiver em modo mini
-          const isMini = sb.classList.contains('w-16') || sb.classList.contains('sb-mini')
-            || sb.style.width === '4rem' || sb.style.width === '64px';
-          if (!isMini) {
-            sb.style.setProperty('width','280px','important');
-            sb.style.setProperty('min-width','280px','important');
-          }
+          const isMini = sb.classList.contains('sb-mini');
           // Força todos os spans de texto a ficarem visíveis
           sb.querySelectorAll('span:not(.material-symbols-rounded), p, [class*="text-xs"], [class*="nav-section"]').forEach(el => {
             el.style.removeProperty('display');
@@ -499,14 +524,20 @@ const ThemeManager = (() => {
             el.style.setProperty('background-color','transparent','important');
           });
           const main = document.getElementById('main-content');
-          if (main && !isMini) {
-            main.style.setProperty('margin-left','280px','important');
+          if (main) {
+            main.style.setProperty('margin-left', isMini ? '76px' : '280px', 'important');
           }
           // Mostra o tab toggle
           const tab = document.getElementById('sb-tab') || document.querySelector('[id*="sb-tab"]');
           if (tab) tab.style.removeProperty('display');
         }
         fixSidebar(); [300,800,1500].forEach(d=>setTimeout(fixSidebar,d));
+
+        // Observer: re-aplica bg sempre que sidebar ganhar/perder sb-mini
+        if (window._pm_sbObs) window._pm_sbObs.disconnect();
+        window._pm_sbObs = new MutationObserver(() => fixSidebar());
+        const sbEl = document.getElementById('sidebar');
+        if (sbEl) window._pm_sbObs.observe(sbEl, { attributes: true, attributeFilter: ['class'] });
 
         // Patch charts — laranja com área preenchida
         const ORA='#ff6b00', ORA_A='rgba(255,107,0,0.15)';
