@@ -837,9 +837,72 @@ const ThemeManager = (() => {
         }
         if(window.buildWeekChart&&!window._tm_origBWC){window._tm_origBWC=window.buildWeekChart;window.buildWeekChart=function(){window._tm_origBWC();_t=0;setTimeout(patch,100);};}
         if(window.updateCharts&&!window._tm_origUC){window._tm_origUC=window.updateCharts;window.updateCharts=function(){window._tm_origUC();_t=0;setTimeout(patch,120);};}
+        // ── Patch donut no Neon ───────────────────────────────────
+        function patchNeonDonut() {
+          if (typeof Chart === 'undefined') return;
+          const getChart = id => typeof Chart.getChart === 'function'
+            ? Chart.getChart(id)
+            : Object.values(Chart.instances||{}).find(c=>c.canvas&&c.canvas.id===id);
+          const pie = getChart('distributionChart');
+          if (!pie) return;
+          // Sem bordas entre segmentos
+          if (pie.data.datasets[0]) {
+            pie.data.datasets[0].borderColor  = 'transparent';
+            pie.data.datasets[0].borderWidth  = 0;
+            pie.data.datasets[0].hoverOffset  = 6;
+            // Cores neon: roxo, azul elétrico, verde neon, laranja
+            pie.data.datasets[0].backgroundColor = [
+              'rgba(123,47,247,0.85)',
+              'rgba(99,147,255,0.85)',
+              'rgba(16,220,160,0.85)',
+              'rgba(255,107,53,0.85)'
+            ];
+          }
+          // Tooltip dark
+          if (pie.options.plugins?.tooltip) {
+            pie.options.plugins.tooltip.backgroundColor = 'rgba(7,4,15,0.97)';
+            pie.options.plugins.tooltip.titleColor = '#f0eaff';
+            pie.options.plugins.tooltip.bodyColor  = '#8b7aaa';
+            pie.options.plugins.tooltip.borderColor = 'rgba(123,47,247,0.25)';
+            pie.options.plugins.tooltip.borderWidth = 1;
+          }
+          // Legend color
+          if (pie.options.plugins?.legend?.labels)
+            pie.options.plugins.legend.labels.color = '#8b7aaa';
+          // Texto central escuro/claro no fundo dark
+          const pluginIdx = (pie.config.plugins||[]).findIndex(p=>p.id==='centerText');
+          const newPlugin = {
+            id: 'centerText',
+            beforeDraw(chart) {
+              const { width, height, ctx: c } = chart;
+              c.save();
+              const cx = width/2, cy = height/2 - 10;
+              c.font = "bold 28px 'Space Grotesk', sans-serif";
+              c.fillStyle = '#f0eaff';
+              c.textAlign = 'center'; c.textBaseline = 'middle';
+              const orders = window.state?.orders || [];
+              const total = orders.length || (pie.data.datasets[0].data.reduce((a,b)=>a+b,0));
+              c.fillText(total, cx, cy);
+              c.font = "12px 'Space Grotesk', sans-serif";
+              c.fillStyle = '#6b5a8a';
+              c.fillText('Total', cx, cy + 22);
+              c.restore();
+            }
+          };
+          if (pluginIdx >= 0) pie.config.plugins[pluginIdx] = newPlugin;
+          pie.update('none');
+        }
+
+        // Intercepta buildPieChart
+        if (window.buildPieChart && !window._tm_origBPC_ne) {
+          window._tm_origBPC_ne = window.buildPieChart;
+          window.buildPieChart = function() { window._tm_origBPC_ne(); setTimeout(patchNeonDonut, 80); };
+        }
+
         [200,600,1400].forEach(d=>setTimeout(patch,d));
+        [300,700,1500].forEach(d=>setTimeout(patchNeonDonut,d));
         if(window._tm_obs)window._tm_obs.disconnect();
-        window._tm_obs=new MutationObserver(()=>{_t=0;setTimeout(patch,150);});
+        window._tm_obs=new MutationObserver(()=>{_t=0;setTimeout(patch,150);setTimeout(patchNeonDonut,200);});
         window._tm_obs.observe(document.getElementById('dashboard-container')||document.body,{childList:true,subtree:true});
       },
     },
@@ -1551,10 +1614,11 @@ const ThemeManager = (() => {
       if (window._tm_obs) { window._tm_obs.disconnect(); window._tm_obs = null; }
 
       // Restaura funções de chart interceptadas
-      if (window._tm_origBWC) { window.buildWeekChart = window._tm_origBWC; window._tm_origBWC = null; }
-      if (window._tm_origBAC) { window.buildAnalyticsChart = window._tm_origBAC; window._tm_origBAC = null; }
-      if (window._tm_origBPC) { window.buildPieChart = window._tm_origBPC; window._tm_origBPC = null; }
-      if (window._tm_origUC)  { window.updateCharts = window._tm_origUC; window._tm_origUC = null; }
+      if (window._tm_origBWC)    { window.buildWeekChart     = window._tm_origBWC;    window._tm_origBWC    = null; }
+      if (window._tm_origBAC)    { window.buildAnalyticsChart= window._tm_origBAC;    window._tm_origBAC    = null; }
+      if (window._tm_origBPC)    { window.buildPieChart       = window._tm_origBPC;    window._tm_origBPC    = null; }
+      if (window._tm_origBPC_ne) { window.buildPieChart       = window._tm_origBPC_ne; window._tm_origBPC_ne = null; }
+      if (window._tm_origUC)     { window.updateCharts        = window._tm_origUC;     window._tm_origUC     = null; }
 
       if (typeof Chart !== 'undefined') {
         // Restaura defaults escuros
