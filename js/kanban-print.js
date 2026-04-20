@@ -1,31 +1,39 @@
 // ============================================================
 // KANBAN PRINT — Impressão A4 do espelho de posição
-// Impressão nativa via window.print() — sem PDF, sem servidor
+// Resolve lotes no contexto da janela principal antes de abrir popup
 // ============================================================
 
-/**
- * Abre janela de impressão A4 com o espelho da posição Kanban.
- * @param {object} avalia  - resultado de avaliarPosicao()
- * @param {object} modelo  - modelo { nome, barColor, pos }
- * @param {string} posKey  - ex: "F11-01"
- */
 function imprimirKanban(avalia, modelo, posKey) {
-    // ── Monta linhas da tabela ───────────────────────────────
-    const linhas = avalia.itens.map(comp => {
-        const qtd   = comp.qtdReal > 0 ? comp.qtdReal.toLocaleString('pt-BR') : '—';
-        // Lote: busca no KS.lotesMap se disponível
+
+    // ── Resolve lotes AQUI (no contexto da janela principal) ─
+    const itensComLote = avalia.itens.map(comp => {
         const loteKey = posKey + '|' + comp.pn;
-        const lotes   = (window.KS?.lotesMap?.get(loteKey) || []);
-        const loteStr = lotes.length > 0 ? lotes.join(' / ') : '—';
-        const mult    = comp.mult ? comp.mult.toFixed(2).replace('.', ',') : '1,00';
+        // Acessa KS diretamente — ainda estamos na janela principal
+        const lotesArr = KS?.lotesMap?.get(loteKey) || [];
+        return {
+            pn:    comp.pn,
+            desc:  comp.desc,
+            qtd:   comp.qtdReal,
+            mult:  comp.mult || 1,
+            lotes: lotesArr,
+        };
+    });
+
+    // ── Monta linhas da tabela ───────────────────────────────
+    const linhas = itensComLote.map(comp => {
+        const qtdStr  = comp.qtd > 0
+            ? comp.qtd.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            : '—';
+        const loteStr = comp.lotes.length > 0 ? comp.lotes.join(' / ') : '—';
+        const multStr = comp.mult.toFixed(2).replace('.', ',');
 
         return `
         <tr>
             <td class="pn">${comp.pn}</td>
             <td class="desc">${comp.desc}</td>
-            <td class="num">${qtd}</td>
+            <td class="num">${qtdStr}</td>
             <td class="lote">${loteStr}</td>
-            <td class="num">${mult}</td>
+            <td class="num">${multStr}</td>
         </tr>`;
     }).join('');
 
@@ -48,7 +56,6 @@ function imprimirKanban(avalia, modelo, posKey) {
     background: #fff;
   }
 
-  /* ── Cabeçalho do modelo ─────────────────────────── */
   .modelo-header {
     text-align: center;
     font-size: 16pt;
@@ -59,15 +66,11 @@ function imprimirKanban(avalia, modelo, posKey) {
     margin-bottom: 0;
   }
 
-  /* ── Tabela de componentes ───────────────────────── */
   table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 0;
   }
-  thead tr {
-    background: #f4a460;
-  }
+  thead tr { background: #f4a460; }
   thead th {
     border: 1px solid #888;
     padding: 5px 6px;
@@ -76,9 +79,7 @@ function imprimirKanban(avalia, modelo, posKey) {
     font-style: italic;
     text-align: left;
   }
-  tbody tr {
-    border-bottom: 1px solid #ddd;
-  }
+  tbody tr { border-bottom: 1px solid #ddd; }
   tbody tr:nth-child(even) { background: #fafafa; }
   tbody td {
     border: 1px solid #ccc;
@@ -87,13 +88,11 @@ function imprimirKanban(avalia, modelo, posKey) {
     vertical-align: middle;
   }
   .pn   { font-family: 'Courier New', monospace; font-size: 8.5pt; white-space: nowrap; }
-  .desc { }
   .num  { text-align: right; white-space: nowrap; }
   .lote { font-size: 8.5pt; }
 
-  /* ── Posição em destaque ─────────────────────────── */
   .posicao-block {
-    margin-top: 18mm;
+    margin-top: 14mm;
     text-align: center;
   }
   .posicao-label {
@@ -104,15 +103,13 @@ function imprimirKanban(avalia, modelo, posKey) {
     color: #000;
   }
 
-  /* ── Rodapé conferente / data ────────────────────── */
   .footer {
-    margin-top: 18mm;
+    margin-top: 14mm;
     display: flex;
     justify-content: space-between;
     font-size: 13pt;
     font-weight: bold;
   }
-  .footer span { min-width: 200px; }
 </style>
 </head>
 <body>
@@ -146,17 +143,16 @@ function imprimirKanban(avalia, modelo, posKey) {
   <script>
     window.onload = function() {
       window.print();
-      // Fecha a janela após imprimir (ou cancelar)
       window.onfocus = function() { setTimeout(() => window.close(), 300); };
     };
   </script>
 </body>
 </html>`;
 
-    // ── Abre popup e imprime ─────────────────────────────────
+    // ── Abre popup ───────────────────────────────────────────
     const popup = window.open('', '_blank', 'width=794,height=1123,menubar=no,toolbar=no,location=no');
     if (!popup) {
-        // Fallback: popup bloqueado — usa iframe oculto
+        // Fallback: iframe oculto
         let iframe = document.getElementById('_kanban_print_frame');
         if (!iframe) {
             iframe = document.createElement('iframe');
