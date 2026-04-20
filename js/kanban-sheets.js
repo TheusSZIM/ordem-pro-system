@@ -669,6 +669,16 @@ async function processarUploadXLS(event) {
 
         renderShelf();
 
+        // Abre diagnóstico automaticamente se nenhum lote foi capturado
+        if (KS.lotesMap.size === 0) {
+            console.warn('[XLS] Nenhum lote detectado. Abrindo diagnóstico...');
+            if (typeof window.diagnosticarXLS === 'function') {
+                setTimeout(() => window.diagnosticarXLS(rows), 500);
+            }
+        } else {
+            console.log('[XLS] ✅', KS.lotesMap.size, 'lotes capturados');
+        }
+
         const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         setSyncStatus('✓ Arquivo carregado', 'ok');
         setText('last-sync', `${file.name} às ${now}`);
@@ -708,6 +718,69 @@ async function processarUploadXLS(event) {
 
 window.abrirUploadXLS     = abrirUploadXLS;
 window.processarUploadXLS = processarUploadXLS;
+
+// ── DIAGNÓSTICO DE COLUNAS XLS ────────────────────────────────
+// Mostra um modal com todas as colunas detectadas para ajudar a
+// identificar o nome exato da coluna de Lote no arquivo TOTVS.
+window.diagnosticarXLS = function(rows) {
+    if (!rows || rows.length < 2) return;
+    const h = rows[0].map((c, i) => ({ i, nome: String(c || '').trim(), ex: String(rows[1]?.[i] || '').trim() }));
+
+    const linhas = h.map(col =>
+        `<tr style="border-bottom:1px solid rgba(148,163,184,.1);">
+            <td style="padding:4px 8px;color:#94a3b8;font-size:11px;text-align:right;">${col.i}</td>
+            <td style="padding:4px 8px;font-weight:700;color:#e2e8f0;font-size:11px;">${col.nome || '(vazio)'}</td>
+            <td style="padding:4px 8px;color:#64748b;font-size:10px;font-family:monospace;">${col.ex || '—'}</td>
+        </tr>`
+    ).join('');
+
+    const lotesInfo = KS.lotesMap.size > 0
+        ? `<div style="margin-top:10px;padding:8px;background:rgba(34,197,94,.1);border-radius:8px;border:1px solid rgba(34,197,94,.3);">
+               <p style="font-size:11px;font-weight:700;color:#22c55e;">✅ ${KS.lotesMap.size} lotes capturados!</p>
+               <p style="font-size:10px;color:#64748b;margin-top:2px;">Ex: ${[...KS.lotesMap.entries()].slice(0,2).map(([k,v])=>k+' → '+v.join(',')).join(' | ')}</p>
+           </div>`
+        : `<div style="margin-top:10px;padding:8px;background:rgba(239,68,68,.1);border-radius:8px;border:1px solid rgba(239,68,68,.3);">
+               <p style="font-size:11px;font-weight:700;color:#ef4444;">⚠️ Nenhum lote detectado automaticamente</p>
+               <p style="font-size:10px;color:#64748b;margin-top:2px;">Identifique abaixo qual coluna contém o número do lote e informe o nome exato.</p>
+           </div>`;
+
+    document.getElementById('xls-diag-modal')?.remove();
+    const html = `
+    <div id="xls-diag-modal" class="fixed inset-0 z-[99] hidden">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="document.getElementById('xls-diag-modal')?.remove()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+            <div class="bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg pointer-events-auto p-5"
+                 style="transform:scale(1);opacity:1;max-height:85vh;display:flex;flex-direction:column;">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-bold text-white flex items-center gap-2">
+                        <span class="material-symbols-rounded text-amber-400">manage_search</span>
+                        Diagnóstico — Colunas do XLS
+                    </h3>
+                    <button onclick="document.getElementById('xls-diag-modal')?.remove()" class="text-slate-400 hover:text-white">
+                        <span class="material-symbols-rounded">close</span>
+                    </button>
+                </div>
+                ${lotesInfo}
+                <p style="font-size:10px;color:#64748b;margin:8px 0 4px;">Colunas encontradas no arquivo:</p>
+                <div style="overflow-y:auto;flex:1;">
+                    <table style="width:100%;border-collapse:collapse;">
+                        <thead>
+                            <tr style="border-bottom:1px solid rgba(148,163,184,.2);">
+                                <th style="padding:4px 8px;color:#64748b;font-size:10px;text-align:right;">#</th>
+                                <th style="padding:4px 8px;color:#64748b;font-size:10px;text-align:left;">Nome da Coluna</th>
+                                <th style="padding:4px 8px;color:#64748b;font-size:10px;text-align:left;">Exemplo (1ª linha)</th>
+                            </tr>
+                        </thead>
+                        <tbody>${linhas}</tbody>
+                    </table>
+                </div>
+                <p style="font-size:10px;color:#64748b;margin-top:8px;">Se o lote não foi detectado, informe o nome exato da coluna ao suporte.</p>
+            </div>
+        </div>
+    </div>`;
+    document.body.insertAdjacentHTML('beforeend', html);
+    document.getElementById('xls-diag-modal').classList.remove('hidden');
+};
 
 // ── FONTE DE DADOS ────────────────────────────────────────────
 
