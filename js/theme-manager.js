@@ -71,12 +71,13 @@ const ThemeManager = (() => {
         html, body { background: linear-gradient(135deg,#0f0f0f 0%,#1a1a1a 100%) !important; color: var(--pm-t1) !important; }
         body::before, body::after, .bg-grid { display:none!important; }
 
-        /* ═══ SIDEBAR — override exato do sidebar.html ══════════════ */
-        /* Usa mesma especificidade do sidebar.html: html.dark #sidebar */
-        html.dark #sidebar,
-        html.dark #sidebar.sb-mini,
-        html body #sidebar,
-        html body #sidebar.sb-mini {
+        /* ═══ SIDEBAR PREMIUM — escopo body.tm-premium ═══════════════
+           Usa body.tm-premium para NÃO afetar Original e Neon
+        ═══════════════════════════════════════════════════════════ */
+
+        /* Background — supera html.dark #sidebar do sidebar.html */
+        body.tm-premium #sidebar,
+        body.tm-premium #sidebar.sb-mini {
           background: linear-gradient(180deg,#1a1a1a 0%,#151515 100%) !important;
           background-color: #1a1a1a !important;
           border-right: 1px solid #3a3a3a !important;
@@ -84,40 +85,39 @@ const ThemeManager = (() => {
           backdrop-filter: none !important;
         }
 
-        /* Sb-tab pill — dark Manus */
-        html.dark #sb-pill {
+        /* Sb-tab pill */
+        body.tm-premium #sb-pill {
           background: #252525 !important;
           border-color: rgba(255,107,0,0.3) !important;
           box-shadow: 4px 0 14px rgba(0,0,0,0.5) !important;
         }
-        html.dark #sb-tab:hover #sb-pill {
+        body.tm-premium #sb-tab:hover #sb-pill {
           background: rgba(255,107,0,0.15) !important;
           border-color: rgba(255,107,0,0.6) !important;
         }
-        html.dark #sb-pill .material-symbols-rounded {
-          color: #ff6b00 !important;
-        }
+        body.tm-premium #sb-pill .material-symbols-rounded { color: #ff6b00 !important; }
 
-        /* Nav items — cores Manus no dark */
-        html.dark .nav-item { color: #888888 !important; }
-        html.dark .nav-item:hover {
+        /* Nav items — laranja Manus, só no Premium */
+        body.tm-premium .nav-item { color: #888888 !important; }
+        body.tm-premium .nav-item:hover {
           background: rgba(255,107,0,0.1) !important;
           color: #ff6b00 !important;
         }
-        html.dark .nav-item.active-nav {
+        body.tm-premium .nav-item.active-nav {
           background: linear-gradient(135deg,rgba(255,107,0,0.2),rgba(255,107,0,0.05)) !important;
           color: #ff6b00 !important;
         }
-        html.dark .nav-item.active-nav::before {
+        body.tm-premium .nav-item.active-nav::before {
           background: #ff6b00 !important;
           box-shadow: none !important;
         }
+        body.tm-premium .nav-item:hover .material-symbols-rounded { color: #ff6b00 !important; }
 
         /* Labels de seção */
-        html.dark .sb-label { color: #666666 !important; }
+        body.tm-premium .sb-label { color: #666666 !important; }
 
         /* Badge "Novo" */
-        html.dark .nav-badge {
+        body.tm-premium .nav-badge {
           background: rgba(255,107,0,0.15) !important;
           color: #ff6b00 !important;
         }
@@ -492,6 +492,8 @@ const ThemeManager = (() => {
         // Premium MANTÉM dark mode — só muda acentos para laranja
         document.documentElement.classList.add('dark');
         document.body.classList.remove('tm-nondark');
+        // Classe de escopo — isola CSS do Premium
+        document.body.classList.add('tm-premium');
 
         if (typeof Chart !== 'undefined') {
           Chart.defaults.color       = '#888888';
@@ -1474,7 +1476,7 @@ const ThemeManager = (() => {
       }
       // Re-ativa dark mode do Tailwind
       document.documentElement.classList.add('dark');
-      document.body.classList.remove('tm-nondark','tm-light');
+      document.body.classList.remove('tm-nondark','tm-light','tm-premium');
 
       // Desconecta observer
       if (window._tm_obs) { window._tm_obs.disconnect(); window._tm_obs = null; }
