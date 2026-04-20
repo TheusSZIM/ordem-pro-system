@@ -341,12 +341,70 @@ const ThemeManager = (() => {
         }
 
         /* ── Cmd cards (layout command) ── */
-        #layout-command .cmd-card { background:var(--clsurf)!important; border:1px solid var(--clbdr)!important; box-shadow:var(--clsh)!important; }
+        #layout-command .cmd-card {
+          background:var(--clsurf)!important; border:1px solid var(--clbdr)!important;
+          box-shadow:var(--clsh)!important;
+        }
         #layout-command .cmd-card::before { display:none!important; }
-        #layout-command .cmd-total-card { background:var(--clgrad)!important; border:none!important; box-shadow:0 8px 28px rgba(255,107,157,.3)!important; }
-        #layout-command .cmd-total-card * { color:rgba(255,255,255,.9)!important; }
-        #layout-command .cmd-number { color:#fff!important; }
+        #layout-command .cmd-card:hover { border-color:rgba(196,77,255,.25)!important; box-shadow:var(--clsh2)!important; }
+
+        /* Total card — mantém gradiente */
+        #layout-command .cmd-total-card {
+          background:var(--clgrad)!important; border:none!important;
+          box-shadow:0 8px 28px rgba(255,107,157,.3)!important;
+        }
+        #layout-command .cmd-total-card * { color:rgba(255,255,255,.9)!important; -webkit-text-fill-color:rgba(255,255,255,.9)!important; }
+        #layout-command .cmd-number { color:#fff!important; letter-spacing:-3px; }
         #layout-command .cmd-trend { background:rgba(255,255,255,.2)!important; color:#fff!important; }
+
+        /* ── Ordens Recentes cmd — CONTRASTE ── */
+        /* Título e subtítulo da seção */
+        #layout-command .cmd-section-label { color:var(--clmut)!important; }
+        #layout-command [style*="color:#e2e8f0"],
+        #layout-command [style*="color: #e2e8f0"],
+        #layout-command [style*="color:#f1f5f9"] {
+          color:var(--cltext)!important;
+        }
+        #layout-command [style*="color:#64748b"],
+        #layout-command [style*="color: #64748b"],
+        #layout-command [style*="color:#475569"] {
+          color:var(--clmut)!important;
+        }
+
+        /* Classes das linhas de ordem */
+        #layout-command .cmd-order-lote   { color:var(--cltext)!important; font-weight:700!important; }
+        #layout-command .cmd-order-product { color:var(--clmut)!important; }
+        #layout-command .cmd-order-date    { color:var(--clmut)!important; }
+        #layout-command .cmd-order-row {
+          border-bottom:1px solid var(--clbdr)!important;
+        }
+        #layout-command .cmd-order-row:hover { background:rgba(196,77,255,.04)!important; border-radius:8px!important; }
+
+        /* Badges status */
+        #layout-command .cmd-badge-queue   { background:rgba(245,158,11,.1)!important; color:#f59e0b!important; border-color:rgba(245,158,11,.2)!important; }
+        #layout-command .cmd-badge-active  { background:rgba(59,130,246,.1)!important; color:#3b82f6!important; border-color:rgba(59,130,246,.2)!important; }
+        #layout-command .cmd-badge-done    { background:rgba(16,185,129,.1)!important; color:#10b981!important; border-color:rgba(16,185,129,.2)!important; }
+        #layout-command .cmd-badge-deliver { background:rgba(139,92,246,.1)!important; color:#8b5cf6!important; border-color:rgba(139,92,246,.2)!important; }
+
+        /* Stat numbers nos cards cmd */
+        #layout-command .cmd-stat-num { color:var(--cltext)!important; }
+        #layout-command [style*="color:#f59e0b"] { color:#f59e0b!important; }
+        #layout-command [style*="color:#60a5fa"] { color:#3b82f6!important; }
+        #layout-command [style*="color:#34d399"] { color:#10b981!important; }
+        #layout-command [style*="color:#a78bfa"] { color:#8b5cf6!important; }
+
+        /* Botão ver todas */
+        #layout-command [style*="color:#6366f1"] { color:#c44dff!important; }
+        #layout-command [style*="background:rgba(99,102,241"] {
+          background:rgba(196,77,255,.08)!important; border-color:rgba(196,77,255,.2)!important; color:#c44dff!important;
+        }
+
+        /* Botões ação cmd */
+        #layout-command .cmd-action-btn { border-radius:10px!important; font-weight:600!important; }
+
+        /* Arco eficiência */
+        #layout-command #cmd-efic { color:#10b981!important; }
+        #layout-command [style*="color:#10b981"] { color:#10b981!important; }
 
         /* ── Dots legenda ── */
         .bg-amber-400.rounded-full, span.bg-amber-400 { background-color:#ff6b9d!important; }
