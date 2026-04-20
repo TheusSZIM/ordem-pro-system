@@ -71,43 +71,28 @@ const ThemeManager = (() => {
         html, body { background: linear-gradient(135deg,#0f0f0f 0%,#1a1a1a 100%) !important; color: var(--pm-t1) !important; }
         body::before, body::after, .bg-grid { display:none!important; }
 
-        /* ── SIDEBAR + container — fundo escuro total ── */
-
-        /* Garante que nada fora do sidebar fique azul/slate */
-        #sidebar-container {
-          background: #1a1a1a !important;
-          background-color: #1a1a1a !important;
-        }
-
-        /* O sidebar em si */
-        #sidebar,
-        [id="sidebar"] {
-          width: 280px !important; min-width: 280px !important; max-width: 280px !important;
+        /* ── SIDEBAR — fundo escuro Manus ── */
+        /* Apenas o sidebar, não o container (que pode ter largura dinâmica) */
+        #sidebar {
           background: linear-gradient(180deg,#1a1a1a 0%,#151515 100%) !important;
           background-color: #1a1a1a !important;
           border-right: 1px solid #3a3a3a !important;
           box-shadow: 8px 0 16px rgba(0,0,0,0.5) !important;
-          overflow-y: auto !important; backdrop-filter: none !important;
-          padding: 0 !important;
+          backdrop-filter: none !important;
+        }
+        /* Expanded — 280px */
+        #sidebar:not(.sb-mini):not([style*="width: 4rem"]):not([style*="width:4rem"]):not(.w-16) {
+          width: 280px !important; min-width: 280px !important;
         }
 
-        /* Anula qualquer bg-slate no sidebar e container */
-        #sidebar-container [class*="bg-slate-9"],
-        #sidebar-container [class*="bg-slate-8"],
-        #sidebar-container [class*="bg-slate-7"],
+        /* Zera bg-slate dentro do sidebar */
         #sidebar [class*="bg-slate"],
-        #sidebar [class*="dark:bg-slate"],
-        aside [class*="bg-slate"] {
+        #sidebar [class*="dark:bg-slate"] {
           background-color: transparent !important;
           background: transparent !important;
         }
 
-        /* Modo mini (recolhida) */
-        #sidebar.w-16, #sidebar[style*="width:64"] { width: 64px !important; min-width: 64px !important; max-width: 64px !important; }
-        #sidebar.w-64, #sidebar.w-72 { width: 280px !important; min-width: 280px !important; max-width: 280px !important; }
-
         #main-content { margin-left: 280px !important; }
-        #main-content.sb-mini { margin-left: 64px !important; }
 
         /* Logo */
         #sidebar header, #sidebar [class*="sidebar-header"], #sidebar > div:first-child {
@@ -490,20 +475,16 @@ const ThemeManager = (() => {
           sb.style.setProperty('width','280px','important');
           sb.style.setProperty('min-width','280px','important');
           sb.style.setProperty('max-width','280px','important');
-          // Força background correto via JS (Tailwind pode sobrescrever via className)
+          // Força background apenas no sidebar (não no container)
           sb.style.setProperty('background','linear-gradient(180deg,#1a1a1a 0%,#151515 100%)','important');
           sb.style.setProperty('background-color','#1a1a1a','important');
           sb.style.setProperty('border-right','1px solid #3a3a3a','important');
-          // Corrige também o container pai do sidebar
-          const sbContainer = document.getElementById('sidebar-container');
-          if (sbContainer) {
-            sbContainer.style.setProperty('background','#1a1a1a','important');
-            sbContainer.style.setProperty('background-color','#1a1a1a','important');
-            // Remove classes bg-slate do container
-            sbContainer.querySelectorAll('[class*="bg-slate"]').forEach(el => {
-              el.style.setProperty('background-color','transparent','important');
-              el.style.setProperty('background','transparent','important');
-            });
+          // Só expande largura se não estiver em modo mini
+          const isMini = sb.classList.contains('w-16') || sb.classList.contains('sb-mini')
+            || sb.style.width === '4rem' || sb.style.width === '64px';
+          if (!isMini) {
+            sb.style.setProperty('width','280px','important');
+            sb.style.setProperty('min-width','280px','important');
           }
           // Força todos os spans de texto a ficarem visíveis
           sb.querySelectorAll('span:not(.material-symbols-rounded), p, [class*="text-xs"], [class*="nav-section"]').forEach(el => {
@@ -518,7 +499,9 @@ const ThemeManager = (() => {
             el.style.setProperty('background-color','transparent','important');
           });
           const main = document.getElementById('main-content');
-          if (main) main.style.setProperty('margin-left','280px','important');
+          if (main && !isMini) {
+            main.style.setProperty('margin-left','280px','important');
+          }
           // Mostra o tab toggle
           const tab = document.getElementById('sb-tab') || document.querySelector('[id*="sb-tab"]');
           if (tab) tab.style.removeProperty('display');
