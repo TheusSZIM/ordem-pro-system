@@ -560,6 +560,145 @@ const ThemeManager = (() => {
         }
         .fixed button[class*="text-slate"]:hover { color:var(--cltext)!important; }
 
+        /* ══ PÁGINA EQUIPE ═══════════════════════════════════════════ */
+
+        /* Avatares — cores por nível, não gradiente forçado */
+        #equipe [class*="rounded-full"][class*="bg-"],
+        #equipe [class*="w-10"][class*="h-10"],
+        #equipe [class*="w-9"][class*="h-9"],
+        #equipe [class*="avatar"] {
+          box-shadow: 0 2px 8px rgba(100,120,180,0.15) !important;
+          font-weight: 700 !important;
+        }
+        /* Nível 3 Admin — vermelho suave */
+        #equipe [class*="bg-red"], #equipe [class*="bg-rose"],
+        #equipe [style*="background:#ef4444"], #equipe [style*="background:#dc2626"],
+        #equipe [style*="background:linear-gradient"][style*="ef4444"],
+        #equipe [style*="background:linear-gradient"][style*="dc2626"] {
+          background: #ef4444 !important;
+          box-shadow: 0 2px 8px rgba(239,68,68,0.25) !important;
+        }
+        /* Nível 2 Separador — roxo suave */
+        #equipe [class*="bg-violet"], #equipe [class*="bg-purple"],
+        #equipe [style*="background:#7c3aed"], #equipe [style*="background:#8b5cf6"],
+        #equipe [style*="background:linear-gradient"][style*="7c3aed"],
+        #equipe [style*="background:linear-gradient"][style*="8b5cf6"] {
+          background: #8b5cf6 !important;
+          box-shadow: 0 2px 8px rgba(139,92,246,0.25) !important;
+        }
+        /* Nível 1 Stage — azul suave */
+        #equipe [class*="bg-blue"], #equipe [class*="bg-sky"],
+        #equipe [style*="background:#3b82f6"], #equipe [style*="background:#0ea5e9"] {
+          background: #3b82f6 !important;
+          box-shadow: 0 2px 8px rgba(59,130,246,0.2) !important;
+        }
+        /* Nível 0 Visualizador — cinza azulado */
+        #equipe [class*="bg-slate"], #equipe [class*="bg-gray"],
+        #equipe [style*="background:#64748b"], #equipe [style*="background:#475569"] {
+          background: #64748b !important;
+          box-shadow: 0 2px 8px rgba(100,116,139,0.2) !important;
+        }
+        /* Fallback — avatar com gradiente do tema: mais suave */
+        #equipe [class*="rounded-full"][style*="gradient"] {
+          background: linear-gradient(135deg,#f9a8d4,#c084fc) !important;
+          box-shadow: 0 2px 8px rgba(192,132,252,0.25) !important;
+        }
+
+        /* Nomes dos usuários — escuro, sem gradiente */
+        #equipe td:first-child,
+        #equipe [class*="font-semibold"], #equipe [class*="font-bold"],
+        #equipe [class*="font-medium"] {
+          background: none !important;
+          -webkit-background-clip: unset !important;
+          -webkit-text-fill-color: var(--cltext) !important;
+          color: var(--cltext) !important;
+        }
+        #equipe td:first-child { background: none !important; }
+
+        /* E-mails — cinza muted, não rosa */
+        #equipe [class*="text-xs"],
+        #equipe [class*="text-slate-4"], #equipe [class*="text-slate-5"],
+        #equipe a[href^="mailto"], #equipe [class*="email"],
+        #equipe span[class*="text-xs"] {
+          color: var(--clmut) !important;
+          -webkit-text-fill-color: var(--clmut) !important;
+          background: none !important;
+          -webkit-background-clip: unset !important;
+        }
+
+        /* Cabeçalhos da tabela */
+        #equipe th {
+          color: var(--clmut) !important;
+          background: var(--clsurf2) !important;
+          border-color: var(--clbdr) !important;
+          font-size: 10px !important; font-weight: 700 !important;
+          letter-spacing: .07em !important; text-transform: uppercase !important;
+        }
+
+        /* Linhas da tabela */
+        #equipe tr { border-color: var(--clbdr) !important; }
+        #equipe tr:hover td { background: var(--clsurf2) !important; }
+        #equipe td { color: var(--cltext) !important; }
+
+        /* Badges de nível (3·Admin, 2·Separador...) */
+        #equipe [class*="badge"], #equipe [class*="rounded-full"][class*="px"],
+        #equipe [class*="rounded-full"][class*="text-xs"] {
+          font-weight: 700 !important;
+          border: 1px solid transparent !important;
+        }
+        /* Admin — vermelho suave */
+        #equipe [class*="bg-red"][class*="rounded-full"],
+        #equipe [style*="background:rgba(239,68,68"],
+        #equipe [style*="background:rgba(220,38,38"] {
+          background: rgba(239,68,68,.1) !important;
+          color: #ef4444 !important;
+          border-color: rgba(239,68,68,.2) !important;
+        }
+        /* Separador — roxo suave */
+        #equipe [class*="bg-violet"][class*="rounded-full"],
+        #equipe [class*="bg-purple"][class*="rounded-full"],
+        #equipe [style*="background:rgba(139,92,246"],
+        #equipe [style*="background:rgba(124,58,237"] {
+          background: rgba(139,92,246,.1) !important;
+          color: #8b5cf6 !important;
+          border-color: rgba(139,92,246,.2) !important;
+        }
+        /* Stage — azul suave */
+        #equipe [class*="bg-blue"][class*="rounded-full"],
+        #equipe [style*="background:rgba(59,130,246"] {
+          background: rgba(59,130,246,.1) !important;
+          color: #3b82f6 !important;
+          border-color: rgba(59,130,246,.2) !important;
+        }
+        /* Visualizador — cinza */
+        #equipe [class*="bg-slate"][class*="rounded-full"],
+        #equipe [style*="background:rgba(100,116"] {
+          background: rgba(100,116,139,.1) !important;
+          color: #64748b !important;
+          border-color: rgba(100,116,139,.2) !important;
+        }
+
+        /* Ações (lápis, histórico, ban) */
+        #equipe [class*="action"], #equipe button[title],
+        #equipe [class*="text-slate-4"] .material-symbols-rounded {
+          color: var(--clmut) !important;
+          opacity: 0.7 !important;
+        }
+        #equipe button:hover .material-symbols-rounded { opacity: 1 !important; }
+
+        /* Filtros de nível no topo */
+        #equipe [class*="nivel"], #equipe [class*="filter"],
+        #equipe [class*="rounded-full"][class*="border"] {
+          border-color: var(--clbdr) !important;
+          background: var(--clsurf) !important;
+        }
+
+        /* Último acesso */
+        #equipe [class*="tabular-nums"], #equipe [class*="font-mono"] {
+          color: var(--clmut) !important;
+          font-size: 12px !important;
+        }
+
         /* ── Scrollbar ── */
         *{scrollbar-color:#dde3f0 transparent;}
         ::-webkit-scrollbar-thumb{background:#dde3f0;border-radius:3px;}
