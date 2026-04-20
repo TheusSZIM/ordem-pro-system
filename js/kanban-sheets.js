@@ -116,6 +116,7 @@ const KS = {
     sheetsUrl: '',
     ultimoArquivo: '',
     ultimaSync: null,
+    lotesMap: new Map(), // "posKey|pn" → [lote1, lote2, ...] capturado do XLS
     qtdBase: { 'FIREFLY':1000,'GM ASP':1000,'GM TURBO':1000,'FRONT COVER':1000,'RENAULT':1000,'HYUNDAI VOLUTA':375,'HYUNDAI PRIME':1000,'MAN D08':1000 },
     consumoHora: { 'FIREFLY':0,'GM ASP':0,'GM TURBO':0,'FRONT COVER':0,'RENAULT':0,'HYUNDAI VOLUTA':0,'HYUNDAI PRIME':0,'MAN D08':0 },
 };
@@ -787,6 +788,37 @@ function openKanbanDetail(avalia, modelo, posKey) {
     const flagAtual = flags[posKey];
     setText('kd-pn', posKey);
     document.getElementById('kd-modelo').innerHTML = `<span style="color:${modelo?.barColor || '#6366f1'};font-weight:700;">${modelo?.nome || '—'}</span><span style="font-size:10px;color:#64748b;margin-left:8px;">Base: ${avalia.qtdBase} un/kanban</span>`;
+
+    // Botão imprimir — injeta no header do modal
+    const printBtnId = 'kd-print-btn';
+    setTimeout(() => {
+        const existing = document.getElementById(printBtnId);
+        if (existing) existing.remove();
+        const closeBtn = document.querySelector('#kanban-detail-content button[onclick*="closeKanbanDetail"]');
+        if (closeBtn) {
+            const btn = document.createElement('button');
+            btn.id = printBtnId;
+            btn.onclick = () => {
+                if (typeof imprimirKanban === 'function') {
+                    imprimirKanban(avalia, modelo, posKey);
+                } else {
+                    alert('kanban-print.js não carregado');
+                }
+            };
+            btn.title = 'Imprimir espelho A4';
+            btn.style.cssText = `
+                display:flex;align-items:center;gap:6px;
+                padding:6px 14px;border-radius:10px;border:none;cursor:pointer;
+                background:rgba(99,102,241,0.12);color:#818cf8;
+                font-size:12px;font-weight:700;transition:all .15s;
+                font-family:inherit;
+            `;
+            btn.innerHTML = '<span class="material-symbols-rounded" style="font-size:17px;">print</span> Imprimir';
+            btn.onmouseenter = () => { btn.style.background = 'rgba(99,102,241,0.22)'; btn.style.color = '#a5b4fc'; };
+            btn.onmouseleave = () => { btn.style.background = 'rgba(99,102,241,0.12)'; btn.style.color = '#818cf8'; };
+            closeBtn.parentElement.insertBefore(btn, closeBtn);
+        }
+    }, 50);
     const statusBadge = { ok:'<span style="background:rgba(34,197,94,.2);color:#22c55e;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;">✅ KANBAN OK</span>', duplicado:'<span style="background:rgba(96,165,250,.2);color:#60a5fa;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;">🔵 DUPLICADO</span>', incompleto:'<span style="background:rgba(245,158,11,.2);color:#f59e0b;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;">⚠️ INCOMPLETO</span>', estranho:'<span style="background:rgba(249,115,22,.2);color:#f97316;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;">🟠 MATERIAL EXTRA</span>' }[avalia.status] || '';
 
     let body = `<div class="mb-3 flex items-center gap-2 flex-wrap">${statusBadge}`;
