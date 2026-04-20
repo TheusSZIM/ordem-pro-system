@@ -133,7 +133,7 @@ function gradeToJSON(grade) {
             const map = grade[nivel][pos];
             obj[nivel][pos] = map instanceof Map
                 ? Object.fromEntries(map)
-                : map; // fallback se já for objeto
+                : map;
         }
     }
     return obj;
@@ -150,6 +150,20 @@ function gradeFromJSON(obj) {
     return grade;
 }
 
+// Serializa Map<string, string[]> → objeto JSON
+function lotesToJSON(lotesMap) {
+    const obj = {};
+    for (const [k, v] of lotesMap) { obj[k] = v; }
+    return obj;
+}
+
+// Restaura objeto JSON → Map<string, string[]>
+function lotesFromJSON(obj) {
+    const map = new Map();
+    for (const k in obj) { map.set(k, Array.isArray(obj[k]) ? obj[k] : [obj[k]]); }
+    return map;
+}
+
 // ── SUPABASE CONFIG ───────────────────────────────────────────
 
 async function carregarConfigDoSupabase() {
@@ -159,8 +173,9 @@ async function carregarConfigDoSupabase() {
                 'kanban_sheets_url',
                 'kanban_qtd_base',
                 'kanban_consumo_hora',
-                'kanban_grade_totvs',      // ← NOVO: grade compartilhado
-                'kanban_grade_totvs_meta', // ← NOVO: metadados (nome arquivo, data)
+                'kanban_grade_totvs',
+                'kanban_grade_totvs_meta',
+                'kanban_lotes_totvs',   // ← lotes por posição/PN
             ]);
         if (!data) return;
         data.forEach(row => {
@@ -187,6 +202,14 @@ async function carregarConfigDoSupabase() {
                     KS.ultimoArquivo = meta.arquivo || '';
                     KS.ultimaSync    = meta.data ? new Date(meta.data) : null;
                 } catch(_) {}
+            }
+            if (row.chave === 'kanban_lotes_totvs' && row.valor) {
+                try {
+                    KS.lotesMap = lotesFromJSON(JSON.parse(row.valor));
+                    console.log('[Supabase] LotesMap carregado —', KS.lotesMap.size, 'entradas');
+                } catch(e) {
+                    console.warn('[Supabase] Erro ao carregar lotesMap:', e.message);
+                }
             }
         });
     } catch(e) { console.warn('Config kanban:', e.message); }
@@ -232,6 +255,8 @@ async function salvarGradeNoSupabase(grade, nomeArquivo) {
             return false;
         }
 
+        const lotesJSON = JSON.stringify(lotesToJSON(KS.lotesMap));
+
         await Promise.all([
             supabaseClient.from('system_config').upsert({
                 chave: 'kanban_grade_totvs',
@@ -242,6 +267,12 @@ async function salvarGradeNoSupabase(grade, nomeArquivo) {
             supabaseClient.from('system_config').upsert({
                 chave: 'kanban_grade_totvs_meta',
                 valor: JSON.stringify({ arquivo: nomeArquivo, data: agora, usuario: user?.email || 'admin' }),
+                updated_at: agora,
+                updated_by: user?.email || 'admin',
+            }),
+            supabaseClient.from('system_config').upsert({
+                chave: 'kanban_lotes_totvs',
+                valor: lotesJSON,
                 updated_at: agora,
                 updated_by: user?.email || 'admin',
             }),
@@ -480,8 +511,20 @@ function parseEstoqueXLS(rows) {
     if (!rows || rows.length < 2) return {};
     const h = rows[0].map(c => String(c || '').toLowerCase().trim());
     const fi = names => { for (const n of names) { const i = h.findIndex(c => c.includes(n)); if (i >= 0) return i; } return -1; };
-    const iPN = fi(['item']), iDep = fi(['dep']), iLoc = fi(['localiz']), iQty = fi(['qtd liq','quantidade','qtd']);
+
+    const iPN  = fi(['item']);
+    const iDep = fi(['dep']);
+    const iLoc = fi(['localiz']);
+    const iQty = fi(['qtd liq','quantidade','qtd']);
+    // Lote — TOTVS exporta com nomes variados dependendo da versão/relatório
+    const iLote = fi(['nro.lote','nro lote','n.lote','nr.lote','nr lote','num.lote','num lote','lote','lot num','batch','lote/serie','lote ']);
+
+    // DEBUG — mostra cabeçalho e índices no console para diagnóstico
+    console.log('[XLS] Cabeçalho:', h);
+    console.log('[XLS] Índices → PN:'+iPN+' DEP:'+iDep+' LOC:'+iLoc+' QTY:'+iQty+' LOTE:'+iLote);
+
     const grade = {}, seen = new Set();
+    KS.lotesMap = new Map(); // zera ao reprocessar
 
     rows.slice(1).forEach(r => {
         if (!r || !r.length) return;
@@ -493,6 +536,7 @@ function parseEstoqueXLS(rows) {
         if (pos > KS.POSICOES || nivel > 12) return;
         const pn = String(r[iPN] || '').trim();
         if (!pn) return;
+
         let qtd = r[iQty];
         if (typeof qtd === 'number') {
             qtd = Math.round(qtd);
@@ -505,13 +549,56 @@ function parseEstoqueXLS(rows) {
             }
         }
         if (qtd <= 0) return;
+
         const chave = pn + '|' + nivel + '|' + pos + '|' + qtd;
         if (seen.has(chave)) return;
         seen.add(chave);
+
         if (!grade[nivel]) grade[nivel] = {};
         if (!grade[nivel][pos]) grade[nivel][pos] = new Map();
         grade[nivel][pos].set(pn, (grade[nivel][pos].get(pn) || 0) + qtd);
+
+        // ── Captura lote ───────────────────────────────────────
+        let lote = '';
+
+        // Tentativa 1: coluna detectada pelo fi()
+        if (iLote >= 0 && r[iLote] != null) {
+            lote = String(r[iLote]).trim();
+        }
+
+        // Tentativa 2: varredura de todas as colunas com nome relacionado a lote
+        if (!lote) {
+            for (let ci = 0; ci < h.length; ci++) {
+                if (ci === iPN || ci === iDep || ci === iLoc || ci === iQty) continue;
+                const hdr = h[ci] || '';
+                if (!hdr.match(/lote|lot|batch|serie|nro|nr\.|num/)) continue;
+                const val = String(r[ci] || '').trim();
+                if (val && val.length >= 2) { lote = val; break; }
+            }
+        }
+
+        // Tentativa 3: qualquer coluna com valor alfanumérico que pareça lote
+        // (apenas se as tentativas 1 e 2 falharam)
+        if (!lote) {
+            const skipIdx = new Set([iPN, iDep, iLoc, iQty]);
+            for (let ci = 0; ci < r.length; ci++) {
+                if (skipIdx.has(ci)) continue;
+                const val = String(r[ci] || '').trim();
+                // Padrão típico TOTVS: letras+números, 4-20 chars, sem espaços
+                if (/^[A-Za-z0-9\.\-\/]{4,20}$/.test(val)) { lote = val; break; }
+            }
+        }
+
+        if (lote && lote !== '0' && lote.toLowerCase() !== 'nan') {
+            const posKey = 'F' + nivel + '-' + String(pos).padStart(2, '0');
+            const loteKey = posKey + '|' + pn;
+            const arr = KS.lotesMap.get(loteKey) || [];
+            if (!arr.includes(lote)) arr.push(lote);
+            KS.lotesMap.set(loteKey, arr);
+        }
     });
+
+    console.log('[XLS] Grade:', Object.keys(grade).length, 'níveis | LotesMap:', KS.lotesMap.size, 'entradas');
     return grade;
 }
 
