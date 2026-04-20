@@ -117,6 +117,7 @@ const KS = {
     ultimoArquivo: '',
     ultimaSync: null,
     lotesMap: new Map(), // "posKey|pn" → [lote1, lote2, ...] capturado do XLS
+    multiplos: {},       // "modelo|pn" → mult (override do ESTRUTURAS hardcoded)
     qtdBase: { 'FIREFLY':1000,'GM ASP':1000,'GM TURBO':1000,'FRONT COVER':1000,'RENAULT':1000,'HYUNDAI VOLUTA':375,'HYUNDAI PRIME':1000,'MAN D08':1000 },
     consumoHora: { 'FIREFLY':0,'GM ASP':0,'GM TURBO':0,'FRONT COVER':0,'RENAULT':0,'HYUNDAI VOLUTA':0,'HYUNDAI PRIME':0,'MAN D08':0 },
 };
@@ -176,6 +177,7 @@ async function carregarConfigDoSupabase() {
                 'kanban_grade_totvs',
                 'kanban_grade_totvs_meta',
                 'kanban_lotes_totvs',   // ← lotes por posição/PN
+                'kanban_multiplos',      // ← múltiplos por modelo/PN
             ]);
         if (!data) return;
         data.forEach(row => {
@@ -211,6 +213,14 @@ async function carregarConfigDoSupabase() {
                     console.warn('[Supabase] Erro ao carregar lotesMap:', e.message);
                 }
             }
+            if (row.chave === 'kanban_multiplos' && row.valor) {
+                try {
+                    KS.multiplos = JSON.parse(row.valor);
+                    console.log('[Supabase] Múltiplos carregados —', Object.keys(KS.multiplos).length, 'entradas');
+                } catch(e) {
+                    console.warn('[Supabase] Erro ao carregar múltiplos:', e.message);
+                }
+            }
         });
     } catch(e) { console.warn('Config kanban:', e.message); }
 }
@@ -228,6 +238,14 @@ async function salvarQtdNoSupabase(qtds) {
     const user = window.auth?.getUser?.() || window.auth?.getCurrentUser?.();
     await supabaseClient.from('system_config').upsert({
         chave: 'kanban_qtd_base', valor: JSON.stringify(qtds),
+        updated_at: new Date().toISOString(), updated_by: user?.email || 'admin'
+    });
+}
+
+async function salvarMultiplosNoSupabase(multiplos) {
+    const user = window.auth?.getUser?.() || window.auth?.getCurrentUser?.();
+    await supabaseClient.from('system_config').upsert({
+        chave: 'kanban_multiplos', valor: JSON.stringify(multiplos),
         updated_at: new Date().toISOString(), updated_by: user?.email || 'admin'
     });
 }
@@ -820,9 +838,12 @@ function avaliarPosicao(nivel, pos) {
 
     const itens = estrutura.map(comp => {
         const qtdReal     = pnsPos.get(comp.pn) || 0;
-        const qtdEsperada = qtdBase * comp.mult;
+        // Usa múltiplo salvo no Supabase (se existir) ou o valor do ESTRUTURAS
+        const multKey     = modelo.nome + '|' + comp.pn;
+        const mult        = KS.multiplos[multKey] !== undefined ? KS.multiplos[multKey] : comp.mult;
+        const qtdEsperada = qtdBase * mult;
         const estado      = qtdReal <= 0 ? 'falta' : qtdReal >= qtdEsperada * 1.8 ? 'duplicado' : 'ok';
-        return { ...comp, qtdReal, qtdEsperada, estado };
+        return { ...comp, mult, qtdReal, qtdEsperada, estado };
     });
 
     const estranhos = [];
@@ -1018,6 +1039,165 @@ function closeKanbanDetail() {
 
 // ── MODAL CONSUMO POR HORA ─────────────────────────────────────
 
+// ── MODAL CONFIG MÚLTIPLOS ───────────────────────────────────
+
+function openMultiplosConfig() {
+    if ((typeof getNivel === 'function' ? getNivel() : 0) < 3) {
+        showToast && showToast('Apenas Admin pode alterar múltiplos', 'warning'); return;
+    }
+    document.getElementById('multiplos-config-modal')?.remove();
+
+    // Monta seções por modelo
+    const secoes = MODELOS.map(m => {
+        const estrutura = ESTRUTURAS[m.nome] || [];
+        const linhas = estrutura.map(comp => {
+            const multKey = m.nome + '|' + comp.pn;
+            const multAtual = KS.multiplos[multKey] !== undefined ? KS.multiplos[multKey] : comp.mult;
+            return `
+            <div class="flex items-center gap-2 py-1.5 border-b border-slate-800">
+                <div class="flex-1 min-w-0">
+                    <p style="font-size:10px;font-family:monospace;color:#94a3b8;">${comp.pn}</p>
+                    <p style="font-size:10px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${comp.desc}</p>
+                </div>
+                <div class="flex items-center gap-1 flex-shrink-0">
+                    <label style="font-size:9px;color:#475569;">mult:</label>
+                    <input type="number" min="0" step="0.5"
+                           data-mult-key="${multKey}"
+                           value="${multAtual}"
+                           style="width:56px;padding:3px 6px;text-align:right;font-size:11px;font-weight:700;
+                                  background:#1e293b;border:1px solid #334155;border-radius:6px;color:#fff;outline:none;"
+                           onfocus="this.style.borderColor='#6366f1'"
+                           onblur="this.style.borderColor='#334155'">
+                </div>
+            </div>`;
+        }).join('');
+
+        return `
+        <div style="margin-bottom:12px;">
+            <div style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;
+                        color:${m.barColor};padding:6px 0 4px;border-bottom:1.5px solid ${m.barColor}33;">
+                ${m.nome}
+                <span style="font-size:9px;font-weight:500;color:#64748b;margin-left:6px;">
+                    (${estrutura.length} componentes · base ${KS.qtdBase[m.nome]||1000} un)
+                </span>
+            </div>
+            ${linhas}
+        </div>`;
+    }).join('');
+
+    const html = `
+    <div id="multiplos-config-modal" class="fixed inset-0 z-[96] hidden">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="fecharMultiplosConfig()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+            <div id="multiplos-config-content"
+                 class="bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg pointer-events-auto"
+                 style="transform:scale(.95);opacity:0;transition:all .25s;max-height:88vh;display:flex;flex-direction:column;">
+
+                <!-- Header -->
+                <div class="flex items-center justify-between px-5 py-4 border-b border-slate-800 flex-shrink-0">
+                    <div>
+                        <h3 class="font-bold text-white flex items-center gap-2">
+                            <span class="material-symbols-rounded text-indigo-400">calculate</span>
+                            Múltiplos por Componente
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-0.5">
+                            Quantidade esperada = Base × Múltiplo · Salvo para todos
+                        </p>
+                    </div>
+                    <button onclick="fecharMultiplosConfig()" class="text-slate-400 hover:text-white">
+                        <span class="material-symbols-rounded">close</span>
+                    </button>
+                </div>
+
+                <!-- Filtro de modelo -->
+                <div class="px-5 pt-3 pb-2 flex-shrink-0">
+                    <select id="mult-modelo-filter" onchange="filtrarModulosMult(this.value)"
+                            class="w-full px-3 py-1.5 text-sm bg-slate-800 border border-slate-700 rounded-lg text-white outline-none">
+                        <option value="all">Todos os modelos</option>
+                        ${MODELOS.map(m => `<option value="${m.nome}">${m.nome}</option>`).join('')}
+                    </select>
+                </div>
+
+                <!-- Corpo scrollável -->
+                <div id="multiplos-body" class="px-5 pb-2 overflow-y-auto flex-1">
+                    ${secoes}
+                </div>
+
+                <!-- Footer -->
+                <div class="flex gap-3 px-5 py-4 border-t border-slate-800 flex-shrink-0">
+                    <button onclick="resetarMultiplos()"
+                        class="px-4 py-2 border border-slate-700 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:border-slate-500 transition-colors">
+                        Restaurar padrões
+                    </button>
+                    <div class="flex-1"></div>
+                    <button onclick="fecharMultiplosConfig()"
+                        class="px-4 py-2 border border-slate-700 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors">
+                        Cancelar
+                    </button>
+                    <button onclick="salvarMultiplosConfig()"
+                        class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-colors flex items-center gap-2">
+                        <span class="material-symbols-rounded text-sm">save</span>
+                        Salvar para Todos
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>`;
+
+    document.body.insertAdjacentHTML('beforeend', html);
+    const modal = document.getElementById('multiplos-config-modal');
+    const cont  = document.getElementById('multiplos-config-content');
+    modal.classList.remove('hidden');
+    requestAnimationFrame(() => { cont.style.transform = 'scale(1)'; cont.style.opacity = '1'; });
+}
+
+function filtrarModulosMult(modelo) {
+    const body = document.getElementById('multiplos-body');
+    if (!body) return;
+    body.querySelectorAll('div[style*="margin-bottom"]').forEach(sec => {
+        const titulo = sec.querySelector('div[style*="font-weight:900"]')?.textContent?.trim() || '';
+        sec.style.display = (modelo === 'all' || titulo.startsWith(modelo)) ? '' : 'none';
+    });
+}
+
+function fecharMultiplosConfig() {
+    const m = document.getElementById('multiplos-config-modal');
+    const c = document.getElementById('multiplos-config-content');
+    if (!m) return;
+    c.style.transform = 'scale(.95)'; c.style.opacity = '0';
+    setTimeout(() => m.remove(), 250);
+}
+
+async function salvarMultiplosConfig() {
+    const novos = {};
+    document.querySelectorAll('[data-mult-key]').forEach(inp => {
+        const v = parseFloat(inp.value);
+        if (!isNaN(v) && v >= 0) novos[inp.dataset.multKey] = v;
+    });
+    KS.multiplos = novos;
+    await salvarMultiplosNoSupabase(novos);
+    fecharMultiplosConfig();
+    renderShelf();
+    if (typeof showToast === 'function') showToast('✅ Múltiplos salvos para todos!', 'success');
+}
+
+async function resetarMultiplos() {
+    if (!confirm('Restaurar múltiplos para os valores padrão do sistema?')) return;
+    KS.multiplos = {};
+    await salvarMultiplosNoSupabase({});
+    fecharMultiplosConfig();
+    renderShelf();
+    if (typeof showToast === 'function') showToast('✅ Múltiplos restaurados!', 'success');
+}
+
+window.openMultiplosConfig  = openMultiplosConfig;
+window.fecharMultiplosConfig = fecharMultiplosConfig;
+window.salvarMultiplosConfig = salvarMultiplosConfig;
+window.resetarMultiplos      = resetarMultiplos;
+window.filtrarModulosMult    = filtrarModulosMult;
+
+// ── MODAL CONSUMO POR HORA ─────────────────────────────────────
+
 function openConsumoConfig() {
     if ((typeof getNivel === 'function' ? getNivel() : 0) < 3) { showToast && showToast('Apenas Admin pode configurar consumo', 'warning'); return; }
     document.getElementById('consumo-config-modal')?.remove();
@@ -1099,6 +1279,7 @@ window.initKanban = initKanban; window.setKanbanFonte = setKanbanFonte; window.k
 window.openSheetsConfig = openSheetsConfig; window.closeSheetsConfig = closeSheetsConfig; window.saveSheetsConfig = saveSheetsConfig;
 window.openKanbanDetail = openKanbanDetail; window.closeKanbanDetail = closeKanbanDetail;
 window.openQtdConfig = openQtdConfig; window.closeQtdConfig = closeQtdConfig; window.salvarQtdConfig = salvarQtdConfig;
+window.openMultiplosConfig = openMultiplosConfig; window.fecharMultiplosConfig = fecharMultiplosConfig;
 window.openConsumoConfig = openConsumoConfig; window.fecharConsumoConfig = fecharConsumoConfig; window.salvarConsumoConfig = salvarConsumoConfig;
 
 document.addEventListener('pageChanged', e => { if (e.detail === 'kanban') initKanban(); });
