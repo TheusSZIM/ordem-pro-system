@@ -122,9 +122,7 @@ const ThemeManager = (() => {
           color: #ff6b00 !important;
         }
 
-        /* Main content margin — respeita sb-mini do initSidebar */
-        body.tm-premium #main-content           { margin-left: 280px !important; }
-        body.tm-premium #main-content.sb-mini   { margin-left: 76px  !important; }
+        /* Main content margin — controlado via JS no fixSidebar/observer */
 
         /* Logo */
         #sidebar header, #sidebar [class*="sidebar-header"], #sidebar > div:first-child {
@@ -506,41 +504,46 @@ const ThemeManager = (() => {
         function fixSidebar() {
           const sb = document.getElementById('sidebar');
           if (!sb) return;
-          sb.style.setProperty('width','280px','important');
-          sb.style.setProperty('min-width','280px','important');
-          sb.style.setProperty('max-width','280px','important');
-          // Força background via inline style (maior prioridade que qualquer CSS)
+
+          // Detecta estado atual ANTES de qualquer alteração
+          const isMini = sb.classList.contains('sb-mini');
+
+          // Background — sempre Manus (não afeta largura)
           sb.style.setProperty('background','linear-gradient(180deg,#1a1a1a 0%,#151515 100%)','important');
           sb.style.setProperty('background-color','#1a1a1a','important');
           sb.style.setProperty('border-right','1px solid #3a3a3a','important');
-          const isMini = sb.classList.contains('sb-mini');
-          // Força todos os spans de texto a ficarem visíveis
-          sb.querySelectorAll('span:not(.material-symbols-rounded), p, [class*="text-xs"], [class*="nav-section"]').forEach(el => {
-            el.style.removeProperty('display');
-            el.style.removeProperty('font-size');
-            el.style.removeProperty('max-height');
-            el.style.removeProperty('line-height');
-            el.style.removeProperty('overflow');
-          });
-          // Zera backgrounds internos que podem ser slate
-          sb.querySelectorAll('[class*="bg-slate"], [class*="dark:bg-slate"]').forEach(el => {
-            el.style.setProperty('background-color','transparent','important');
-          });
-          // Não força margin-left inline — deixa o CSS body.tm-premium cuidar
-          // (respeita a transição suave do sidebar)
+
+          // Largura — respeita o estado mini/expandido do initSidebar
+          if (isMini) {
+            // Mini: deixa o sidebar.html CSS controlar (76px)
+            sb.style.removeProperty('width');
+            sb.style.removeProperty('min-width');
+            sb.style.removeProperty('max-width');
+          } else {
+            // Expandido: força 280px Manus
+            sb.style.setProperty('width','280px','important');
+            sb.style.setProperty('min-width','280px','important');
+            sb.style.removeProperty('max-width');
+          }
+
+          // Main content margin — sincronizado com o estado
           const main = document.getElementById('main-content');
           if (main) {
-            main.style.removeProperty('margin-left');
+            main.style.setProperty('margin-left', isMini ? '76px' : '280px', 'important');
           }
-          // Mostra o tab toggle
-          const tab = document.getElementById('sb-tab') || document.querySelector('[id*="sb-tab"]');
+
+          // Mostra tab toggle
+          const tab = document.getElementById('sb-tab');
           if (tab) tab.style.removeProperty('display');
         }
         fixSidebar(); [300,800,1500].forEach(d=>setTimeout(fixSidebar,d));
 
-        // Observer: re-aplica bg sempre que sidebar ganhar/perder sb-mini
+        // Observer: re-aplica bg e margin quando sidebar muda de classe
         if (window._pm_sbObs) window._pm_sbObs.disconnect();
-        window._pm_sbObs = new MutationObserver(() => fixSidebar());
+        window._pm_sbObs = new MutationObserver(() => {
+          // Aguarda o initSidebar terminar de aplicar sb-mini no main-content
+          requestAnimationFrame(fixSidebar);
+        });
         const sbEl = document.getElementById('sidebar');
         if (sbEl) window._pm_sbObs.observe(sbEl, { attributes: true, attributeFilter: ['class'] });
 
