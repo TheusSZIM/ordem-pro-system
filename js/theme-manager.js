@@ -243,6 +243,52 @@ const ThemeManager = (() => {
         #layout-command .cmd-badge-active { background:rgba(123,47,247,.1)!important; color:var(--ne-v3)!important; border-color:rgba(123,47,247,.2)!important; }
         #layout-command .cmd-badge-deliver { background:rgba(255,107,53,.1)!important; color:var(--ne-v2)!important; border-color:rgba(255,107,53,.2)!important; }
 
+        /* ══ EQUIPE — avatares com fundo e letra branca ══ */
+        #equipe [class*="w-10"][class*="h-10"],
+        #equipe [class*="w-9"][class*="h-9"],
+        #equipe [class*="w-8"][class*="h-8"],
+        #equipe [class*="rounded-xl"][class*="flex"][class*="items-center"],
+        #equipe [class*="rounded-full"][class*="flex"][class*="items-center"] {
+          color: #ffffff !important;
+          -webkit-text-fill-color: #ffffff !important;
+          font-weight: 700 !important;
+          font-size: 15px !important;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.35) !important;
+        }
+        /* Garante que spans internos dos avatares também sejam brancos */
+        #equipe [class*="w-10"] > span,
+        #equipe [class*="w-9"] > span,
+        #equipe [class*="w-8"] > span {
+          color: #ffffff !important;
+          -webkit-text-fill-color: #ffffff !important;
+          background: none !important;
+          -webkit-background-clip: unset !important;
+        }
+
+        /* Nomes — cor clara legível, não roxa */
+        #equipe [class*="font-semibold"],
+        #equipe [class*="font-medium"] {
+          color: #e2e8f0 !important;
+          -webkit-text-fill-color: #e2e8f0 !important;
+          background: none !important;
+          -webkit-background-clip: unset !important;
+        }
+        /* E-mails — cinza muted, sem negrito */
+        #equipe [class*="text-xs"] {
+          color: #6b5a8a !important;
+          -webkit-text-fill-color: #6b5a8a !important;
+          background: none !important;
+          -webkit-background-clip: unset !important;
+          font-weight: 400 !important;
+        }
+        /* td:first-child na equipe — sem gradient */
+        #equipe td:first-child {
+          background: none !important;
+          -webkit-background-clip: unset !important;
+          -webkit-text-fill-color: #e2e8f0 !important;
+          color: #e2e8f0 !important;
+        }
+
         /* Scrollbar */
         *{scrollbar-color:rgba(123,47,247,.3) transparent;}
         ::-webkit-scrollbar-thumb{background:rgba(123,47,247,.3);border-radius:3px;}
