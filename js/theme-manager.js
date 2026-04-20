@@ -640,6 +640,187 @@ const ThemeManager = (() => {
         #vito-fab { filter:drop-shadow(0 4px 12px rgba(255,107,157,.35))!important; }
         #vito-hints,#vito-foot { border-top-color:var(--clbdr)!important; }
 
+        /* ══ LAYOUT 1 — CLÁSSICO ══════════════════════════════════ */
+        /* Chart card + distribuição */
+        #layout-classic .bg-white.dark\:bg-slate-900,
+        #layout-classic .dark\:bg-slate-900 {
+          background: var(--clsurf) !important;
+          border: 1px solid var(--clbdr) !important;
+          box-shadow: var(--clsh) !important;
+        }
+        /* Textos dentro dos cards do clássico */
+        #layout-classic h3 { color: var(--cltext) !important; }
+        #layout-classic p.text-xs, #layout-classic p.text-slate-400,
+        #layout-classic .text-slate-400, #layout-classic .text-slate-500 {
+          color: var(--clmut) !important;
+        }
+        /* Linha separadora */
+        #layout-classic .border-slate-100, #layout-classic .dark\:border-slate-800 {
+          border-color: var(--clbdr) !important;
+        }
+        /* Thead da tabela ordens recentes */
+        #layout-classic thead tr { background: var(--clsurf2) !important; }
+        #layout-classic th { color: var(--clmut) !important; border-color: var(--clbdr) !important; }
+        #layout-classic td { color: var(--cltext) !important; }
+        #layout-classic tbody tr:hover td { background: var(--clsurf2) !important; }
+        /* Ações rápidas */
+        #layout-classic button.w-full:hover { background: var(--clsurf2) !important; }
+        #layout-classic button.w-full p { color: var(--cltext) !important; }
+        #layout-classic button.w-full span.text-xs { color: var(--clmut) !important; }
+        /* Bot ver todas */
+        #layout-classic button.text-primary-600 { color: #c44dff !important; }
+
+        /* ══ LAYOUT 2 — ANALYTICS ═══════════════════════════════════ */
+        #layout-analytics .metric-card,
+        #layout-analytics .bg-white.dark\:bg-slate-900,
+        #layout-analytics .dark\:bg-slate-900 {
+          background: var(--clsurf) !important;
+          border: 1px solid var(--clbdr) !important;
+          box-shadow: var(--clsh) !important;
+          color: var(--cltext) !important;
+        }
+        /* Card escuro de eficiência (analytics) */
+        #layout-analytics .metric-card[style*="1e293b"],
+        #layout-analytics .metric-card[style*="0f172a"],
+        #layout-analytics [style*="background:#1e293b"],
+        #layout-analytics [style*="background:#0f172a"] {
+          background: var(--clsurf) !important;
+          border: 1px solid var(--clbdr) !important;
+        }
+        #layout-analytics .metric-card[style*="1e293b"] *,
+        #layout-analytics .metric-card[style*="0f172a"] * { color: var(--cltext) !important; }
+        #layout-analytics h3 { color: var(--cltext) !important; }
+        #layout-analytics .text-slate-400, #layout-analytics .text-slate-500,
+        #layout-analytics .dark\:text-slate-400 { color: var(--clmut) !important; }
+        #layout-analytics .border-slate-100, #layout-analytics .dark\:border-slate-800,
+        #layout-analytics .border-t { border-color: var(--clbdr) !important; }
+        /* Barras de progresso — fundo */
+        #layout-analytics .bg-slate-100, #layout-analytics .dark\:bg-slate-800 {
+          background: var(--clsurf2) !important;
+        }
+        /* Timeline items */
+        #layout-analytics .tl-card, #layout-analytics [class*="tl-card"] {
+          background: var(--clsurf2) !important;
+          border-color: var(--clbdr) !important;
+          color: var(--cltext) !important;
+        }
+        #layout-analytics .tl-card:hover { background: rgba(196,77,255,.06) !important; }
+        #layout-analytics #al-timeline * { color: var(--cltext) !important; }
+
+        /* ══ LAYOUT 3 — COMPACTO ════════════════════════════════════ */
+        #layout-compact .bg-white.dark\:bg-slate-900,
+        #layout-compact .bg-white.dark\:bg-slate-900.rounded-xl,
+        #layout-compact .dark\:bg-slate-900 {
+          background: var(--clsurf) !important;
+          border: 1px solid var(--clbdr) !important;
+          box-shadow: var(--clsh) !important;
+        }
+        #layout-compact h3 { color: var(--cltext) !important; }
+        #layout-compact .text-slate-400, #layout-compact .dark\:text-slate-400,
+        #layout-compact .text-slate-500 { color: var(--clmut) !important; }
+        #layout-compact .border-slate-200, #layout-compact .dark\:border-slate-800,
+        #layout-compact .divide-slate-100, #layout-compact .dark\:divide-slate-800 {
+          border-color: var(--clbdr) !important;
+        }
+        /* Lista de ordens do compacto */
+        #layout-compact #cp-orders-list > * { border-color: var(--clbdr) !important; }
+        #layout-compact #cp-orders-list .text-slate-700,
+        #layout-compact #cp-orders-list .dark\:text-slate-200 { color: var(--cltext) !important; }
+        /* Ações rápidas compacto */
+        #layout-compact .bg-primary-50, #layout-compact [class*="bg-primary-50"] {
+          background: rgba(196,77,255,.08) !important;
+        }
+        #layout-compact .bg-indigo-50 { background: rgba(99,102,241,.08) !important; }
+        #layout-compact .bg-violet-50 { background: rgba(139,92,246,.08) !important; }
+        #layout-compact .bg-amber-50  { background: rgba(245,158,11,.08) !important; }
+        #layout-compact .bg-emerald-50{ background: rgba(16,185,129,.08) !important; }
+        #layout-compact [class*="text-primary-6"] { color: #c44dff !important; }
+        /* Barras de progresso */
+        #layout-compact .bg-amber-100, #layout-compact [class*="bg-amber-100"],
+        #layout-compact .dark\:bg-amber-900 { background: rgba(245,158,11,.1) !important; }
+        #layout-compact .bg-blue-100, #layout-compact .dark\:bg-blue-900 { background: rgba(59,130,246,.1) !important; }
+        #layout-compact .bg-emerald-100, #layout-compact .dark\:bg-emerald-900 { background: rgba(16,185,129,.1) !important; }
+        #layout-compact .bg-violet-100, #layout-compact .dark\:bg-violet-900 { background: rgba(139,92,246,.1) !important; }
+
+        /* ══ LAYOUT 4 — COMMAND CENTER ══════════════════════════════ */
+        /* Cards cmd — background hardcoded #0d1526 */
+        #layout-command .cmd-card {
+          background: var(--clsurf) !important;
+          border: 1px solid var(--clbdr) !important;
+          box-shadow: var(--clsh) !important;
+        }
+        #layout-command .cmd-card::before { display:none !important; }
+        #layout-command .cmd-card:hover {
+          border-color: rgba(196,77,255,.3) !important;
+          box-shadow: var(--clsh2) !important;
+        }
+
+        /* Total card — mantém warm gradient */
+        #layout-command .cmd-total-card {
+          background: var(--clgrad) !important;
+          border: none !important;
+          box-shadow: 0 8px 28px rgba(255,107,157,.3) !important;
+        }
+        #layout-command .cmd-total-card::after { display:none !important; }
+        #layout-command .cmd-total-card:hover { border-color: transparent !important; }
+        #layout-command .cmd-total-card * { color: rgba(255,255,255,.9) !important; }
+        #layout-command .cmd-trend {
+          background: rgba(255,255,255,.2) !important; color: #fff !important;
+        }
+        #layout-command .cmd-number { color: #fff !important; letter-spacing:-3px; }
+
+        /* Textos dentro dos cmd-cards */
+        #layout-command .cmd-stat-num[style*="f59e0b"] { color: #f59e0b !important; }
+        #layout-command .cmd-stat-num[style*="60a5fa"] { color: #60a5fa !important; }
+        #layout-command .cmd-stat-num[style*="34d399"] { color: #34d399 !important; }
+        #layout-command [style*="color:#64748b"], #layout-command [style*="color: #64748b"] {
+          color: var(--clmut) !important;
+        }
+        #layout-command [style*="color:#e2e8f0"], #layout-command [style*="color: #e2e8f0"],
+        #layout-command [style*="color:#f1f5f9"] { color: var(--cltext) !important; }
+        #layout-command [style*="color:#475569"] { color: var(--clmut) !important; }
+        #layout-command .cmd-section-label { color: var(--clmut) !important; }
+
+        /* Linhas separadoras das ordens */
+        #layout-command .cmd-order-row {
+          border-bottom: 1px solid var(--clbdr) !important;
+        }
+        #layout-command .cmd-order-row:hover { background: rgba(196,77,255,.04) !important; }
+        #layout-command .cmd-order-lote { color: var(--cltext) !important; }
+        #layout-command .cmd-order-product { color: var(--clmut) !important; }
+        #layout-command .cmd-order-date { color: var(--clmut) !important; }
+
+        /* Badges cmd */
+        #layout-command .cmd-badge-queue  { background:rgba(245,158,11,.1)!important; color:#f59e0b!important; border-color:rgba(245,158,11,.2)!important; }
+        #layout-command .cmd-badge-active { background:rgba(59,130,246,.1)!important; color:#60a5fa!important; border-color:rgba(59,130,246,.2)!important; }
+        #layout-command .cmd-badge-done   { background:rgba(16,185,129,.1)!important; color:#34d399!important; border-color:rgba(16,185,129,.2)!important; }
+        #layout-command .cmd-badge-deliver{ background:rgba(139,92,246,.1)!important; color:#a78bfa!important; border-color:rgba(139,92,246,.2)!important; }
+
+        /* Botões de ação cmd */
+        #layout-command .cmd-action-btn[style*="rgba(99,102,241"] {
+          background: rgba(196,77,255,.08) !important; border-color: rgba(196,77,255,.2) !important; color: #c44dff !important;
+        }
+        #layout-command .cmd-action-btn[style*="rgba(59,130,246"] {
+          background: rgba(59,130,246,.08) !important; border-color: rgba(59,130,246,.2) !important; color: #60a5fa !important;
+        }
+        #layout-command .cmd-action-btn[style*="rgba(139,92,246"] {
+          background: rgba(139,92,246,.08) !important; border-color: rgba(139,92,246,.2) !important; color: #a78bfa !important;
+        }
+        #layout-command .cmd-action-btn[style*="rgba(245,158,11"] {
+          background: rgba(245,158,11,.08) !important; border-color: rgba(245,158,11,.2) !important; color: #f59e0b !important;
+        }
+
+        /* Arco de eficiência */
+        #layout-command #cmd-efic { color: #10b981 !important; }
+
+        /* Botão ver todas */
+        #layout-command [style*="color:#6366f1"] { color: #c44dff !important; }
+        #layout-command [style*="background:rgba(99,102,241"] {
+          background: rgba(196,77,255,.08) !important;
+          border-color: rgba(196,77,255,.2) !important;
+          color: #c44dff !important;
+        }
+
         /* ── Scrollbar ── */
         *{scrollbar-color:#dde3f0 transparent;}
         ::-webkit-scrollbar-thumb{background:#dde3f0;border-radius:3px;}
