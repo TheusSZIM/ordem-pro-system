@@ -410,6 +410,156 @@ const ThemeManager = (() => {
         .bg-amber-400.rounded-full, span.bg-amber-400 { background-color:#ff6b9d!important; }
         .bg-blue-500.rounded-full, span.bg-blue-500 { background-color:#a29bfe!important; }
 
+        /* ══ KANBAN — Prateleira F ════════════════════════════════════ */
+
+        /* Fundo da página kanban */
+        #kanban { background-color:var(--clbg)!important; }
+
+        /* Cards de posição (F11, F12...) */
+        #kanban .rounded-xl, #kanban .rounded-2xl,
+        #kanban [class*="kanban-cell"], #kanban [class*="position-card"],
+        #kanban .bg-white, #kanban [class*="bg-slate-8"], #kanban [class*="bg-slate-9"] {
+          background:var(--clsurf)!important;
+          border:1px solid var(--clbdr)!important;
+          box-shadow:var(--clsh)!important;
+        }
+
+        /* Textos nos cards de posição */
+        #kanban [class*="text-slate-4"], #kanban [class*="text-slate-5"],
+        #kanban [class*="text-slate-6"], #kanban .text-slate-400,
+        #kanban .text-slate-500, #kanban [class*="dark:text-slate"] {
+          color:var(--clmut)!important;
+        }
+        #kanban [class*="text-slate-9"], #kanban [class*="text-slate-8"],
+        #kanban .text-slate-900, #kanban .text-slate-800,
+        #kanban [class*="dark:text-white"] { color:var(--cltext)!important; }
+        #kanban p, #kanban span:not(.material-symbols-rounded),
+        #kanban div[class*="text-"] { color:inherit; }
+
+        /* "sem dados", "sem taxa", "clique para formar" */
+        #kanban [class*="text-xs"] { color:var(--clmut)!important; }
+        #kanban [class*="font-bold"], #kanban [class*="font-semibold"] { color:var(--cltext)!important; }
+
+        /* Rótulos de modelo (FIREFLY, GM ASP...) */
+        #kanban [class*="border-b"] { border-color:var(--clbdr)!important; }
+        #kanban thead, #kanban thead tr { background:var(--clsurf2)!important; }
+        #kanban th { color:var(--clmut)!important; border-color:var(--clbdr)!important; }
+
+        /* Filtros (Todos, Kanban OK, Incompleto...) */
+        #kanban button[class*="rounded-full"],
+        #kanban [class*="filter-btn"],
+        #kanban button.rounded-full {
+          border-color:var(--clbdr)!important;
+          color:var(--cltext)!important;
+        }
+
+        /* Buscar posição input */
+        #kanban input[placeholder*="posição"],
+        #kanban input[placeholder*="Buscar"] {
+          background:var(--clsurf)!important;
+          border:1px solid var(--clbdr)!important;
+          color:var(--cltext)!important;
+        }
+
+        /* Legenda (OK, Incompleto, Duplicado...) */
+        #kanban [class*="legend"], #kanban [class*="bg-emerald"],
+        #kanban [class*="bg-amber"], #kanban [class*="bg-blue"],
+        #kanban [class*="bg-orange"], #kanban [class*="bg-slate"] {
+          opacity:1!important;
+        }
+
+        /* Rótulos F12, F11... (coluna lateral) */
+        #kanban [class*="row-label"],
+        #kanban .sticky, #kanban [class*="text-slate-4"].font-mono,
+        #kanban [style*="color:#64748b"], #kanban [style*="color: #64748b"] {
+          color:var(--clmut)!important;
+        }
+
+        /* Área de drop/upload */
+        #kanban [class*="border-dashed"] {
+          border-color:rgba(196,77,255,.3)!important;
+          background:rgba(196,77,255,.03)!important;
+        }
+        #kanban [class*="border-dashed"] * { color:var(--clmut)!important; }
+        #kanban [class*="border-dashed"] [class*="text-primary"],
+        #kanban [class*="border-dashed"] a { color:#c44dff!important; }
+
+        /* Botões superiores (Google Sheets, Upload TOTVS) */
+        #kanban button[class*="border"] {
+          border-color:var(--clbdr)!important;
+          color:var(--cltext)!important;
+          background:var(--clsurf)!important;
+        }
+        /* Carregar XLS — mantém gradiente */
+        #kanban button[class*="bg-primary"],
+        #kanban button[class*="bg-emerald"],
+        #kanban [id*="btn-upload-xls"],
+        #kanban button[onclick*="XLS"], #kanban button[onclick*="xls"] {
+          background:var(--clgrad)!important;
+          color:#fff!important; border:none!important;
+        }
+
+        /* ══ MODAL KANBAN (popup F11-01) ══════════════════════════════ */
+
+        /* Overlay do modal */
+        .modal-overlay, [id*="modal-overlay"], [id*="kanban-modal"] ~ * {
+          background:rgba(100,120,180,0.25)!important;
+          backdrop-filter:blur(6px)!important;
+        }
+
+        /* Container do modal */
+        [id*="kanban-detail"], [id*="shelf-modal"], [id*="position-modal"],
+        [class*="kanban-modal"] > div,
+        .fixed.inset-0 > div > div[class*="rounded"],
+        .fixed.inset-0 > div > div[class*="bg-white"],
+        .fixed.inset-0 > div > div[class*="dark:bg-slate"] {
+          background:var(--clsurf)!important;
+          border:1px solid var(--clbdr)!important;
+          box-shadow:0 24px 64px rgba(100,120,180,0.2)!important;
+          color:var(--cltext)!important;
+        }
+
+        /* Cabeçalho do modal — título, subtítulo, badge */
+        .fixed [class*="font-black"], .fixed [class*="font-bold"],
+        .fixed h2, .fixed h3 { color:var(--cltext)!important; }
+        .fixed [class*="text-slate-4"], .fixed [class*="text-slate-5"],
+        .fixed [class*="text-slate-6"], .fixed p.text-sm,
+        .fixed span.text-sm, .fixed [class*="text-muted"] { color:var(--clmut)!important; }
+
+        /* Tabela dentro do modal */
+        .fixed thead, .fixed thead tr { background:var(--cltext)!important; }
+        .fixed th {
+          color:#fff!important;
+          background:var(--cltext)!important;
+          border-color:rgba(255,255,255,.1)!important;
+        }
+        .fixed tbody tr { border-bottom:1px solid var(--clbdr)!important; }
+        .fixed tbody tr:hover td { background:var(--clsurf2)!important; }
+        .fixed td { color:var(--cltext)!important; background:transparent!important; }
+        /* PN (primeira coluna) */
+        .fixed td:first-child {
+          color:#c44dff!important;
+          -webkit-text-fill-color:#c44dff!important;
+          background:none!important; font-weight:700!important;
+        }
+        /* SALDO (terceira coluna) */
+        .fixed td:nth-child(3) { color:#10b981!important; -webkit-text-fill-color:#10b981!important; font-weight:700!important; }
+
+        /* Botão "Marcar como Vazio" */
+        .fixed button[class*="border-red"], .fixed button[class*="text-red"],
+        .fixed [class*="btn-danger"], .fixed button[onclick*="vazio"],
+        .fixed button[onclick*="Vazio"] {
+          background:rgba(239,68,68,.06)!important;
+          border-color:rgba(239,68,68,.25)!important;
+          color:#ef4444!important;
+        }
+
+        /* X fechar modal */
+        .fixed button[class*="text-slate"], .fixed [class*="close-btn"] {
+          color:var(--clmut)!important;
+        }
+        .fixed button[class*="text-slate"]:hover { color:var(--cltext)!important; }
+
         /* ── Scrollbar ── */
         *{scrollbar-color:#dde3f0 transparent;}
         ::-webkit-scrollbar-thumb{background:#dde3f0;border-radius:3px;}
