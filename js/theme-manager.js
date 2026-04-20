@@ -122,8 +122,9 @@ const ThemeManager = (() => {
           color: #ff6b00 !important;
         }
 
-        /* Main content margin */
-        #main-content { margin-left: 280px !important; }
+        /* Main content margin — respeita sb-mini do initSidebar */
+        body.tm-premium #main-content           { margin-left: 280px !important; }
+        body.tm-premium #main-content.sb-mini   { margin-left: 76px  !important; }
 
         /* Logo */
         #sidebar header, #sidebar [class*="sidebar-header"], #sidebar > div:first-child {
@@ -525,9 +526,11 @@ const ThemeManager = (() => {
           sb.querySelectorAll('[class*="bg-slate"], [class*="dark:bg-slate"]').forEach(el => {
             el.style.setProperty('background-color','transparent','important');
           });
+          // Não força margin-left inline — deixa o CSS body.tm-premium cuidar
+          // (respeita a transição suave do sidebar)
           const main = document.getElementById('main-content');
           if (main) {
-            main.style.setProperty('margin-left', isMini ? '76px' : '280px', 'important');
+            main.style.removeProperty('margin-left');
           }
           // Mostra o tab toggle
           const tab = document.getElementById('sb-tab') || document.querySelector('[id*="sb-tab"]');
