@@ -447,12 +447,24 @@ const ThemeManager = (() => {
   function apply(id, save = true) {
     const t = THEMES[id];
     if (!t) return;
+
+    // ── Para de travar o dark mode antes de trocar ────────────
+    if (window._tm_darkObserver) {
+      window._tm_darkObserver.disconnect();
+      window._tm_darkObserver = null;
+    }
+
+    // ── Se era um tema não-dark, restaura dark antes de trocar ─
+    if (_current !== 'original' && id === 'original') {
+      _restoreCharts(); // re-adiciona dark
+    }
+
     _current = id;
 
-    // Carrega fontes
+    // ── Carrega fontes ────────────────────────────────────────
     if (t.fonts?.length) _loadFonts(t.fonts);
 
-    // Injeta CSS
+    // ── Injeta CSS ────────────────────────────────────────────
     if (!_styleEl) {
       _styleEl = document.createElement('style');
       _styleEl.id = 'tm-active';
@@ -460,12 +472,22 @@ const ThemeManager = (() => {
     }
     _styleEl.textContent = t.css;
 
-    // Executa JS do tema (ex: patcher de gráficos)
+    // ── Remove dark mode imediatamente para temas não-original ─
+    if (id !== 'original') {
+      document.documentElement.classList.remove('dark');
+      document.body.classList.add('tm-nondark');
+      // Trava: impede que qualquer script re-adicione 'dark'
+      window._tm_darkObserver = new MutationObserver(() => {
+        if (document.documentElement.classList.contains('dark') && _current !== 'original') {
+          document.documentElement.classList.remove('dark');
+        }
+      });
+      window._tm_darkObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    // ── Executa JS específico do tema ─────────────────────────
     if (t.onApply) {
       try { t.onApply(); } catch(e) { console.warn('[ThemeManager] onApply:', e); }
-    } else {
-      // Restaura Chart.js para defaults do tema original ao sair
-      _restoreCharts();
     }
 
     // Salva por usuário
@@ -479,6 +501,11 @@ const ThemeManager = (() => {
   // Restaura ao sair de temas não-dark (Premium/Neon/Light)
   function _restoreCharts() {
     try {
+      // Para o observer antes de re-adicionar dark
+      if (window._tm_darkObserver) {
+        window._tm_darkObserver.disconnect();
+        window._tm_darkObserver = null;
+      }
       // Re-ativa dark mode do Tailwind
       document.documentElement.classList.add('dark');
       document.body.classList.remove('tm-nondark','tm-light');
@@ -586,6 +613,8 @@ const ThemeManager = (() => {
   }
 
   function loadSaved() {
+    // Garante dark mode ativo antes de aplicar (o apply decide se remove)
+    document.documentElement.classList.add('dark');
     const saved = localStorage.getItem(KEY + '_' + _uid()) || 'original';
     apply(saved, false);
   }
