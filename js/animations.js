@@ -1,554 +1,693 @@
 // ============================================================
-// ANIMATIONS.JS — Animações minimalistas para o Ordem Pro
-// Cards, gráficos, botões, contadores, micro-interações
+// ANIMATIONS.JS — Ordem Pro · Sistema de animações completo
 // ============================================================
-
-(function() {
+(function () {
 'use strict';
 
-// ── CSS BASE ─────────────────────────────────────────────────
-
+// ══════════════════════════════════════════════════════════════
+// CSS — keyframes + classes utilitárias
+// ══════════════════════════════════════════════════════════════
 const CSS = `
-/* ═══════════════════════════════════════════════════════════
-   KEYFRAMES
-═══════════════════════════════════════════════════════════ */
+@keyframes vt-fade-up    { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:none} }
+@keyframes vt-fade-in    { from{opacity:0} to{opacity:1} }
+@keyframes vt-scale-in   { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
+@keyframes vt-slide-r    { from{opacity:0;transform:translateX(-14px)} to{opacity:1;transform:none} }
+@keyframes vt-slide-l    { from{opacity:0;transform:translateX(14px)}  to{opacity:1;transform:none} }
 
-@keyframes vt-fade-up {
-  from { opacity:0; transform:translateY(18px); }
-  to   { opacity:1; transform:translateY(0); }
-}
-@keyframes vt-fade-in {
-  from { opacity:0; }
-  to   { opacity:1; }
-}
-@keyframes vt-scale-in {
-  from { opacity:0; transform:scale(0.94); }
-  to   { opacity:1; transform:scale(1); }
-}
-@keyframes vt-slide-right {
-  from { opacity:0; transform:translateX(-12px); }
-  to   { opacity:1; transform:translateX(0); }
-}
-@keyframes vt-slide-left {
-  from { opacity:0; transform:translateX(12px); }
-  to   { opacity:1; transform:translateX(0); }
-}
-@keyframes vt-number-pop {
-  0%   { transform:scale(1); }
-  40%  { transform:scale(1.08); }
-  100% { transform:scale(1); }
-}
-@keyframes vt-shimmer {
-  0%   { background-position:-200% center; }
-  100% { background-position:200% center; }
+@keyframes vt-float      { 0%,100%{transform:translateY(0)}  50%{transform:translateY(-5px)} }
+@keyframes vt-float-r    { 0%,100%{transform:translateY(0) rotate(0)}  50%{transform:translateY(-3px) rotate(1deg)} }
+@keyframes vt-bob        { 0%,100%{transform:translateY(0) scale(1)}  50%{transform:translateY(-2px) scale(1.01)} }
+
+@keyframes vt-pulse-ring {
+  0%   { box-shadow:0 0 0 0 rgba(99,102,241,.4); }
+  70%  { box-shadow:0 0 0 10px rgba(99,102,241,0); }
+  100% { box-shadow:0 0 0 0  rgba(99,102,241,0); }
 }
 @keyframes vt-pulse-dot {
-  0%,100% { opacity:1; transform:scale(1); box-shadow:0 0 0 0 currentColor; }
-  50%     { opacity:.8; transform:scale(1.15); box-shadow:0 0 0 5px transparent; }
+  0%,100%{ opacity:1; transform:scale(1); }
+  50%    { opacity:.7; transform:scale(1.2); }
 }
-@keyframes vt-spin-slow {
-  from { transform:rotate(0deg); }
-  to   { transform:rotate(360deg); }
+@keyframes vt-glow {
+  0%,100%{ filter:brightness(1) drop-shadow(0 0 0px transparent); }
+  50%    { filter:brightness(1.08) drop-shadow(0 0 6px rgba(99,102,241,.45)); }
 }
-@keyframes vt-float {
-  0%,100% { transform:translateY(0px); }
-  50%     { transform:translateY(-4px); }
+@keyframes vt-glow-orange {
+  0%,100%{ filter:brightness(1); }
+  50%    { filter:brightness(1.1) drop-shadow(0 0 8px rgba(255,107,0,.5)); }
 }
-@keyframes vt-bar-grow {
-  from { transform:scaleX(0); }
-  to   { transform:scaleX(1); }
+@keyframes vt-shimmer {
+  0%  { background-position:-250% center; }
+  100%{ background-position:250% center; }
 }
-@keyframes vt-chart-breathe {
-  0%,100% { transform:scaleY(1);    opacity:1; }
-  50%     { transform:scaleY(0.97); opacity:.93; }
-}
-@keyframes vt-glow-pulse {
-  0%,100% { filter:brightness(1) drop-shadow(0 0 0 transparent); }
-  50%     { filter:brightness(1.06) drop-shadow(0 0 8px currentColor); }
-}
-@keyframes vt-border-spin {
-  from { --vt-border-angle:0deg; }
-  to   { --vt-border-angle:360deg; }
+@keyframes vt-border-flow {
+  0%  { background-position:0% 50%; }
+  50% { background-position:100% 50%; }
+  100%{ background-position:0% 50%; }
 }
 @keyframes vt-ripple {
-  0%   { transform:scale(0);   opacity:.5; }
-  100% { transform:scale(2.5); opacity:0; }
+  0%  { transform:translate(-50%,-50%) scale(0); opacity:.5; }
+  100%{ transform:translate(-50%,-50%) scale(3);  opacity:0; }
 }
-@keyframes vt-counter-up {
-  0%   { clip-path:inset(100% 0 0 0); transform:translateY(8px); }
-  100% { clip-path:inset(0% 0 0 0);   transform:translateY(0); }
+@keyframes vt-pop {
+  0%  { transform:scale(1); }
+  35% { transform:scale(1.1); }
+  60% { transform:scale(.96); }
+  100%{ transform:scale(1); }
 }
-
-/* ═══════════════════════════════════════════════════════════
-   UTILITY — Entrada de elementos
-═══════════════════════════════════════════════════════════ */
-
-.vt-enter        { animation: vt-fade-up   .5s cubic-bezier(.16,1,.3,1) both; }
-.vt-enter-scale  { animation: vt-scale-in  .4s cubic-bezier(.16,1,.3,1) both; }
-.vt-enter-left   { animation: vt-slide-right .4s cubic-bezier(.16,1,.3,1) both; }
-.vt-enter-right  { animation: vt-slide-left  .4s cubic-bezier(.16,1,.3,1) both; }
-
-/* Stagger delays */
-.vt-d1  { animation-delay:.05s; }
-.vt-d2  { animation-delay:.10s; }
-.vt-d3  { animation-delay:.16s; }
-.vt-d4  { animation-delay:.22s; }
-.vt-d5  { animation-delay:.28s; }
-.vt-d6  { animation-delay:.34s; }
-.vt-d7  { animation-delay:.40s; }
-.vt-d8  { animation-delay:.46s; }
-
-/* ═══════════════════════════════════════════════════════════
-   CARDS — metric cards
-═══════════════════════════════════════════════════════════ */
-
-.metric-card, .vt-card {
-  transition:
-    transform .25s cubic-bezier(.34,1.56,.64,1),
-    box-shadow .25s ease,
-    border-color .2s ease !important;
+@keyframes vt-spin-once {
+  from{ transform:rotate(0deg); }
+  to  { transform:rotate(360deg); }
 }
-.metric-card:hover, .vt-card:hover {
-  transform: translateY(-3px) scale(1.01) !important;
+@keyframes vt-shake {
+  0%,100%{ transform:translateX(0); }
+  20%    { transform:translateX(-3px); }
+  40%    { transform:translateX(3px); }
+  60%    { transform:translateX(-2px); }
+  80%    { transform:translateX(2px); }
 }
+@keyframes vt-counter {
+  from{ opacity:0; transform:translateY(6px) scale(.9); }
+  to  { opacity:1; transform:none; }
+}
+@keyframes vt-chart-wave {
+  0%  { transform:scaleY(1) scaleX(1); opacity:1; }
+  25% { transform:scaleY(.97) scaleX(1.005); opacity:.95; }
+  50% { transform:scaleY(.985) scaleX(.998); opacity:.97; }
+  75% { transform:scaleY(.994) scaleX(1.002); opacity:.98; }
+  100%{ transform:scaleY(1) scaleX(1); opacity:1; }
+}
+@keyframes vt-chart-flash {
+  0%  { filter:brightness(1) saturate(1); }
+  30% { filter:brightness(1.12) saturate(1.15); }
+  60% { filter:brightness(1.06) saturate(1.08); }
+  100%{ filter:brightness(1) saturate(1); }
+}
+@keyframes vt-bar-grow    { from{transform:scaleX(0)} to{transform:scaleX(1)} }
+@keyframes vt-num-pop     { 0%{transform:scale(1)} 40%{transform:scale(1.09)} 100%{transform:scale(1)} }
 
-/* Número animado ao atualizar */
-.vt-number-anim {
-  animation: vt-number-pop .4s cubic-bezier(.34,1.56,.64,1);
-}
+/* Utility classes */
+.vt-enter   { animation:vt-fade-up  .55s cubic-bezier(.16,1,.3,1) both; }
+.vt-scale   { animation:vt-scale-in .45s cubic-bezier(.16,1,.3,1) both; }
+.vt-left    { animation:vt-slide-r  .45s cubic-bezier(.16,1,.3,1) both; }
+.vt-right   { animation:vt-slide-l  .45s cubic-bezier(.16,1,.3,1) both; }
 
-/* ═══════════════════════════════════════════════════════════
-   BOTÕES — micro-interações
-═══════════════════════════════════════════════════════════ */
+/* Stagger */
+${[...Array(10)].map((_,i)=>`
+.vt-d${i+1}{ animation-delay:${(i+1)*60}ms; }`).join('')}
 
-/* Ripple ao clicar */
-.vt-btn-ripple {
-  position: relative;
-  overflow: hidden;
+/* Cards: tilt ao hover via JS (adicionado inline) */
+.vt-tilt {
+  transform-style: preserve-3d;
+  transition: transform .4s cubic-bezier(.03,.98,.52,.99), box-shadow .4s ease !important;
+  will-change: transform;
 }
-.vt-btn-ripple::after {
-  content: '';
-  position: absolute;
-  border-radius: 50%;
-  width: 100px; height: 100px;
-  top: var(--vt-ry, 50%); left: var(--vt-rx, 50%);
-  transform: translate(-50%,-50%) scale(0);
-  background: rgba(255,255,255,.18);
-  pointer-events: none;
-}
-.vt-btn-ripple.vt-rippling::after {
-  animation: vt-ripple .55s ease-out;
+.vt-tilt:hover {
+  box-shadow:
+    0 20px 40px rgba(0,0,0,.25),
+    0 8px 16px rgba(0,0,0,.15) !important;
 }
 
-/* Bounce ao hover em botões de ação */
-.vt-btn-bounce {
-  transition: transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease !important;
+/* Botão primário */
+.vt-btn-primary {
+  position:relative; overflow:hidden;
+  transition: transform .22s cubic-bezier(.34,1.56,.64,1), box-shadow .22s ease !important;
 }
-.vt-btn-bounce:hover {
+.vt-btn-primary:hover {
   transform: translateY(-2px) scale(1.03) !important;
 }
-.vt-btn-bounce:active {
-  transform: scale(.97) !important;
-  transition-duration: .08s !important;
+.vt-btn-primary:active {
+  transform: scale(.96) !important;
+  transition-duration:.08s !important;
+}
+.vt-btn-primary::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);
+  background-size:250% 100%;
+  animation:vt-shimmer 2.8s linear infinite;
+  pointer-events:none;
 }
 
-/* Ícones giram no hover */
-.vt-icon-spin:hover .material-symbols-rounded {
-  animation: vt-spin-slow .6s linear;
+/* Botão secundário */
+.vt-btn-sec {
+  transition: transform .2s cubic-bezier(.34,1.56,.64,1), background .18s ease, border-color .18s ease !important;
+}
+.vt-btn-sec:hover  { transform:translateY(-1px) scale(1.02) !important; }
+.vt-btn-sec:active { transform:scale(.96) !important; transition-duration:.08s !important; }
+
+/* Ripple */
+.vt-ripple-spot {
+  position:absolute; border-radius:50%;
+  width:80px; height:80px;
+  background:rgba(255,255,255,.22);
+  pointer-events:none;
+  animation:vt-ripple .6s ease-out forwards;
 }
 
-/* Float contínuo nos ícones decorativos */
-.vt-float {
-  animation: vt-float 3s ease-in-out infinite;
+/* Status dot */
+.vt-live-dot { animation:vt-pulse-dot 1.8s ease-in-out infinite; }
+
+/* Nav icons */
+.vt-nav-icon {
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1) !important;
+  display:inline-block;
 }
+.nav-item:hover .vt-nav-icon,
+.nav-item.active-nav .vt-nav-icon { transform:scale(1.22) !important; }
 
-/* ═══════════════════════════════════════════════════════════
-   BARRAS DE PROGRESSO
-═══════════════════════════════════════════════════════════ */
+/* Chart wrappers durante ciclo */
+.vt-chart-cycle { animation:vt-chart-wave 1.2s cubic-bezier(.4,0,.2,1); }
+.vt-chart-flash { animation:vt-chart-flash .8s ease-out; }
 
-.vt-progress-bar {
-  transform-origin: left center;
-  animation: vt-bar-grow .8s cubic-bezier(.16,1,.3,1) both;
-}
+/* Número atualizado */
+.vt-num-anim { animation:vt-num-pop .4s cubic-bezier(.34,1.56,.64,1); }
+.vt-counter-anim { animation:vt-counter .35s cubic-bezier(.16,1,.3,1) both; }
 
-/* ═══════════════════════════════════════════════════════════
-   STATUS BADGE — dot pulsante
-═══════════════════════════════════════════════════════════ */
+/* Badge glow */
+.vt-badge-glow { animation:vt-pulse-ring 2.5s ease-in-out infinite; }
 
-.vt-status-dot {
-  animation: vt-pulse-dot 2s ease-in-out infinite;
-}
+/* Progress bar */
+.vt-bar { transform-origin:left; animation:vt-bar-grow .9s cubic-bezier(.16,1,.3,1) both; }
 
-/* ═══════════════════════════════════════════════════════════
-   GRÁFICOS — respira a cada ciclo
-═══════════════════════════════════════════════════════════ */
+/* Float decorativo */
+.vt-float      { animation:vt-float   4s ease-in-out infinite; }
+.vt-float-r    { animation:vt-float-r 5s ease-in-out infinite; }
+.vt-bob        { animation:vt-bob     6s ease-in-out infinite; }
+.vt-glow       { animation:vt-glow 4s ease-in-out infinite; }
+.vt-glow-ora   { animation:vt-glow-orange 3.5s ease-in-out infinite; }
 
-.vt-chart-active {
-  animation: vt-chart-breathe 6s ease-in-out infinite;
-  transform-origin: center bottom;
-}
-.vt-chart-glow canvas {
-  animation: vt-glow-pulse 6s ease-in-out infinite;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   SHIMMER — esqueleto / loading
-═══════════════════════════════════════════════════════════ */
-
-.vt-shimmer {
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.06) 50%, transparent 100%);
-  background-size: 200% 100%;
-  animation: vt-shimmer 1.5s linear infinite;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   LAYOUT TABS — transição suave entre layouts
-═══════════════════════════════════════════════════════════ */
-
-.vt-layout-transition {
-  animation: vt-fade-up .35s cubic-bezier(.16,1,.3,1) both;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   KANBAN — cards de posição
-═══════════════════════════════════════════════════════════ */
-
+/* Kanban cell hover */
 .vaga.ocupada {
-  transition: transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s ease !important;
+  transition:
+    transform .2s cubic-bezier(.34,1.56,.64,1),
+    box-shadow .2s ease,
+    filter .2s ease !important;
+}
+.vaga.ocupada:hover {
+  transform:scale(1.07) translateY(-2px) !important;
+  filter:brightness(1.08) !important;
+}
+
+/* Tab de layout ativa */
+.layout-btn { transition:all .2s cubic-bezier(.16,1,.3,1) !important; }
+.layout-btn:hover { transform:translateY(-1px) !important; }
+.layout-btn.active-layout, .layout-btn.active-chart-btn {
+  animation:vt-pop .35s cubic-bezier(.34,1.56,.64,1);
 }
 `;
 
-// ── INJETA CSS ────────────────────────────────────────────────
-
+// ══════════════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════════════
 function injectCSS() {
-  if (document.getElementById('vt-animations-css')) return;
-  const style = document.createElement('style');
-  style.id = 'vt-animations-css';
-  style.textContent = CSS;
-  document.head.appendChild(style);
+  if (document.getElementById('vt-anim')) return;
+  const s = document.createElement('style');
+  s.id = 'vt-anim';
+  s.textContent = CSS;
+  document.head.appendChild(s);
 }
 
-// ── RIPPLE NOS BOTÕES ─────────────────────────────────────────
-
-function setupRipple() {
-  document.addEventListener('click', e => {
-    const btn = e.target.closest('button, .vt-btn-ripple, [onclick]');
-    if (!btn) return;
-    const rect = btn.getBoundingClientRect();
-    btn.style.setProperty('--vt-rx', (e.clientX - rect.left) + 'px');
-    btn.style.setProperty('--vt-ry', (e.clientY - rect.top) + 'px');
-    btn.classList.add('vt-btn-ripple');
-    btn.classList.remove('vt-rippling');
-    void btn.offsetWidth;
-    btn.classList.add('vt-rippling');
-    setTimeout(() => btn.classList.remove('vt-rippling'), 600);
-  }, { passive: true });
+function once(el, key, fn) {
+  if (!el || el[key]) return;
+  el[key] = true;
+  fn(el);
 }
 
-// ── BOUNCE EM BOTÕES PRIMÁRIOS ────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+// 1. CARD TILT — efeito 3D ao mover o mouse sobre o card
+// ══════════════════════════════════════════════════════════════
+function setupCardTilt() {
+  const MAX = 10; // graus máximos
 
-function setupButtonBounce() {
-  function tag(el) {
-    if (!el || el._vtBounce) return;
-    el._vtBounce = true;
-    el.classList.add('vt-btn-bounce');
+  function attach(card) {
+    once(card, '_vtTilt', el => {
+      el.classList.add('vt-tilt');
+
+      el.addEventListener('mousemove', e => {
+        const r    = el.getBoundingClientRect();
+        const x    = (e.clientX - r.left) / r.width  - .5;
+        const y    = (e.clientY - r.top)  / r.height - .5;
+        const rotX = -(y * MAX).toFixed(2);
+        const rotY =  (x * MAX).toFixed(2);
+        el.style.transform =
+          `perspective(700px) rotateX(${rotX}deg) rotateY(${rotY}deg) scale(1.03) translateY(-3px)`;
+      });
+
+      el.addEventListener('mouseleave', () => {
+        el.style.transition = 'transform .5s cubic-bezier(.03,.98,.52,.99)';
+        el.style.transform  = 'perspective(700px) rotateX(0) rotateY(0) scale(1) translateY(0)';
+      });
+
+      el.addEventListener('mouseenter', () => {
+        el.style.transition = 'transform .1s linear';
+      });
+    });
   }
+
   function scan() {
     document.querySelectorAll(
-      '#nova-ordem-btn, button.bg-primary-600, [id*="nova-ordem"], ' +
-      '.kf-btn, .active-chart-btn, .layout-btn, ' +
-      '#kanban-action-btn, #kanban-qtd-btn, #kanban-mult-btn, ' +
-      '#kanban-consumo-btn, #kanban-cfg-btn, ' +
-      'button[class*="bg-primary"], button[class*="bg-emerald"]'
-    ).forEach(tag);
+      '.metric-card, .bg-white.rounded-2xl, .dark\\:bg-slate-900.rounded-2xl, ' +
+      '.rounded-2xl.border, .rounded-xl.border, .cmd-card, .card-neomorph'
+    ).forEach(attach);
   }
+
   scan();
-  setTimeout(scan, 1500);
+  setTimeout(scan, 1200);
   const obs = new MutationObserver(scan);
   obs.observe(document.body, { childList: true, subtree: true });
 }
 
-// ── ANIMAÇÃO DE ENTRADA NOS CARDS ────────────────────────────
+// ══════════════════════════════════════════════════════════════
+// 2. RIPPLE — onda ao clicar em qualquer botão
+// ══════════════════════════════════════════════════════════════
+function setupRipple() {
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('button, .kf-btn, .nav-item, .layout-btn, .vaga.ocupada');
+    if (!btn) return;
+    const r   = btn.getBoundingClientRect();
+    const dot = document.createElement('span');
+    dot.className = 'vt-ripple-spot';
+    dot.style.left = (e.clientX - r.left) + 'px';
+    dot.style.top  = (e.clientY - r.top)  + 'px';
+    btn.style.position = btn.style.position || 'relative';
+    btn.style.overflow = 'hidden';
+    btn.appendChild(dot);
+    setTimeout(() => dot.remove(), 700);
+  }, { passive: true });
+}
 
-function animateCards(container) {
-  const cards = (container || document).querySelectorAll(
-    '.metric-card, .bg-white.rounded-2xl, .bg-white.rounded-xl, ' +
-    '.dark\\:bg-slate-900.rounded-2xl, [class*="cmd-card"], ' +
-    '.rounded-2xl.border, .rounded-xl.border'
-  );
-  cards.forEach((card, i) => {
-    if (card._vtAnimated) return;
-    card._vtAnimated = true;
-    card.style.opacity = '0';
-    card.style.transform = 'translateY(16px)';
-    card.style.transition = 'none';
-    const delay = Math.min(i * 55, 350);
+// ══════════════════════════════════════════════════════════════
+// 3. BOTÕES — bounce, shimmer, ripple
+// ══════════════════════════════════════════════════════════════
+function setupButtons() {
+  function scan() {
+    // Primários
+    document.querySelectorAll(
+      '#nova-ordem-btn, button.bg-primary-600, [id*="nova-ordem"], ' +
+      '#kanban-action-btn, button[class*="bg-primary-7"], button[class*="bg-primary-6"]'
+    ).forEach(btn => once(btn, '_vtBtnP', el => el.classList.add('vt-btn-primary')));
+
+    // Secundários
+    document.querySelectorAll(
+      '.kf-btn, .layout-btn, #kanban-qtd-btn, #kanban-mult-btn, ' +
+      '#kanban-consumo-btn, #kanban-cfg-btn, button[class*="border"]'
+    ).forEach(btn => once(btn, '_vtBtnS', el => el.classList.add('vt-btn-sec')));
+
+    // Ícones dos botões giram um vez no hover
+    document.querySelectorAll('button').forEach(btn => {
+      once(btn, '_vtIconHov', el => {
+        const ico = el.querySelector('.material-symbols-rounded');
+        if (!ico) return;
+        el.addEventListener('mouseenter', () => {
+          ico.style.transition   = 'transform .4s cubic-bezier(.34,1.56,.64,1)';
+          ico.style.transform    = 'scale(1.25) rotate(-6deg)';
+        });
+        el.addEventListener('mouseleave', () => {
+          ico.style.transform    = 'scale(1) rotate(0deg)';
+        });
+        el.addEventListener('click', () => {
+          ico.style.transition   = 'transform .12s ease';
+          ico.style.transform    = 'scale(.85) rotate(15deg)';
+          setTimeout(() => {
+            ico.style.transition = 'transform .4s cubic-bezier(.34,1.56,.64,1)';
+            ico.style.transform  = 'scale(1) rotate(0)';
+          }, 130);
+        });
+      });
+    });
+  }
+
+  scan();
+  setInterval(scan, 3500);
+}
+
+// ══════════════════════════════════════════════════════════════
+// 4. CARD ENTRANCE — entrada em cascata ao carregar/trocar aba
+// ══════════════════════════════════════════════════════════════
+function animateCardEntrance(root) {
+  const sel =
+    '.metric-card, .rounded-2xl.border:not(.vt-entered), ' +
+    '.rounded-xl.border:not(.vt-entered), .cmd-card:not(.vt-entered), ' +
+    '.bg-white.rounded-2xl:not(.vt-entered)';
+
+  const els = (root || document).querySelectorAll(sel);
+  els.forEach((el, i) => {
+    if (el.classList.contains('vt-entered')) return;
+    el.classList.add('vt-entered');
+    el.style.opacity   = '0';
+    el.style.transform = 'translateY(18px)';
+    el.style.transition = 'none';
+    const d = Math.min(i * 60, 400);
     setTimeout(() => {
-      card.style.transition = `opacity .45s cubic-bezier(.16,1,.3,1) ${delay}ms, transform .45s cubic-bezier(.16,1,.3,1) ${delay}ms`;
-      card.style.opacity = '1';
-      card.style.transform = 'translateY(0)';
+      el.style.transition = `opacity .5s cubic-bezier(.16,1,.3,1) ${d}ms, transform .5s cubic-bezier(.16,1,.3,1) ${d}ms`;
+      el.style.opacity    = '1';
+      el.style.transform  = 'translateY(0)';
     }, 30);
   });
 }
 
-// ── ANIMAÇÃO DOS NÚMEROS (ao atualizar) ───────────────────────
-
-function animateNumbers() {
-  const targets = document.querySelectorAll(
-    '.metric-card h3, .metric-card [class*="text-4xl"], .metric-card [class*="text-3xl"], ' +
-    '.metric-card [class*="text-2xl"], #ks-ok, #ks-low, #ks-dup, #ks-empty, #ks-total'
-  );
-  targets.forEach(el => {
-    if (el._vtNumObs) return;
-    el._vtNumObs = true;
-    const observer = new MutationObserver(() => {
-      el.classList.remove('vt-number-anim');
-      void el.offsetWidth;
-      el.classList.add('vt-number-anim');
-    });
-    observer.observe(el, { childList: true, characterData: true, subtree: true });
-  });
-}
-
-// ── MICRO-ANIMAÇÃO DOS GRÁFICOS A CADA 6s ────────────────────
-
-let _chartCycle = null;
-
-function startChartCycle() {
-  if (_chartCycle) clearInterval(_chartCycle);
-
-  _chartCycle = setInterval(() => {
-    if (typeof Chart === 'undefined') return;
-
-    Object.values(Chart.instances || {}).forEach(chart => {
-      if (!chart.canvas) return;
-
-      // 1. Micro-update dos dados (leve flutuação visual ±0.1%)
-      const was = chart.canvas.style.transition;
-      chart.canvas.style.transition = 'transform .4s ease, opacity .4s ease';
-
-      // 2. Respiro suave — escala Y levemente
-      chart.canvas.style.transform = 'scaleY(0.975)';
-      chart.canvas.style.opacity   = '0.88';
-
-      setTimeout(() => {
-        chart.canvas.style.transform = 'scaleY(1)';
-        chart.canvas.style.opacity   = '1';
-      }, 400);
-    });
-
-    // 3. Efeito nos wrappers dos gráficos
-    document.querySelectorAll('canvas').forEach(canvas => {
-      const wrap = canvas.parentElement;
-      if (!wrap) return;
-      wrap.style.transition = 'filter .4s ease';
-      wrap.style.filter = 'brightness(1.04)';
-      setTimeout(() => { wrap.style.filter = 'brightness(1)'; }, 500);
-    });
-
-  }, 6000);
-}
-
-// ── ANIMAÇÃO NAS ABAS DE LAYOUT ───────────────────────────────
-
-function setupLayoutTabAnimations() {
-  function addClassToLayoutContent() {
-    const dashContainer = document.getElementById('dashboard-container');
-    if (!dashContainer) return;
-
-    // Observa cliques nos botões de layout
-    document.querySelectorAll('.layout-btn, [onclick*="setDashLayout"], [onclick*="layout"]')
-      .forEach(btn => {
-        if (btn._vtLayoutAnim) return;
-        btn._vtLayoutAnim = true;
-        btn.addEventListener('click', () => {
-          // Remove _vtAnimated de todos os cards para re-animar
-          setTimeout(() => {
-            document.querySelectorAll('[data-layout-active] .metric-card, ' +
-              '#dashboard-container .bg-white, #layout-command .cmd-card').forEach(el => {
-              el._vtAnimated = false;
-            });
-            animateCards(document.getElementById('dashboard-container'));
-          }, 50);
-        });
-      });
-  }
-
-  addClassToLayoutContent();
-  setTimeout(addClassToLayoutContent, 1500);
-}
-
-// ── STATUS DOT PULSANTE ───────────────────────────────────────
-
-function setupStatusDot() {
-  function tag() {
-    document.querySelectorAll('#sistema-status, [id*="status-dot"], .status-dot, .animate-pulse, ' +
-      '[class*="bg-emerald"][class*="rounded-full"]:not([class*="border"])').forEach(el => {
-      if (el._vtDot) return;
-      el._vtDot = true;
-      el.classList.add('vt-status-dot');
-    });
-  }
-  tag(); setTimeout(tag, 1200);
-}
-
-// ── OBSERVA NAVEGAÇÃO DE PÁGINAS ──────────────────────────────
-
 function setupPageObserver() {
-  // Observa quando containers de página ficam visíveis
-  const containers = [
-    'dashboard-container', 'kanban-container', 'ordens-container',
-    'entrega-container', 'equipe-container', 'estoque-container', 'configuracoes-container'
-  ];
-
-  containers.forEach(id => {
-    const el = document.getElementById(id);
+  ['dashboard','kanban','ordens','entrega','equipe','estoque','configuracoes'].forEach(page => {
+    const el = document.getElementById(page + '-container');
     if (!el) return;
-    const obs = new MutationObserver(mutations => {
-      for (const m of mutations) {
-        if (m.type === 'attributes' && m.attributeName === 'class') {
-          const isVisible = !el.classList.contains('hidden');
-          if (isVisible) {
-            el._vtAnimated = false;
-            el.querySelectorAll('[data-vt-animated]').forEach(c => { c._vtAnimated = false; });
-            setTimeout(() => animateCards(el), 60);
-          }
+    new MutationObserver(muts => {
+      for (const m of muts) {
+        if (m.type === 'attributes') {
+          const visible = !el.classList.contains('hidden') && el.style.display !== 'none';
+          if (visible) setTimeout(() => animateCardEntrance(el), 80);
         }
       }
-    });
-    obs.observe(el, { attributes: true, attributeFilter: ['class'] });
+    }).observe(el, { attributes: true, attributeFilter: ['class','style'] });
+  });
+
+  document.addEventListener('pageChanged', () => setTimeout(animateCardEntrance, 100));
+  document.addEventListener('themeChanged', () => {
+    document.querySelectorAll('.vt-entered').forEach(el => el.classList.remove('vt-entered'));
+    setTimeout(animateCardEntrance, 150);
   });
 }
 
-// ── HOVER AVANÇADO NOS ÍCONES DA SIDEBAR ─────────────────────
+// ══════════════════════════════════════════════════════════════
+// 5. GRÁFICOS — ciclo dinâmico a cada 6 segundos
+// ══════════════════════════════════════════════════════════════
+let _chartTimer = null;
 
-function setupSidebarIconAnimations() {
-  function tag() {
+function runChartCycle() {
+  if (typeof Chart === 'undefined') return;
+
+  // 5a. Micro-movimento nos canvas
+  document.querySelectorAll('canvas').forEach(canvas => {
+    const wrap = canvas.closest('div');
+    if (!wrap) return;
+
+    // Wave — escala suave
+    canvas.classList.remove('vt-chart-cycle');
+    void canvas.offsetWidth;
+    canvas.classList.add('vt-chart-cycle');
+    setTimeout(() => canvas.classList.remove('vt-chart-cycle'), 1300);
+
+    // Flash de brilho no wrapper
+    wrap.classList.remove('vt-chart-flash');
+    void wrap.offsetWidth;
+    wrap.classList.add('vt-chart-flash');
+    setTimeout(() => wrap.classList.remove('vt-chart-flash'), 900);
+  });
+
+  // 5b. Update suave dos datasets — leve oscilação visual
+  Object.values(Chart.instances || {}).forEach(chart => {
+    if (!chart?.data?.datasets?.length) return;
+
+    chart.data.datasets.forEach(ds => {
+      if (!Array.isArray(ds.data)) return;
+      if (!ds._vtOriginal) ds._vtOriginal = [...ds.data];
+
+      // Aplica ruído leve (±0.5%) nos pontos
+      ds.data = ds._vtOriginal.map(v => {
+        if (typeof v !== 'number') return v;
+        const jitter = v * (Math.random() * .01 - .005);
+        return +(v + jitter).toFixed(1);
+      });
+    });
+
+    chart.update({ duration: 900, easing: 'easeInOutCubic', lazy: true });
+
+    // Após 1.2s, volta ao original para não distorcer dados reais
+    setTimeout(() => {
+      chart.data.datasets.forEach(ds => {
+        if (ds._vtOriginal) ds.data = [...ds._vtOriginal];
+      });
+      chart.update({ duration: 600, easing: 'easeInOutSine', lazy: true });
+    }, 1200);
+  });
+}
+
+function startChartCycle() {
+  if (_chartTimer) clearInterval(_chartTimer);
+  _chartTimer = setInterval(runChartCycle, 6000);
+  // Primeiro ciclo em 2s
+  setTimeout(runChartCycle, 2000);
+}
+
+// ══════════════════════════════════════════════════════════════
+// 6. NÚMEROS — pop ao atualizar valor
+// ══════════════════════════════════════════════════════════════
+function setupNumberAnimations() {
+  function watchEl(el) {
+    once(el, '_vtNum', target => {
+      new MutationObserver(() => {
+        target.classList.remove('vt-num-anim');
+        void target.offsetWidth;
+        target.classList.add('vt-num-anim');
+        setTimeout(() => target.classList.remove('vt-num-anim'), 450);
+      }).observe(target, { childList: true, characterData: true, subtree: true });
+    });
+  }
+
+  function scan() {
+    document.querySelectorAll(
+      '.metric-card h3, #ks-ok, #ks-low, #ks-dup, #ks-empty, #ks-total, ' +
+      '[class*="stat-number"], .cmd-number, #cmd-efic'
+    ).forEach(watchEl);
+  }
+  scan(); setTimeout(scan, 1500);
+}
+
+// ══════════════════════════════════════════════════════════════
+// 7. NAV SIDEBAR — ícones animados
+// ══════════════════════════════════════════════════════════════
+function setupNavAnimations() {
+  function scan() {
     document.querySelectorAll('.nav-item, [class*="nav-item"]').forEach(item => {
-      if (item._vtNav) return;
-      item._vtNav = true;
-      const icon = item.querySelector('.material-symbols-rounded');
-      if (!icon) return;
-      item.addEventListener('mouseenter', () => {
-        icon.style.transition = 'transform .3s cubic-bezier(.34,1.56,.64,1)';
-        icon.style.transform  = 'scale(1.2) rotate(-4deg)';
-      });
-      item.addEventListener('mouseleave', () => {
-        icon.style.transform = 'scale(1) rotate(0deg)';
-      });
-      item.addEventListener('click', () => {
-        icon.style.transition = 'transform .15s ease';
-        icon.style.transform  = 'scale(0.88)';
-        setTimeout(() => {
-          icon.style.transition = 'transform .35s cubic-bezier(.34,1.56,.64,1)';
-          icon.style.transform  = 'scale(1)';
-        }, 150);
+      once(item, '_vtNav', el => {
+        const ico = el.querySelector('.material-symbols-rounded');
+        if (!ico) return;
+        ico.classList.add('vt-nav-icon');
+
+        el.addEventListener('click', () => {
+          ico.style.animation = 'none';
+          void ico.offsetWidth;
+          ico.style.animation = 'vt-spin-once .4s cubic-bezier(.34,1.56,.64,1)';
+          setTimeout(() => { ico.style.animation = ''; }, 450);
+        });
       });
     });
   }
-  tag(); setTimeout(tag, 1500);
+  scan(); setTimeout(scan, 1500);
 }
 
-// ── BOTÕES DE LAYOUT — efeito de seleção ────────────────────
+// ══════════════════════════════════════════════════════════════
+// 8. LAYOUT BUTTONS — flash ao selecionar
+// ══════════════════════════════════════════════════════════════
+function setupLayoutButtons() {
+  function scan() {
+    document.querySelectorAll('.layout-btn, .active-chart-btn, [onclick*="setDashLayout"]').forEach(btn => {
+      once(btn, '_vtLay', el => {
+        el.addEventListener('click', () => {
+          el.style.animation = 'none';
+          void el.offsetWidth;
+          el.style.animation = 'vt-pop .35s cubic-bezier(.34,1.56,.64,1)';
+          setTimeout(() => { el.style.animation = ''; }, 380);
 
-function setupLayoutButtonEffects() {
+          // Re-anima os cards do layout
+          const dashEl = document.getElementById('dashboard-container');
+          if (dashEl) {
+            dashEl.querySelectorAll('.vt-entered').forEach(c => c.classList.remove('vt-entered'));
+            setTimeout(() => animateCardEntrance(dashEl), 80);
+          }
+        });
+      });
+    });
+  }
+  scan(); setTimeout(scan, 1200);
+}
+
+// ══════════════════════════════════════════════════════════════
+// 9. STATUS DOT — pulso nos indicadores de status
+// ══════════════════════════════════════════════════════════════
+function setupStatusDots() {
+  function scan() {
+    document.querySelectorAll(
+      '.animate-pulse, .status-dot, [id*="status-dot"], ' +
+      '.bg-emerald-500.rounded-full:not(.vt-live-dot)'
+    ).forEach(el => {
+      once(el, '_vtDot', e => e.classList.add('vt-live-dot'));
+    });
+  }
+  scan(); setTimeout(scan, 1000);
+}
+
+// ══════════════════════════════════════════════════════════════
+// 10. PROGRESS BARS — cresce ao aparecer
+// ══════════════════════════════════════════════════════════════
+function setupProgressBars() {
+  function scan() {
+    document.querySelectorAll(
+      '[class*="h-1.5"], [class*="h-2 "], [class*="h-px"], ' +
+      '.progress-fill, [class*="progress"]'
+    ).forEach(bar => {
+      once(bar, '_vtBar', el => {
+        if (el.offsetHeight > 10) return;
+        el.classList.add('vt-bar');
+      });
+    });
+  }
+  scan();
+  new MutationObserver(scan).observe(document.body, { childList: true, subtree: true });
+}
+
+// ══════════════════════════════════════════════════════════════
+// 11. HOVER MAGNÉTICO nos cards de ação rápida
+// ══════════════════════════════════════════════════════════════
+function setupMagneticHover() {
+  function attach(el) {
+    once(el, '_vtMag', card => {
+      card.addEventListener('mousemove', e => {
+        const r  = card.getBoundingClientRect();
+        const cx = r.left + r.width  / 2;
+        const cy = r.top  + r.height / 2;
+        const dx = (e.clientX - cx) * .06;
+        const dy = (e.clientY - cy) * .06;
+        card.style.transform = `translate(${dx.toFixed(2)}px, ${dy.toFixed(2)}px) scale(1.02)`;
+        card.style.transition = 'transform .15s linear';
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transition = 'transform .5s cubic-bezier(.16,1,.3,1)';
+        card.style.transform  = '';
+      });
+    });
+  }
+
+  function scan() {
+    document.querySelectorAll(
+      '[onclick*="showPage"], .rapid-action-card, ' +
+      '[class*="acao-rapida"], [class*="quick-action"]'
+    ).forEach(el => {
+      const card = el.closest('.rounded-xl, .rounded-2xl');
+      if (card) attach(card);
+    });
+  }
+  scan(); setTimeout(scan, 1500);
+}
+
+// ══════════════════════════════════════════════════════════════
+// 12. NOTIFICAÇÃO BADGE — shake quando há novos itens
+// ══════════════════════════════════════════════════════════════
+function setupBadgeAnimations() {
+  let lastBadge = {};
+  setInterval(() => {
+    document.querySelectorAll('[id*="badge"], [id*="notification"], [class*="badge"]').forEach(badge => {
+      const txt = badge.textContent.trim();
+      const key = badge.id || badge.className;
+      if (txt && txt !== '0' && txt !== lastBadge[key]) {
+        lastBadge[key] = txt;
+        badge.style.animation = 'none';
+        void badge.offsetWidth;
+        badge.style.animation = 'vt-shake .4s ease, vt-pop .35s ease';
+        setTimeout(() => { badge.style.animation = ''; }, 450);
+      }
+    });
+  }, 3000);
+}
+
+// ══════════════════════════════════════════════════════════════
+// 13. VITO FAB — float decorativo
+// ══════════════════════════════════════════════════════════════
+function setupVitoFloat() {
   function tag() {
-    document.querySelectorAll('.layout-btn').forEach(btn => {
-      if (btn._vtLay) return;
-      btn._vtLay = true;
-      btn.addEventListener('click', function() {
-        // Pulsa o ícone do botão clicado
-        const icon = this.querySelector('.material-symbols-rounded');
-        if (!icon) return;
-        icon.style.transition = 'transform .2s cubic-bezier(.34,1.56,.64,1)';
-        icon.style.transform = 'scale(1.35)';
-        setTimeout(() => { icon.style.transform = 'scale(1)'; }, 200);
+    const vito = document.getElementById('vito-fab');
+    if (!vito || vito._vtFloat) return;
+    vito._vtFloat = true;
+    vito.classList.add('vt-float-r');
+  }
+  tag(); setTimeout(tag, 2500);
+}
+
+// ══════════════════════════════════════════════════════════════
+// 14. CHART TABS (Semana / Mês) — transição dos dados
+// ══════════════════════════════════════════════════════════════
+function setupChartTabAnimations() {
+  function scan() {
+    document.querySelectorAll('.active-chart-btn, [onclick*="setChartMode"], [onclick*="buildWeek"]').forEach(btn => {
+      once(btn, '_vtChartTab', el => {
+        el.addEventListener('click', () => {
+          // Flash rápido nos charts após mudança de modo
+          setTimeout(() => {
+            document.querySelectorAll('canvas').forEach(c => {
+              c.classList.remove('vt-chart-flash');
+              void c.offsetWidth;
+              c.classList.add('vt-chart-flash');
+              setTimeout(() => c.classList.remove('vt-chart-flash'), 900);
+            });
+          }, 100);
+        });
       });
     });
   }
-  tag(); setTimeout(tag, 1200);
+  scan(); setTimeout(scan, 1500);
 }
 
-// ── NOVA ORDEM — botão especial ───────────────────────────────
-
-function setupNovaOrdemButton() {
-  function tag() {
-    const btn = document.getElementById('nova-ordem-btn') ||
-                document.querySelector('[id*="nova-ordem"]');
-    if (!btn || btn._vtNova) return;
-    btn._vtNova = true;
-
-    // Shimmer contínuo suave
-    btn.style.backgroundSize = '200% 100%';
-    btn.style.animation      = 'vt-shimmer 3s linear infinite';
-
-    btn.addEventListener('mouseenter', () => {
-      btn.style.animationDuration = '1.2s';
-      btn.style.transform         = 'translateY(-2px) scale(1.03)';
-    });
-    btn.addEventListener('mouseleave', () => {
-      btn.style.animationDuration = '3s';
-      btn.style.transform         = '';
+// ══════════════════════════════════════════════════════════════
+// 15. KANBAN CELLS — brilho ao hover
+// ══════════════════════════════════════════════════════════════
+function setupKanbanCellGlow() {
+  function scan() {
+    document.querySelectorAll('.vaga.ocupada').forEach(cell => {
+      once(cell, '_vtCell', el => {
+        el.addEventListener('mouseenter', () => {
+          el.style.filter = 'brightness(1.1) saturate(1.15)';
+        });
+        el.addEventListener('mouseleave', () => {
+          el.style.filter = '';
+        });
+      });
     });
   }
-  tag(); setTimeout(tag, 800);
+
+  scan();
+  new MutationObserver(scan).observe(
+    document.getElementById('kanban-container') || document.body,
+    { childList: true, subtree: true }
+  );
 }
 
-// ── PROGRESS BARS ─────────────────────────────────────────────
-
-function animateProgressBars(container) {
-  (container || document).querySelectorAll('[class*="bg-primary"], [class*="bg-indigo"], [class*="bg-emerald"], [class*="bg-amber"]')
-    .forEach(bar => {
-      if (!bar.parentElement || bar._vtBar) return;
-      const p = bar.parentElement;
-      // Só anima se parecer uma barra de progresso (height pequena, parent mais largo)
-      if (p.offsetHeight > 16 || bar.offsetWidth < 8) return;
-      bar._vtBar = true;
-      bar.classList.add('vt-progress-bar');
-    });
-}
-
-// ── INIT PRINCIPAL ────────────────────────────────────────────
-
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
 function init() {
   injectCSS();
-  setupRipple();
-  setupButtonBounce();
-  setupStatusDot();
 
-  // Primeiro render
+  // Imediatos
+  setupRipple();
+  setupStatusDots();
+
+  // Após DOM estável
   setTimeout(() => {
-    animateCards();
-    animateNumbers();
-    animateProgressBars();
-    setupSidebarIconAnimations();
-    setupLayoutButtonEffects();
-    setupNovaOrdemButton();
-    setupLayoutTabAnimations();
+    animateCardEntrance();
+    setupCardTilt();
+    setupButtons();
+    setupNavAnimations();
+    setupLayoutButtons();
+    setupChartTabAnimations();
+    setupNumberAnimations();
+    setupProgressBars();
+    setupMagneticHover();
+    setupBadgeAnimations();
+    setupVitoFloat();
+    setupKanbanCellGlow();
     setupPageObserver();
     startChartCycle();
-  }, 400);
+  }, 500);
 
-  // Re-scan periódico para elementos carregados dinamicamente
+  // Re-scan periódico
   setInterval(() => {
-    setupButtonBounce();
-    setupSidebarIconAnimations();
-    setupLayoutButtonEffects();
-    animateNumbers();
-  }, 4000);
+    setupCardTilt();
+    setupButtons();
+    setupNavAnimations();
+    setupKanbanCellGlow();
+    animateCardEntrance();
+  }, 5000);
 
-  // Escuta evento de troca de página do sistema
-  document.addEventListener('pageChanged', () => {
-    setTimeout(() => {
-      animateCards();
-      animateProgressBars();
-    }, 80);
-  });
-
-  console.log('✅ animations.js — micro-interações ativas');
+  console.log('✅ animations.js — 15 módulos ativos');
 }
-
-// ── START ─────────────────────────────────────────────────────
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
@@ -556,7 +695,6 @@ if (document.readyState === 'loading') {
   init();
 }
 
-// Expõe para uso externo
-window.VTAnimations = { animateCards, animateNumbers, startChartCycle };
+window.VTAnimations = { animateCardEntrance, runChartCycle, startChartCycle };
 
 })();
