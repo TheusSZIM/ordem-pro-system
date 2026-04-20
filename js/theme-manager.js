@@ -1730,7 +1730,7 @@ const ThemeManager = (() => {
     const style = document.createElement('style');
     style.textContent = `
       #tm-fab{
-        position:fixed;bottom:96px;right:24px;z-index:9300;
+        position:fixed;top:13px;left:50%;transform:translateX(-50%);z-index:9300;
         height:34px;padding:0 12px;border-radius:9px;border:none;cursor:pointer;
         background:rgba(255,255,255,0.07);backdrop-filter:blur(12px);
         border:1px solid rgba(255,255,255,0.1);
@@ -1758,14 +1758,15 @@ const ThemeManager = (() => {
       }
 
       #tm-panel{
-        position:fixed;bottom:148px;right:24px;z-index:9299;
+        position:fixed;top:55px;left:50%;transform:translateX(-50%);z-index:9299;
         width:230px;background:rgba(12,10,24,0.98);
         border:1px solid rgba(255,255,255,0.1);border-radius:16px;
         padding:16px;backdrop-filter:blur(24px);
         box-shadow:0 20px 60px rgba(0,0,0,0.6);
         transition:opacity .25s,transform .25s;
       }
-      #tm-panel.tm-hide{opacity:0;transform:translateY(10px);pointer-events:none}
+      #tm-panel.tm-hide{opacity:0;transform:translateY(-6px) translateX(-50%);pointer-events:none}
+      #tm-panel:not(.tm-hide){transform:translateX(-50%);}
 
       #tm-header{
         display:flex;align-items:center;justify-content:space-between;
