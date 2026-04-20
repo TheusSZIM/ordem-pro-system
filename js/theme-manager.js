@@ -121,7 +121,7 @@ const ThemeManager = (() => {
       },
     },
 
-    // ── 3. NEON — Light Purple/Pink ─────────────────────────────
+    // ── 3. NEON — Dark Purple/Orange (mantém dark mode) ────────
     neon: {
       label:   'Neon',
       sub:     'Dark Gradient',
@@ -129,92 +129,172 @@ const ThemeManager = (() => {
       preview: ['#0a0a12', '#7b2ff7', '#ff6b35'],
       fonts:   ['https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap'],
       css: `
-        /* ── Fontes Neon ── */
+        /* ── Fontes Neon (dark mantido — só muda fontes e acentos) ── */
         body, button, input, select, textarea, td, th, label, p, a,
         span:not(.material-symbols-rounded):not([class*="material"]) {
           font-family: 'Space Grotesk', system-ui, sans-serif !important;
         }
-        h1, h2, h3, .page-title, [id*="dashboard-title"] {
-          font-family: 'Syne', sans-serif !important;
-        }
-        .material-symbols-rounded,[class*="material-symbols"] { font-family:'Material Symbols Rounded'!important; }
+        h1, h2, h3, h4, .page-title { font-family: 'Syne', sans-serif !important; letter-spacing:-0.02em!important; }
+        .material-symbols-rounded,[class*="material-symbols"],[class*="material-icons"] { font-family:'Material Symbols Rounded'!important; }
 
+        /* ── Variáveis ── */
         :root {
-          --ne-v1: #7b2ff7;
-          --ne-v2: #ff6b35;
-          --ne-grad: linear-gradient(135deg,#7b2ff7,#ff6b35);
+          --ne-v1:   #7b2ff7;
+          --ne-v2:   #ff6b35;
+          --ne-v3:   #c084fc;
+          --ne-grad: linear-gradient(135deg,#7b2ff7 0%,#ff6b35 100%);
+          --ne-dim:  rgba(123,47,247,0.12);
         }
 
-        /* Logo */
-        [id*="logo-icon"] {
-          background: var(--ne-grad) !important;
-          box-shadow: 0 4px 16px rgba(123,47,247,0.4) !important;
+        /* ── Fundo mais profundo ── */
+        body, html { background-color:#07040f!important; }
+        body::before {
+          content:''!important; display:block!important; position:fixed!important; inset:0!important;
+          background:
+            radial-gradient(ellipse 60% 40% at 20% 20%,rgba(123,47,247,0.07) 0%,transparent 60%),
+            radial-gradient(ellipse 50% 40% at 80% 80%,rgba(255,107,53,0.05) 0%,transparent 60%)!important;
+          pointer-events:none!important; z-index:0!important;
+        }
+        body::after { display:none!important; }
+
+        /* ── Sidebar ── */
+        #sidebar, #sidebar-container>*, aside {
+          background:rgba(7,4,15,0.97)!important;
+          border-right:1px solid rgba(123,47,247,0.15)!important;
+        }
+        #sidebar a.active,.nav-item.active,.nav-item.active-nav {
+          background:rgba(123,47,247,0.12)!important; color:var(--ne-v3)!important;
+        }
+        #sidebar a.active::before,.nav-item.active::before,.nav-item.active-nav::before {
+          background:var(--ne-grad)!important; box-shadow:0 0 8px rgba(123,47,247,.5)!important;
+        }
+        #sidebar a:hover,.nav-item:hover { background:rgba(123,47,247,.07)!important; color:var(--ne-v3)!important; }
+
+        /* ── Logo / Avatar ── */
+        [id*="logo-icon"] { background:var(--ne-grad)!important; box-shadow:0 4px 16px rgba(123,47,247,.45)!important; }
+        #user-avatar { background:var(--ne-grad)!important; box-shadow:0 0 16px rgba(123,47,247,.35)!important; }
+        #user-role { background:var(--ne-grad)!important; -webkit-background-clip:text!important; -webkit-text-fill-color:transparent!important; }
+
+        /* ── Header ── */
+        header,#topbar,#header-container>* {
+          background:rgba(7,4,15,0.96)!important;
+          border-bottom:1px solid rgba(123,47,247,.12)!important;
+          backdrop-filter:blur(16px)!important;
+        }
+        #global-search,#search-input {
+          background:rgba(123,47,247,.06)!important;
+          border:1px solid rgba(123,47,247,.18)!important;
+        }
+        #global-search:focus { border-color:var(--ne-v1)!important; box-shadow:0 0 0 3px rgba(123,47,247,.15)!important; }
+        header button,header .ib { background:rgba(123,47,247,.06)!important; border:1px solid rgba(123,47,247,.15)!important; }
+
+        /* ── Título ── */
+        .text-gradient,#dashboard-title span,.page-title span,h1 span {
+          background:var(--ne-grad)!important;
+          -webkit-background-clip:text!important; -webkit-text-fill-color:transparent!important;
         }
 
-        /* Sidebar ativo */
-        #sidebar a.active, .nav-item.active, .nav-item.active-nav {
-          background: rgba(123,47,247,0.1) !important; color: var(--ne-v1) !important;
+        /* ── Nova Ordem ── */
+        #nova-ordem-btn,button.bg-primary-600,button[class*="bg-primary-6"],
+        button[class*="bg-primary-7"],[id*="nova-ordem"] {
+          background:var(--ne-grad)!important; border:none!important;
+          box-shadow:0 6px 20px rgba(123,47,247,.4)!important;
         }
-        #sidebar a.active::before, .nav-item.active::before, .nav-item.active-nav::before {
-          background: var(--ne-grad) !important; box-shadow: none !important;
+        #nova-ordem-btn span,button.bg-primary-600 span { color:#fff!important; -webkit-text-fill-color:#fff!important; }
+
+        /* ── Botões ── */
+        .active-chart-btn { background:var(--ne-grad)!important; border-color:transparent!important; color:#fff!important; }
+        .layout-btn.active-layout { background:rgba(123,47,247,.15)!important; border-color:rgba(123,47,247,.4)!important; color:var(--ne-v3)!important; }
+        [class*="text-primary-6"],[class*="text-indigo-6"],[class*="text-indigo-4"] { color:var(--ne-v3)!important; }
+        input:focus,select:focus { border-color:var(--ne-v1)!important; box-shadow:0 0 0 3px rgba(123,47,247,.15)!important; }
+        input[type="checkbox"],input[type="radio"] { accent-color:var(--ne-v1)!important; }
+
+        /* ── Cards dark — borda roxa sutil ── */
+        .metric-card,
+        .dark\:bg-slate-900,.dark\:bg-slate-800 {
+          border-color:rgba(123,47,247,0.15)!important;
         }
-        #sidebar a:hover, .nav-item:hover { color: var(--ne-v1) !important; }
+        .metric-card:hover { border-color:rgba(123,47,247,0.35)!important; box-shadow:0 0 24px rgba(123,47,247,.06)!important; }
 
-        /* Avatar */
-        #user-avatar { background: var(--ne-grad) !important; box-shadow: 0 4px 12px rgba(123,47,247,0.3) !important; }
-        #user-role {
-          background: var(--ne-grad) !important;
-          -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important;
-        }
-
-        /* Título */
-        .text-gradient, #dashboard-title span, .page-title span, h1 span {
-          background: var(--ne-grad) !important;
-          -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important;
-        }
-        h1[class*="text-2xl"], h1[class*="text-3xl"] { font-family: 'Syne', sans-serif !important; }
-
-        /* Nova Ordem */
-        #nova-ordem-btn, button.bg-primary-600, button[class*="bg-primary-6"],
-        button[class*="bg-primary-7"], [id*="nova-ordem"] {
-          background: var(--ne-grad) !important;
-          border: none !important; box-shadow: 0 6px 20px rgba(123,47,247,0.35) !important;
-        }
-        #nova-ordem-btn span, button.bg-primary-600 span { color:#fff!important; -webkit-text-fill-color:#fff!important; }
-
-        /* Botões */
-        .active-chart-btn { background: var(--ne-v1) !important; border-color: var(--ne-v1) !important; }
-        .layout-btn.active-layout { background: rgba(123,47,247,0.1) !important; border-color: rgba(123,47,247,0.3) !important; color: var(--ne-v1) !important; }
-
-        /* Textos acento */
-        [class*="text-primary-6"], [class*="text-indigo-6"], [class*="text-indigo-4"] { color: var(--ne-v1) !important; }
-        input:focus, select:focus { border-color: var(--ne-v1) !important; box-shadow: 0 0 0 3px rgba(123,47,247,0.12) !important; }
-        input[type="checkbox"], input[type="radio"] { accent-color: var(--ne-v1) !important; }
-
-        /* Card total */
-        .metric-card[style*="4f46e5"], .metric-card[style*="6366f1"] {
-          background: var(--ne-grad) !important;
-          border: none !important; box-shadow: 0 8px 28px rgba(123,47,247,0.3) !important;
+        /* Card Total — gradiente neon */
+        .metric-card[style*="4f46e5"],.metric-card[style*="6366f1"] {
+          background:var(--ne-grad)!important; border:none!important;
+          box-shadow:0 8px 28px rgba(123,47,247,.4)!important;
         }
 
         /* Lote na tabela */
         td:first-child {
-          background: var(--ne-grad) !important;
-          -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important;
+          background:var(--ne-grad)!important;
+          -webkit-background-clip:text!important; -webkit-text-fill-color:transparent!important;
+          font-weight:700!important;
         }
 
+        /* Cmd cards */
+        #layout-command .cmd-card { border-color:rgba(123,47,247,.15)!important; }
+        #layout-command .cmd-card:hover { border-color:rgba(123,47,247,.35)!important; }
+        #layout-command .cmd-total-card {
+          background:var(--ne-grad)!important; border:none!important;
+          box-shadow:0 8px 28px rgba(123,47,247,.4)!important;
+        }
+        #layout-command [style*="color:#6366f1"] { color:var(--ne-v3)!important; }
+        #layout-command [style*="background:rgba(99,102,241"] {
+          background:rgba(123,47,247,.1)!important; border-color:rgba(123,47,247,.2)!important; color:var(--ne-v3)!important;
+        }
+        #layout-command .cmd-badge-active { background:rgba(123,47,247,.1)!important; color:var(--ne-v3)!important; border-color:rgba(123,47,247,.2)!important; }
+        #layout-command .cmd-badge-deliver { background:rgba(255,107,53,.1)!important; color:var(--ne-v2)!important; border-color:rgba(255,107,53,.2)!important; }
+
         /* Scrollbar */
-        ::-webkit-scrollbar-thumb { background: rgba(123,47,247,0.3); border-radius:3px; }
+        *{scrollbar-color:rgba(123,47,247,.3) transparent;}
+        ::-webkit-scrollbar-thumb{background:rgba(123,47,247,.3);border-radius:3px;}
+        ::-webkit-scrollbar-thumb:hover{background:rgba(123,47,247,.5);}
       `,
       onApply() {
-        document.documentElement.classList.remove('dark');
-        document.body.classList.add('tm-nondark');
+        // Neon MANTÉM dark mode — só muda acentos
+        document.documentElement.classList.add('dark');
+        document.body.classList.remove('tm-nondark');
+
         if (typeof Chart !== 'undefined') {
-          Chart.defaults.color       = '#64748b';
-          Chart.defaults.borderColor = 'rgba(148,163,184,0.2)';
+          Chart.defaults.color       = '#8b7aaa';
+          Chart.defaults.borderColor = 'rgba(123,47,247,0.1)';
           Chart.defaults.font.family = "'Space Grotesk', sans-serif";
         }
-        _restoreChartColors();
+
+        const PURP='#7b2ff7', PURP_A='rgba(123,47,247,0.1)';
+        const ORAN='#ff6b35', ORAN_A='rgba(255,107,53,0.08)';
+        let _t=0;
+        function patch() {
+          if(typeof Chart==='undefined') return;
+          const getChart=id=>typeof Chart.getChart==='function'?Chart.getChart(id):Object.values(Chart.instances||{}).find(c=>c.canvas&&c.canvas.id===id);
+          let ok=false;
+          ['performanceChart','performanceChart2','performanceChart3','performanceChart4'].forEach(id=>{
+            const ch=getChart(id);
+            if(!ch||!ch.data||!ch.data.datasets||!ch.data.datasets.length)return;
+            const ds=ch.data.datasets;
+            if(ds[0]){ds[0].borderColor=PURP;ds[0].backgroundColor=PURP_A;ds[0].pointBackgroundColor=PURP;ds[0].pointBorderColor='#07040f';ds[0].pointBorderWidth=2;}
+            if(ds[1]){ds[1].borderColor=ORAN;ds[1].backgroundColor=ORAN_A;ds[1].pointBackgroundColor=ORAN;ds[1].pointBorderColor='#07040f';ds[1].pointBorderWidth=2;}
+            try{
+              ['x','y'].forEach(ax=>{if(ch.options.scales&&ch.options.scales[ax]){ch.options.scales[ax].grid.color='rgba(123,47,247,0.07)';ch.options.scales[ax].ticks.color='#6b5a8a';}});
+              if(ch.options.plugins){
+                if(ch.options.plugins.legend?.labels)ch.options.plugins.legend.labels.color='#8b7aaa';
+                if(ch.options.plugins.tooltip){
+                  ch.options.plugins.tooltip.backgroundColor='rgba(7,4,15,0.97)';
+                  ch.options.plugins.tooltip.titleColor='#f0eaff';
+                  ch.options.plugins.tooltip.bodyColor='#8b7aaa';
+                  ch.options.plugins.tooltip.borderColor='rgba(123,47,247,.25)';
+                  ch.options.plugins.tooltip.borderWidth=1;
+                }
+              }
+            }catch(e){}
+            ch.update('none'); ok=true;
+          });
+          if(!ok&&_t++<15)setTimeout(patch,350);
+        }
+        if(window.buildWeekChart&&!window._tm_origBWC){window._tm_origBWC=window.buildWeekChart;window.buildWeekChart=function(){window._tm_origBWC();_t=0;setTimeout(patch,100);};}
+        if(window.updateCharts&&!window._tm_origUC){window._tm_origUC=window.updateCharts;window.updateCharts=function(){window._tm_origUC();_t=0;setTimeout(patch,120);};}
+        [200,600,1400].forEach(d=>setTimeout(patch,d));
+        if(window._tm_obs)window._tm_obs.disconnect();
+        window._tm_obs=new MutationObserver(()=>{_t=0;setTimeout(patch,150);});
+        window._tm_obs.observe(document.getElementById('dashboard-container')||document.body,{childList:true,subtree:true});
       },
     },
 
@@ -854,17 +934,21 @@ const ThemeManager = (() => {
     }
     _styleEl.textContent = t.css;
 
-    // ── Remove dark mode imediatamente para temas não-original ─
-    if (id !== 'original') {
+    // ── Premium e Light: remove dark. Neon: mantém dark ─────────
+    const LIGHT_THEMES = ['premium', 'light'];
+    if (LIGHT_THEMES.includes(id)) {
       document.documentElement.classList.remove('dark');
       document.body.classList.add('tm-nondark');
-      // Trava: impede que qualquer script re-adicione 'dark'
       window._tm_darkObserver = new MutationObserver(() => {
-        if (document.documentElement.classList.contains('dark') && _current !== 'original') {
+        if (document.documentElement.classList.contains('dark') && LIGHT_THEMES.includes(_current)) {
           document.documentElement.classList.remove('dark');
         }
       });
       window._tm_darkObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    } else {
+      // original e neon: dark mode ligado
+      document.documentElement.classList.add('dark');
+      document.body.classList.remove('tm-nondark');
     }
 
     // ── Executa JS específico do tema ─────────────────────────
