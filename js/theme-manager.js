@@ -481,7 +481,45 @@ const ThemeManager = (() => {
         #user-name { color: #ffffff !important; font-weight: 600 !important; font-size: 12px !important; }
         #user-role { color: #888888 !important; font-size: 10px !important; background:none!important; -webkit-text-fill-color:#888888!important; }
 
-        /* ── Scrollbar ── */
+        /* ══ EQUIPE — Premium: nomes e avatares ═══════════════════ */
+
+        /* Avatares — letra branca */
+        body.tm-premium #equipe [class*="w-10"],
+        body.tm-premium #equipe [class*="w-9"],
+        body.tm-premium #equipe [class*="w-8"] {
+          color: #fff !important; -webkit-text-fill-color: #fff !important;
+          font-weight: 700 !important;
+          box-shadow: 0 2px 8px rgba(0,0,0,.4) !important;
+        }
+
+        /* Nomes — branco, NÃO laranja */
+        body.tm-premium #equipe td:first-child,
+        body.tm-premium #equipe [class*="font-semibold"],
+        body.tm-premium #equipe [class*="font-medium"] {
+          color: #ffffff !important; -webkit-text-fill-color: #ffffff !important;
+          background: none !important; -webkit-background-clip: unset !important;
+          font-weight: 600 !important; font-family: 'Inter',sans-serif !important;
+        }
+
+        /* E-mails — cinza muted, sem negrito */
+        body.tm-premium #equipe [class*="text-xs"],
+        body.tm-premium #equipe span[class*="text-xs"] {
+          color: #888888 !important; -webkit-text-fill-color: #888888 !important;
+          background: none !important; -webkit-background-clip: unset !important;
+          font-weight: 400 !important;
+        }
+
+        /* Linhas */
+        body.tm-premium #equipe tr { border-color: #2a2a2a !important; }
+        body.tm-premium #equipe tr:hover td { background: rgba(255,107,0,.04) !important; }
+        body.tm-premium #equipe td { color: #cccccc !important; }
+
+        /* Último acesso */
+        body.tm-premium #equipe [class*="tabular-nums"] {
+          color: #888888 !important; font-size: 12px !important;
+        }
+
+        /* Scrollbar */
         *{scrollbar-color:rgba(255,107,0,.25) transparent;}
         ::-webkit-scrollbar{width:8px;height:8px;}
         ::-webkit-scrollbar-thumb{background:var(--pm-bdr);border-radius:4px;}
