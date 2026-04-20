@@ -1269,6 +1269,20 @@ const ThemeManager = (() => {
         document.documentElement.classList.remove('dark');
         document.body.classList.add('tm-nondark');
 
+        // Limpa inline styles do sidebar (deixados pelo Premium)
+        (function() {
+          var sbEl = document.getElementById('sidebar');
+          if (sbEl) {
+            ['background','background-color','border-right','width','min-width','max-width'].forEach(function(p) {
+              sbEl.style.removeProperty(p);
+            });
+          }
+          var mcEl = document.getElementById('main-content');
+          if (mcEl) mcEl.style.removeProperty('margin-left');
+          // Desconecta observer do Premium
+          if (window._pm_sbObs) { window._pm_sbObs.disconnect(); window._pm_sbObs = null; }
+        })();
+
         // Chart.js defaults light
         if (typeof Chart !== 'undefined') {
           Chart.defaults.color       = '#8a93b2';
@@ -1514,10 +1528,21 @@ const ThemeManager = (() => {
   function _restoreCharts() {
     try {
       // Para o observer antes de re-adicionar dark
-      if (window._tm_darkObserver) {
-        window._tm_darkObserver.disconnect();
-        window._tm_darkObserver = null;
-      }
+      if (window._tm_darkObserver) { window._tm_darkObserver.disconnect(); window._tm_darkObserver = null; }
+      if (window._pm_sbObs)        { window._pm_sbObs.disconnect();        window._pm_sbObs = null; }
+
+      // Limpa estilos inline do sidebar deixados pelo Premium
+      (function() {
+        var sbEl = document.getElementById('sidebar');
+        if (sbEl) {
+          ['background','background-color','border-right','width','min-width','max-width'].forEach(function(p) {
+            sbEl.style.removeProperty(p);
+          });
+        }
+        var mcEl = document.getElementById('main-content');
+        if (mcEl) mcEl.style.removeProperty('margin-left');
+      })();
+
       // Re-ativa dark mode do Tailwind
       document.documentElement.classList.add('dark');
       document.body.classList.remove('tm-nondark','tm-light','tm-premium');
