@@ -16,7 +16,10 @@ function getNivelNome(nivel) {
 // Funciona para TODAS as páginas, inclusive as novas (separacao, etc.)
 
 function showPage(page) {
-    // 1. Esconde todas as .page
+    // 1. Salva página ativa no localStorage
+    try { localStorage.setItem('vt_active_page', page); } catch(_) {}
+
+    // 2. Esconde todas as .page
     document.querySelectorAll('.page').forEach(function(p) {
         p.classList.add('hidden');
         p.classList.remove('active');
@@ -139,9 +142,26 @@ function refreshDashboard() {
     }, 800);
 }
 
+// ── Restaura última página ativa ─────────────────────────────
+// Chamada no final do init do index.html, após todos os setups
+function restoreActivePage() {
+    try {
+        var saved = localStorage.getItem('vt_active_page') || 'dashboard';
+        // Só restaura se a página existir no DOM
+        if (document.getElementById(saved)) {
+            showPage(saved);
+        } else {
+            showPage('dashboard');
+        }
+    } catch(_) {
+        showPage('dashboard');
+    }
+}
+
 // ── Exports ───────────────────────────────────────────────────
 
 window.showPage              = showPage;
+window.restoreActivePage     = restoreActivePage;
 window.setupAuthenticatedUI  = setupAuthenticatedUI;
 window.setupUserHeader       = setupUserHeader;
 window.refreshDashboard      = refreshDashboard;
