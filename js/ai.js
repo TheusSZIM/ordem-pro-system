@@ -1,11 +1,11 @@
 /**
  * js/ai.js — Vito · Assistente IA do Ordem Pro
- * Vetore Movimentação · Powered by Google Gemini (gratuito)
+ * Vetore Movimentação · Powered by Groq (Llama 3.1)
  *
- * SETUP:
- * 1. console.groq.com → "Create API Key" → copie a chave
- * 2. Cole em CFG.key abaixo (começa com gsk_...)
- * 3. Adicione <script src="js/ai.js"></script> no index.html (último script)
+ * SETUP (Admin faz uma vez):
+ * 1. console.groq.com → "Create API Key" → copie a chave (gsk_...)
+ * 2. Abra o Vito → clique em "Configurar Chave" → cole e salve
+ * 3. A chave fica no Supabase e todos os usuários usam automaticamente
  */
 
 const VetoAI = (() => {
@@ -14,14 +14,73 @@ const VetoAI = (() => {
   let _msgs = [];
   let _busy = false;
   let _cooldownUntil = 0;
+  let _keyLoaded = false; // chave já carregada do Supabase?
 
   const CFG = {
-    // Chave lida do localStorage — nunca no código-fonte!
-    get key() { return localStorage.getItem('vito_groq_key') || ''; },
+    // Prioridade: localStorage (admin local) → Supabase (compartilhada) → vazio
+    get key() {
+      return localStorage.getItem('vito_groq_key') || window._vitoSharedKey || '';
+    },
     model:    'llama-3.1-8b-instant',
     maxTokens: 600,
     histMax:   16,
   };
+
+  // ── Carrega chave compartilhada do Supabase ───────────────────
+  async function _loadSharedKey() {
+    if (_keyLoaded) return;
+    _keyLoaded = true;
+    try {
+      if (typeof supabaseClient === 'undefined') return;
+      const { data } = await supabaseClient
+        .from('system_config')
+        .select('valor')
+        .eq('chave', 'vito_api_key')
+        .single();
+      if (data?.valor) {
+        window._vitoSharedKey = data.valor;
+        console.log('[Vito] Chave compartilhada carregada do Supabase');
+      }
+    } catch(e) {
+      console.warn('[Vito] Chave compartilhada não encontrada:', e.message);
+    }
+  }
+
+  // ── Salva chave no Supabase (só Admin) ───────────────────────
+  async function _saveSharedKey(key) {
+    try {
+      if (typeof supabaseClient === 'undefined') return false;
+      const user = window.auth?.getUser?.() || window.auth?.getCurrentUser?.();
+      await supabaseClient.from('system_config').upsert({
+        chave: 'vito_api_key',
+        valor: key,
+        updated_at: new Date().toISOString(),
+        updated_by: user?.email || 'admin'
+      });
+      window._vitoSharedKey = key;
+      console.log('[Vito] Chave salva no Supabase para todos os usuários');
+      return true;
+    } catch(e) {
+      console.error('[Vito] Erro ao salvar chave:', e.message);
+      return false;
+    }
+  }
+
+  // ── Remove chave compartilhada (só Admin) ─────────────────────
+  async function _removeSharedKey() {
+    try {
+      if (typeof supabaseClient === 'undefined') return;
+      await supabaseClient
+        .from('system_config')
+        .delete()
+        .eq('chave', 'vito_api_key');
+      window._vitoSharedKey = '';
+      localStorage.removeItem('vito_groq_key');
+      console.log('[Vito] Chave removida do Supabase');
+    } catch(e) {
+      console.error('[Vito] Erro ao remover chave:', e.message);
+    }
+  }
 
   // ── Contexto dinâmico ──────────────────────────────────────────
   function _ctx() {
@@ -48,141 +107,81 @@ ${recent}
 
 🏭 SISTEMA:
 - Status das ordens: pending / in_progress / completed / delivered
-- Kanban prateleira F: Firefly, GM ASP, GM Turbo, Front Cover, Renault, Hyundai Voluta/Prime, MAN D08
+- Kanban prateleira F: Firefly, GM ASP, GM Turbo, Front Cover, Renault, Hyundai Voluta, AGCO 1250, MAN D08
 - Etiquetas ZLP para volumes, campo lote, produto, quantidade, separador
 - Usuários: níveis 0 (Visualizador) → 3 (Admin)
 - Stack: HTML + Vanilla JS + Tailwind + Supabase + Vercel
 
 Ajude com: busca/explicação de ordens, status, funcionalidades, operações de armazém.
 
-IMAGENS: Quando o usuário pedir para VER ou MOSTRAR algo (produto, peça, equipamento), responda normalmente e adicione ao final uma linha exatamente assim (sem espaços extras):
-[IMG_SEARCH: termo de busca em português]
-Exemplo: [IMG_SEARCH: bomba hidráulica vbd 904]
-Use sempre termos técnicos precisos para melhores resultados.`;
+IMAGENS: Quando o usuário pedir para VER ou MOSTRAR algo, adicione ao final:
+[IMG_SEARCH: termo de busca em português]`;
   }
 
-  // ── SVG Vito — caixinha robô estilo 3D ────────────────────────
+  // ── SVG Vito ──────────────────────────────────────────────────
   function _svg(size, talking) {
     const s = size, t = !!talking;
-    // escala os pontos de 100×120 → size
     const sc = s / 100;
     const h  = Math.round(120 * sc);
     return `<svg width="${s}" height="${h}" viewBox="0 0 100 120"
       xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
   <defs>
-    <!-- gradiente corpo (face frontal) -->
     <linearGradient id="vg_body_${s}" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%"   stop-color="#7c7cf8"/>
       <stop offset="55%"  stop-color="#4f46e5"/>
       <stop offset="100%" stop-color="#312e81"/>
     </linearGradient>
-    <!-- lateral direita do cubo -->
     <linearGradient id="vg_side_${s}" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%"   stop-color="#312e81"/>
       <stop offset="100%" stop-color="#1e1b4b"/>
     </linearGradient>
-    <!-- topo do cubo -->
     <linearGradient id="vg_top_${s}" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%"   stop-color="#818cf8"/>
       <stop offset="100%" stop-color="#4f46e5"/>
     </linearGradient>
-    <!-- sombra suave nos olhos -->
     <filter id="vg_eye_${s}" x="-20%" y="-20%" width="140%" height="140%">
       <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="#312e81" flood-opacity="0.4"/>
     </filter>
   </defs>
-
-  <!-- Sombra no chão -->
   <ellipse cx="50" cy="117" rx="26" ry="4" fill="#000" opacity="0.18"/>
-
-  <!-- ── Pernas ── -->
   <rect x="33" y="95" width="13" height="16" rx="4" fill="#312e81"/>
   <rect x="54" y="95" width="13" height="16" rx="4" fill="#312e81"/>
-  <!-- Pés -->
   <rect x="28" y="107" width="20" height="8"  rx="4" fill="#1e1b4b"/>
   <rect x="52" y="107" width="20" height="8"  rx="4" fill="#1e1b4b"/>
-  <!-- Brilho pés -->
-  <rect x="30" y="108" width="10" height="3"  rx="1.5" fill="white" opacity="0.08"/>
-  <rect x="54" y="108" width="10" height="3"  rx="1.5" fill="white" opacity="0.08"/>
-
-  <!-- ── Cubo corpo — efeito 3D ── -->
-  <!-- Lateral direita -->
   <polygon points="82,30 92,22 92,90 82,98" fill="url(#vg_side_${s})"/>
-  <!-- Topo -->
   <polygon points="18,30 82,30 92,22 28,22" fill="url(#vg_top_${s})"/>
-  <!-- Face frontal principal -->
   <rect x="18" y="30" width="64" height="68" rx="6" fill="url(#vg_body_${s})"/>
-  <!-- Brilho edge esquerdo -->
   <rect x="18" y="30" width="3"  height="68" rx="1" fill="white" opacity="0.12"/>
-  <!-- Brilho edge topo -->
   <rect x="18" y="30" width="64" height="3"  rx="1" fill="white" opacity="0.14"/>
-
-  <!-- ── Rebites nos cantos ── -->
   <circle cx="22" cy="34" r="2.5" fill="#818cf8" opacity="0.7"/>
   <circle cx="78" cy="34" r="2.5" fill="#818cf8" opacity="0.7"/>
   <circle cx="22" cy="94" r="2.5" fill="#818cf8" opacity="0.7"/>
   <circle cx="78" cy="94" r="2.5" fill="#818cf8" opacity="0.7"/>
-
-  <!-- ── Painel visor (área escura do rosto) ── -->
   <rect x="22" y="34" width="56" height="40" rx="5" fill="#0f0c29"/>
-  <rect x="22" y="34" width="56" height="2"  rx="1" fill="white" opacity="0.06"/>
-
-  <!-- ── Olhos ── -->
-  <!-- globo ocular esq -->
   <circle cx="38" cy="52" r="11" fill="white" filter="url(#vg_eye_${s})"/>
-  <!-- globo ocular dir -->
   <circle cx="62" cy="52" r="11" fill="white" filter="url(#vg_eye_${s})"/>
-  <!-- íris esq -->
   <circle cx="40" cy="52" r="7"  fill="#1e1b4b"/>
-  <!-- íris dir -->
   <circle cx="64" cy="52" r="7"  fill="#1e1b4b"/>
-  <!-- pupila esq -->
   <circle cx="41" cy="52" r="4.5" fill="#0a0820"/>
-  <!-- pupila dir -->
   <circle cx="65" cy="52" r="4.5" fill="#0a0820"/>
-  <!-- brilho primário -->
   <circle cx="36" cy="48" r="3"  fill="white" opacity="0.92"/>
   <circle cx="60" cy="48" r="3"  fill="white" opacity="0.92"/>
-  <!-- brilho secundário -->
   <circle cx="44" cy="56" r="1.5" fill="white" opacity="0.45"/>
   <circle cx="68" cy="56" r="1.5" fill="white" opacity="0.45"/>
-
-  <!-- ── Boca ── -->
   ${t
-    ? `<!-- falando -->
-       <ellipse cx="50" cy="69" rx="8" ry="5" fill="#0f0c29"/>
+    ? `<ellipse cx="50" cy="69" rx="8" ry="5" fill="#0f0c29"/>
        <ellipse cx="50" cy="67" rx="5" ry="2" fill="white" opacity="0.12"/>`
-    : `<!-- sorriso -->
-       <path d="M40 68 Q50 76 60 68"
-         stroke="white" stroke-width="2.5" fill="none"
-         stroke-linecap="round" opacity="0.75"/>`
+    : `<path d="M40 68 Q50 76 60 68" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.75"/>`
   }
-
-  <!-- ── Badge VT no peito ── -->
   <rect x="36" y="80" width="28" height="12" rx="5" fill="#1e1b4b" opacity="0.85"/>
-  <rect x="37" y="81" width="26" height="5"  rx="2" fill="white"  opacity="0.05"/>
-  <text x="50" y="90" text-anchor="middle" fill="#818cf8"
-    font-size="7.5" font-weight="800" font-family="'Plus Jakarta Sans',sans-serif"
-    letter-spacing="1">VT</text>
-
-  <!-- ── Braço esquerdo ── -->
+  <text x="50" y="90" text-anchor="middle" fill="#818cf8" font-size="7.5" font-weight="800" font-family="'Plus Jakarta Sans',sans-serif" letter-spacing="1">VT</text>
   <rect x="5" y="44" width="14" height="26" rx="6" fill="#3730a3"/>
-  <rect x="5" y="44" width="5"  height="26" rx="3" fill="#4f46e5" opacity="0.4"/>
-  <!-- Mão esq (scanner) -->
   <rect x="2"  y="68" width="18" height="9" rx="4" fill="#1e1b4b"/>
   <rect x="5"  y="70" width="9"  height="5" rx="1" fill="#6366f1" opacity="0.7"/>
-  <rect x="5"  y="70" width="9"  height="2" rx="1" fill="white"   opacity="0.15"/>
-
-  <!-- ── Braço direito ── -->
   <rect x="81" y="44" width="14" height="22" rx="6" fill="#3730a3"/>
-  <rect x="88" y="44" width="5"  height="22" rx="3" fill="#4f46e5" opacity="0.35"/>
-  <!-- Varinha / caneta -->
   <rect x="93" y="54" width="3.5" height="22" rx="1.5" fill="#c7d2fe"/>
-  <rect x="93" y="54" width="1.5" height="22" rx="1"   fill="white" opacity="0.3"/>
-  <!-- ponta da varinha -->
   <ellipse cx="94.7" cy="53" rx="4" ry="4" fill="#fbbf24"/>
   <ellipse cx="94.7" cy="53" rx="2" ry="2" fill="white" opacity="0.6"/>
-  <ellipse cx="93.5" cy="51.5" rx="1" ry="1" fill="white" opacity="0.9"/>
 </svg>`;
   }
 
@@ -190,53 +189,27 @@ Use sempre termos técnicos precisos para melhores resultados.`;
   const _CSS = `
 #vito-root *{box-sizing:border-box;font-family:'Plus Jakarta Sans',sans-serif}
 @keyframes vito-bob {0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-@keyframes vito-pulse{0%,100%{filter:drop-shadow(0 6px 18px rgba(99,102,241,.5))}
-  70%{filter:drop-shadow(0 6px 28px rgba(99,102,241,.9))}}
+@keyframes vito-pulse{0%,100%{filter:drop-shadow(0 6px 18px rgba(99,102,241,.5))} 70%{filter:drop-shadow(0 6px 28px rgba(99,102,241,.9))}}
 @keyframes vito-in  {from{opacity:0;transform:translateY(20px) scale(.93)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes vito-dot {0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}
 
-#vito-fab{
-  position:fixed;bottom:24px;right:24px;z-index:9100;
-  background:transparent;border:none;cursor:pointer;padding:0;
-  animation:vito-pulse 2.8s ease-in-out infinite;
-  transition:transform .2s;
-}
+#vito-fab{position:fixed;bottom:24px;right:24px;z-index:9100;background:transparent;border:none;cursor:pointer;padding:0;animation:vito-pulse 2.8s ease-in-out infinite;transition:transform .2s;}
 #vito-fab:hover{transform:scale(1.08)}
 #vito-bob{animation:vito-bob 2.2s ease-in-out infinite}
 
-#vito-panel{
-  position:fixed;bottom:148px;right:24px;z-index:9099;
-  width:340px;display:flex;flex-direction:column;
-  background:#0a0f1e;border:1px solid rgba(99,102,241,.35);
-  border-radius:20px;overflow:hidden;
-  box-shadow:0 24px 64px rgba(0,0,0,.6),0 0 0 1px rgba(99,102,241,.1);
-  animation:vito-in .3s cubic-bezier(.16,1,.3,1);
-}
+#vito-panel{position:fixed;bottom:148px;right:24px;z-index:9099;width:340px;display:flex;flex-direction:column;background:#0a0f1e;border:1px solid rgba(99,102,241,.35);border-radius:20px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.6),0 0 0 1px rgba(99,102,241,.1);animation:vito-in .3s cubic-bezier(.16,1,.3,1);}
 #vito-panel.v-hidden{display:none}
 
-#vito-head{
-  display:flex;align-items:center;gap:10px;padding:13px 15px;
-  background:linear-gradient(135deg,rgba(99,102,241,.18),rgba(67,56,202,.1));
-  border-bottom:1px solid rgba(99,102,241,.18);
-}
-#vito-head-av  {flex-shrink:0;animation:vito-bob 2.2s ease-in-out infinite}
+#vito-head{display:flex;align-items:center;gap:10px;padding:13px 15px;background:linear-gradient(135deg,rgba(99,102,241,.18),rgba(67,56,202,.1));border-bottom:1px solid rgba(99,102,241,.18);}
+#vito-head-av{flex-shrink:0;animation:vito-bob 2.2s ease-in-out infinite}
 #vito-head-info{flex:1}
 #vito-head-name{font-size:14px;font-weight:800;color:#e2e8f0;margin:0;line-height:1.2}
-#vito-head-sub {font-size:10px;color:#6366f1;margin:0;display:flex;align-items:center;gap:4px}
-#vito-head-dot {width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block;box-shadow:0 0 5px #10b981}
-#vito-x-btn{
-  background:transparent;border:none;cursor:pointer;
-  color:#475569;padding:4px;border-radius:8px;
-  display:flex;align-items:center;transition:color .2s,background .2s;
-}
+#vito-head-sub{font-size:10px;color:#6366f1;margin:0;display:flex;align-items:center;gap:4px}
+#vito-head-dot{width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block;box-shadow:0 0 5px #10b981}
+#vito-x-btn{background:transparent;border:none;cursor:pointer;color:#475569;padding:4px;border-radius:8px;display:flex;align-items:center;transition:color .2s,background .2s;}
 #vito-x-btn:hover{color:#f1f5f9;background:rgba(255,255,255,.06)}
 
-#vito-msgs{
-  flex:1;overflow-y:auto;padding:12px 13px;
-  display:flex;flex-direction:column;gap:8px;
-  max-height:300px;min-height:100px;
-  scrollbar-width:thin;scrollbar-color:rgba(99,102,241,.3) transparent;
-}
+#vito-msgs{flex:1;overflow-y:auto;padding:12px 13px;display:flex;flex-direction:column;gap:8px;max-height:300px;min-height:100px;scrollbar-width:thin;scrollbar-color:rgba(99,102,241,.3) transparent;}
 .vmsg{display:flex;gap:7px;animation:vito-in .22s ease}
 .vmsg.u{flex-direction:row-reverse}
 .vbub{max-width:82%;padding:9px 13px;font-size:13px;line-height:1.55;word-break:break-word}
@@ -249,50 +222,28 @@ Use sempre termos técnicos precisos para melhores resultados.`;
 .vdot:nth-child(3){animation-delay:.4s}
 
 #vito-hints{padding:4px 12px 8px;display:flex;flex-wrap:wrap;gap:4px;border-top:1px solid rgba(99,102,241,.1)}
-.vhint{
-  display:inline-flex;align-items:center;gap:3px;
-  padding:4px 10px;border-radius:20px;font-size:11px;cursor:pointer;
-  border:1px solid rgba(99,102,241,.28);background:rgba(99,102,241,.07);
-  color:#818cf8;transition:all .15s;white-space:nowrap;
-}
+.vhint{display:inline-flex;align-items:center;gap:3px;padding:4px 10px;border-radius:20px;font-size:11px;cursor:pointer;border:1px solid rgba(99,102,241,.28);background:rgba(99,102,241,.07);color:#818cf8;transition:all .15s;white-space:nowrap;}
 .vhint:hover{background:rgba(99,102,241,.2);color:#a5b4fc}
 
 #vito-foot{padding:10px 11px;border-top:1px solid rgba(99,102,241,.15);display:flex;gap:8px;align-items:flex-end}
-#vito-inp{
-  flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(99,102,241,.25);
-  border-radius:12px;padding:9px 12px;color:#e2e8f0;font-size:13px;
-  resize:none;outline:none;line-height:1.4;max-height:80px;font-family:inherit;
-  transition:border-color .2s;
-}
+#vito-inp{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(99,102,241,.25);border-radius:12px;padding:9px 12px;color:#e2e8f0;font-size:13px;resize:none;outline:none;line-height:1.4;max-height:80px;font-family:inherit;transition:border-color .2s;}
 #vito-inp::placeholder{color:#475569}
 #vito-inp:focus{border-color:rgba(99,102,241,.5)}
-#vito-send{
-  background:#4338ca;border:none;border-radius:10px;
-  width:36px;height:36px;cursor:pointer;color:white;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;transition:background .2s;
-}
+#vito-send{background:#4338ca;border:none;border-radius:10px;width:36px;height:36px;cursor:pointer;color:white;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background .2s;}
 #vito-send:hover{background:#6366f1}
 #vito-send:disabled{background:#374151;cursor:not-allowed}
+
+/* Setup da chave */
 #vito-setup{padding:16px;display:flex;flex-direction:column;gap:10px}
 #vito-setup p{font-size:12px;color:#94a3b8;margin:0;line-height:1.5}
 #vito-setup a{color:#818cf8;text-decoration:none}
 #vito-setup a:hover{text-decoration:underline}
-#vito-key-inp{
-  width:100%;background:rgba(255,255,255,.05);
-  border:1px solid rgba(99,102,241,.3);border-radius:10px;
-  padding:9px 12px;color:#e2e8f0;font-size:12px;
-  font-family:monospace;outline:none;
-  transition:border-color .2s;
-}
+#vito-key-inp{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(99,102,241,.3);border-radius:10px;padding:9px 12px;color:#e2e8f0;font-size:12px;font-family:monospace;outline:none;transition:border-color .2s;}
 #vito-key-inp:focus{border-color:rgba(99,102,241,.6)}
 #vito-key-inp::placeholder{color:#475569}
-#vito-save-key{
-  background:#4338ca;border:none;border-radius:10px;
-  padding:9px 0;color:white;font-size:13px;font-weight:700;
-  cursor:pointer;width:100%;transition:background .2s;
-  font-family:inherit;
-}
+#vito-save-key{background:#4338ca;border:none;border-radius:10px;padding:9px 0;color:white;font-size:13px;font-weight:700;cursor:pointer;width:100%;transition:background .2s;font-family:inherit;}
 #vito-save-key:hover{background:#6366f1}
+#vito-key-status{font-size:11px;text-align:center;padding:4px 0;border-radius:8px;display:none;}
 `;
 
   // ── HTML ───────────────────────────────────────────────────────
@@ -327,15 +278,16 @@ Use sempre termos técnicos precisos para melhores resultados.`;
       <span class="vhint" onclick="VetoAI.suggest('Explica o Kanban da prateleira F')">📦 Kanban</span>
     </div>
 
-    <!-- Setup da chave (mostrado quando não configurada) -->
+    <!-- Setup da chave — aparece quando não há chave configurada -->
     <div id="vito-setup" style="display:none">
-      <p>Para usar o Vito, informe sua chave da API Groq.<br>
-        Obtenha gratuitamente em <a href="https://console.groq.com" target="_blank">console.groq.com</a>
-        → <strong>API Keys</strong> → <strong>Create API Key</strong>.<br><br>
-        A chave é salva apenas no seu navegador (localStorage) e nunca vai para o código.
-      </p>
+      <p id="vito-setup-info">Para usar o Vito, um Admin precisa configurar a chave da API Groq.</p>
       <input id="vito-key-inp" type="password" placeholder="gsk_..." autocomplete="off"/>
-      <button id="vito-save-key" onclick="VetoAI.saveKey()">Salvar chave e começar</button>
+      <div id="vito-key-options" style="display:flex;gap:6px;">
+        <button id="vito-save-key" onclick="VetoAI.saveKey()" style="flex:1;">
+          💾 Salvar para todos
+        </button>
+      </div>
+      <div id="vito-key-status"></div>
     </div>
 
     <div id="vito-foot">
@@ -350,9 +302,8 @@ Use sempre termos técnicos precisos para melhores resultados.`;
 </div>`;
   }
 
-  // ── Groq API (formato OpenAI) ──────────────────────────────────
+  // ── Groq API ──────────────────────────────────────────────────
   async function _ask(text) {
-    // histórico no formato OpenAI: [{role:'user'|'assistant', content}]
     _msgs.push({ role: 'user', content: text });
     if (_msgs.length > CFG.histMax) _msgs = _msgs.slice(-CFG.histMax);
 
@@ -390,24 +341,16 @@ Use sempre termos técnicos precisos para melhores resultados.`;
     const div = document.createElement('div');
     div.className = `vmsg ${role === 'bot' ? '' : 'u'}`;
 
-    // detecta [IMG_SEARCH: termo]
     let imgBtn = '';
     const imgMatch = text.match(/\[IMG_SEARCH:\s*(.+?)\]/);
     if (imgMatch) {
       const termo = imgMatch[1].trim();
       const url   = 'https://www.google.com/search?q=' + encodeURIComponent(termo) + '&tbm=isch';
       imgBtn = `<a href="${url}" target="_blank" rel="noopener"
-        style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;
-               padding:7px 13px;border-radius:10px;font-size:12px;font-weight:700;
-               background:rgba(99,102,241,.18);border:1px solid rgba(99,102,241,.35);
-               color:#a5b4fc;text-decoration:none;transition:background .15s;"
+        style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:7px 13px;border-radius:10px;font-size:12px;font-weight:700;background:rgba(99,102,241,.18);border:1px solid rgba(99,102,241,.35);color:#a5b4fc;text-decoration:none;"
         onmouseover="this.style.background='rgba(99,102,241,.32)'"
         onmouseout="this.style.background='rgba(99,102,241,.18)'">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-          <rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="2.5"/>
-          <polyline points="21 15 16 10 5 21"/>
-        </svg>
-        Ver imagens: ${termo}
+        🔍 Ver imagens: ${termo}
       </a>`;
       text = text.replace(/\[IMG_SEARCH:\s*.+?\]/, '').trim();
     }
@@ -437,6 +380,52 @@ Use sempre termos técnicos precisos para melhores resultados.`;
   }
   function _hideTyping() { document.getElementById('vito-typ')?.remove(); }
 
+  function _showSetup() {
+    const setup = document.getElementById('vito-setup');
+    const hints = document.getElementById('vito-hints');
+    const foot  = document.getElementById('vito-foot');
+    const info  = document.getElementById('vito-setup-info');
+    if (!setup) return;
+
+    // Ajusta mensagem conforme nível do usuário
+    const nivel = typeof getNivel === 'function' ? getNivel() : 0;
+    if (nivel >= 3) {
+      if (info) info.innerHTML = 'Cole a chave da API Groq abaixo.<br><a href="https://console.groq.com" target="_blank">console.groq.com</a> → API Keys → Create API Key<br><br><strong>Ao salvar, todos os usuários usarão esta chave automaticamente.</strong>';
+    } else {
+      if (info) info.textContent = 'O Vito ainda não foi configurado. Solicite ao Admin do sistema que configure a chave da API.';
+      // Esconde o formulário para não-admins
+      const inp = document.getElementById('vito-key-inp');
+      const btn = document.getElementById('vito-save-key');
+      const opts = document.getElementById('vito-key-options');
+      if (inp) inp.style.display = 'none';
+      if (opts) opts.style.display = 'none';
+    }
+
+    setup.style.display = 'flex';
+    setup.style.flexDirection = 'column';
+    if (hints) hints.style.display = 'none';
+    if (foot)  foot.style.display  = 'none';
+    setTimeout(() => document.getElementById('vito-key-inp')?.focus(), 100);
+  }
+
+  function _hideSetup() {
+    const setup = document.getElementById('vito-setup');
+    const hints = document.getElementById('vito-hints');
+    const foot  = document.getElementById('vito-foot');
+    if (setup) setup.style.display = 'none';
+    if (hints) hints.style.display = '';
+    if (foot)  foot.style.display  = '';
+  }
+
+  function _setKeyStatus(msg, ok) {
+    const el = document.getElementById('vito-key-status');
+    if (!el) return;
+    el.style.display = 'block';
+    el.style.background = ok ? 'rgba(16,185,129,.15)' : 'rgba(239,68,68,.12)';
+    el.style.color = ok ? '#10b981' : '#f87171';
+    el.textContent = msg;
+  }
+
   // ── API pública ────────────────────────────────────────────────
   function toggle() {
     _open = !_open;
@@ -446,6 +435,10 @@ Use sempre termos técnicos precisos para melhores resultados.`;
       panel.classList.remove('v-hidden');
       if (_msgs.length === 0) {
         setTimeout(() => {
+          if (!CFG.key) {
+            _showSetup();
+            return;
+          }
           const cnt = (window.state?.orders || []).length;
           _addMsg('bot',
             `Oi! 👋 Sou o **Vito**, assistente do Ordem Pro!\n\nTemos **${cnt} ordens** no sistema agora. Em que posso ajudar?`);
@@ -469,15 +462,15 @@ Use sempre termos técnicos precisos para melhores resultados.`;
     if (!text) return;
     inp.value = ''; inp.style.height = 'auto';
 
-    // Detecta chave Groq digitada no chat
+    // Chave digitada diretamente no chat (admin power user)
     if (text.startsWith('gsk_')) {
+      await _saveSharedKey(text);
       localStorage.setItem('vito_groq_key', text);
       _hideSetup();
-      _addMsg('bot', '✅ Chave salva com sucesso! Agora pode me perguntar o que quiser. 😄\n\n⚠️ Dica: não compartilhe sua chave com ninguém.');
+      _addMsg('bot', '✅ Chave salva no Supabase! Todos os usuários do sistema já podem usar o Vito automaticamente. 🎉');
       return;
     }
 
-    // Sem chave configurada: mostra form de setup
     if (!CFG.key) { _showSetup(); return; }
     _addMsg('user', text);
     _busy = true;
@@ -489,35 +482,25 @@ Use sempre termos técnicos precisos para melhores resultados.`;
     } catch(e) {
       console.error('[Vito]', e);
       if (e.message === 'RATE_LIMIT') {
-        // cooldown: bloqueia por 60s sem retry automático
         _cooldownUntil = Date.now() + 60000;
         let secs = 60;
         const box = document.getElementById('vito-msgs');
         const el  = document.createElement('div');
         el.className = 'vmsg'; el.id = 'vito-cd-msg';
         el.innerHTML = `<div class="vico">${_svg(28,false)}</div>
-          <div class="vbub bot">⏳ Limite da API atingido. Aguarde <strong id="vito-cd">${secs}s</strong> para perguntar novamente.</div>`;
+          <div class="vbub bot">⏳ Limite da API atingido. Aguarde <strong id="vito-cd">${secs}s</strong>.</div>`;
         box.appendChild(el); box.scrollTop = box.scrollHeight;
         const iv = setInterval(() => {
           secs--;
           const cd = document.getElementById('vito-cd');
           if (cd) cd.textContent = secs + 's';
-          if (secs <= 0) {
-            clearInterval(iv);
-            document.getElementById('vito-cd-msg')?.remove();
-            _addMsg('bot', '✅ Pronto! Pode perguntar agora.');
-          }
+          if (secs <= 0) { clearInterval(iv); document.getElementById('vito-cd-msg')?.remove(); _addMsg('bot', '✅ Pronto! Pode perguntar agora.'); }
         }, 1000);
       }
       let msg;
-      if (!CFG.key)
-        msg = '⚠️ Chave não configurada! Abra o Vito e informe sua chave Groq.';
-      else if (e.message === 'FORBIDDEN')
-        msg = '🔑 Chave inválida. Verifique em **console.groq.com** → API Keys.';
-      else if (e.message?.startsWith('ALL_FAILED_404'))
-        msg = '⚠️ Erro na API Groq. Verifique sua chave em console.groq.com';
-      else
-        msg = 'Ops, não consegui conectar agora. 😅 Tenta em instantes!';
+      if (!CFG.key) msg = '⚠️ Chave não configurada. Admin deve configurar a chave da API.';
+      else if (e.message === 'FORBIDDEN') msg = '🔑 Chave inválida ou expirada. Admin deve atualizar a chave em console.groq.com → API Keys.';
+      else msg = 'Ops, não consegui conectar agora. 😅 Tenta em instantes!';
       _addMsg('bot', msg);
     } finally {
       _hideTyping();
@@ -527,50 +510,80 @@ Use sempre termos técnicos precisos para melhores resultados.`;
   }
 
   function suggest(text) {
-    if (_busy) return; // ignora cliques duplos
+    if (_busy) return;
     const inp = document.getElementById('vito-inp');
     if (inp) { inp.value = text; inp.focus(); }
     send();
   }
 
-  function init() {
+  async function saveKey() {
+    const inp = document.getElementById('vito-key-inp');
+    const key = (inp?.value || '').trim();
+
+    if (!key.startsWith('gsk_')) {
+      if (inp) inp.style.borderColor = '#ef4444';
+      _setKeyStatus('❌ Chave inválida — deve começar com gsk_', false);
+      return;
+    }
+
+    const btn = document.getElementById('vito-save-key');
+    if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
+
+    // Salva no Supabase para todos + no localStorage local
+    const ok = await _saveSharedKey(key);
+    localStorage.setItem('vito_groq_key', key);
+
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Salvar para todos'; }
+
+    if (ok) {
+      _setKeyStatus('✅ Chave salva! Todos os usuários podem usar o Vito agora.', true);
+      setTimeout(() => {
+        _hideSetup();
+        _addMsg('bot', '✅ Chave configurada com sucesso! Todos os usuários do sistema agora têm acesso ao Vito automaticamente. 🎉');
+      }, 1500);
+    } else {
+      // Salvou só local
+      _setKeyStatus('⚠️ Salvo localmente. Erro ao salvar no servidor.', false);
+      setTimeout(() => {
+        _hideSetup();
+        _addMsg('bot', '✅ Chave salva localmente. Para compartilhar com todos, verifique a conexão com o Supabase.');
+      }, 1500);
+    }
+  }
+
+  async function removeKey() {
+    if (!confirm('Remover a chave da API de todos os usuários?')) return;
+    await _removeSharedKey();
+    if (typeof showToast === 'function') showToast('Chave do Vito removida', 'warning');
+  }
+
+  async function init() {
     if (document.getElementById('vito-root')) return;
     document.body.insertAdjacentHTML('beforeend', _html());
+
+    // Auto-redimensiona textarea
     const inp = document.getElementById('vito-inp');
     if (inp) inp.addEventListener('input', () => {
       inp.style.height = 'auto';
       inp.style.height = Math.min(inp.scrollHeight, 80) + 'px';
     });
+
+    // Carrega chave compartilhada do Supabase em background
+    // (supabaseClient pode não estar pronto ainda — tenta em 1s)
+    setTimeout(async () => {
+      await _loadSharedKey();
+      // Se o painel já estiver aberto e esperando chave, re-verifica
+      if (_open && !CFG.key) {
+        _showSetup();
+      } else if (_open && CFG.key && document.getElementById('vito-setup')?.style.display !== 'none') {
+        _hideSetup();
+        const cnt = (window.state?.orders || []).length;
+        _addMsg('bot', `Oi! 👋 Sou o **Vito**! Temos **${cnt} ordens** no sistema. Em que posso ajudar?`);
+      }
+    }, 1200);
   }
 
-  function _showSetup() {
-    document.getElementById('vito-setup').style.display = 'flex';
-    document.getElementById('vito-setup').style.flexDirection = 'column';
-    document.getElementById('vito-hints').style.display = 'none';
-    document.getElementById('vito-foot').style.display  = 'none';
-    setTimeout(() => document.getElementById('vito-key-inp')?.focus(), 100);
-  }
-
-  function _hideSetup() {
-    document.getElementById('vito-setup').style.display = 'none';
-    document.getElementById('vito-hints').style.display = '';
-    document.getElementById('vito-foot').style.display  = '';
-  }
-
-  function saveKey() {
-    const inp = document.getElementById('vito-key-inp');
-    const key = (inp?.value || '').trim();
-    if (!key.startsWith('gsk_')) {
-      inp.style.borderColor = '#ef4444';
-      inp.placeholder = 'Chave inválida — deve começar com gsk_';
-      return;
-    }
-    localStorage.setItem('vito_groq_key', key);
-    _hideSetup();
-    _addMsg('bot', '✅ Chave salva! Agora pode me perguntar o que quiser. 😄');
-  }
-
-  return { init, toggle, send, suggest, saveKey };
+  return { init, toggle, send, suggest, saveKey, removeKey };
 })();
 
 if (document.readyState === 'loading') {
@@ -579,4 +592,4 @@ if (document.readyState === 'loading') {
   VetoAI.init();
 }
 window.VetoAI = VetoAI;
-console.log('✅ Vito carregado — Powered by Groq (Llama 3.1)!');
+console.log('✅ Vito carregado — Chave compartilhada via Supabase');
