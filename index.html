@@ -337,11 +337,11 @@
                     if (typeof updateTime    === 'function') { updateTime(); setInterval(updateTime, 1000); }
                     if (typeof dashUpdateAll === 'function') dashUpdateAll();
 
-                    // ✅ Restaura última página ativa — deve ser o ÚLTIMO passo
-                    // para não ser sobrescrito por dashUpdateAll ou setDashLayout
+                    // Restaura página ativa — roda 500ms depois de dashUpdateAll
+                    // para garantir que nenhum outro init sobrescreva depois
                     setTimeout(function() {
                         if (typeof restoreActivePage === 'function') restoreActivePage();
-                    }, 150);
+                    }, 500);
                 }, 300);
             }, 100);
         });
