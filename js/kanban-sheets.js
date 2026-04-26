@@ -88,22 +88,33 @@ const ESTRUTURAS = {
         { pn:'25.003.2302', desc:'Saco Plastico VCI',      mult:1 },
         { pn:'20.008.0662', desc:'Tampa respiro Ø20.188',  mult:1 },
     ],
+    // AGCO 1250 — componentes configuráveis via painel de prateleiras
+    'AGCO 1250': [],
 };
 
-const MODELOS = [
+// ── MODELOS PADRÃO — sobrepostos pela config do Supabase ────
+const MODELOS_DEFAULT = [
     { nome:'FIREFLY',        pos:[1,2],  cor:'#93c5fd', cls:'m-firefly',    barColor:'#3b82f6' },
     { nome:'GM ASP',         pos:[3,4],  cor:'#86efac', cls:'m-gmasp',      barColor:'#22c55e' },
     { nome:'GM TURBO',       pos:[5,6],  cor:'#5eead4', cls:'m-gmturbo',    barColor:'#14b8a6' },
     { nome:'FRONT COVER',    pos:[7],    cor:'#67e8f9', cls:'m-frontcover', barColor:'#06b6d4' },
-    { nome:'RENAULT',        pos:[8],    cor:'#a5b4fc', cls:'m-renault',    barColor:'#6366f1' },
-    { nome:'HYUNDAI VOLUTA', pos:[9],    cor:'#fde047', cls:'m-hyundai',    barColor:'#eab308' },
-    { nome:'HYUNDAI PRIME',  pos:[10],   cor:'#fca5a5', cls:'m-prime',      barColor:'#ef4444' },
+    { nome:'HYUNDAI VOLUTA', pos:[8],    cor:'#fde047', cls:'m-hyundai',    barColor:'#eab308' },
+    { nome:'AGCO 1250',      pos:[9],    cor:'#d8b4fe', cls:'m-agco',       barColor:'#a855f7' },
+    { nome:'RENAULT',        pos:[10],   cor:'#a5b4fc', cls:'m-renault',    barColor:'#6366f1' },
     { nome:'MAN D08',        pos:[11],   cor:'#93c5fd', cls:'m-man',        barColor:'#2563eb' },
 ];
 
-const NIVEL_SKIP = new Set([10]);
-const POS_MODELO = {};
-MODELOS.forEach(m => m.pos.forEach(p => POS_MODELO[p] = m));
+// MODELOS ativo — será substituído ao carregar config do Supabase
+let MODELOS = [...MODELOS_DEFAULT];
+
+const NIVEL_SKIP = new Set([]); // nenhum nível físico pulado
+let POS_MODELO = {};
+
+function recalcPosModelo() {
+    POS_MODELO = {};
+    MODELOS.forEach(m => m.pos.forEach(p => { POS_MODELO[p] = m; }));
+}
+recalcPosModelo();
 
 // ── CONFIG GLOBAL ─────────────────────────────────────────────
 
@@ -118,8 +129,8 @@ const KS = {
     ultimaSync: null,
     lotesMap: new Map(), // "posKey|pn" → [lote1, lote2, ...] capturado do XLS
     multiplos: {},       // "modelo|pn" → mult (override do ESTRUTURAS hardcoded)
-    qtdBase: { 'FIREFLY':1000,'GM ASP':1000,'GM TURBO':1000,'FRONT COVER':1000,'RENAULT':1000,'HYUNDAI VOLUTA':375,'HYUNDAI PRIME':1000,'MAN D08':1000 },
-    consumoHora: { 'FIREFLY':0,'GM ASP':0,'GM TURBO':0,'FRONT COVER':0,'RENAULT':0,'HYUNDAI VOLUTA':0,'HYUNDAI PRIME':0,'MAN D08':0 },
+    qtdBase: { 'FIREFLY':1000,'GM ASP':1000,'GM TURBO':1000,'FRONT COVER':1000,'HYUNDAI VOLUTA':1000,'AGCO 1250':1000,'RENAULT':1000,'MAN D08':1000 },
+    consumoHora: { 'FIREFLY':0,'GM ASP':0,'GM TURBO':0,'FRONT COVER':0,'HYUNDAI VOLUTA':0,'AGCO 1250':0,'RENAULT':0,'MAN D08':0 },
 };
 
 // ── SERIALIZAÇÃO DO GRADE (Map ↔ JSON) ────────────────────────
@@ -178,6 +189,8 @@ async function carregarConfigDoSupabase() {
                 'kanban_grade_totvs_meta',
                 'kanban_lotes_totvs',   // ← lotes por posição/PN
                 'kanban_multiplos',      // ← múltiplos por modelo/PN
+                'kanban_modelos_config', // ← modelos/posições configuráveis
+                'kanban_estruturas_ext', // ← estruturas adicionais (ex: AGCO)
             ]);
         if (!data) return;
         data.forEach(row => {
@@ -221,6 +234,28 @@ async function carregarConfigDoSupabase() {
                     console.warn('[Supabase] Erro ao carregar múltiplos:', e.message);
                 }
             }
+            if (row.chave === 'kanban_modelos_config' && row.valor) {
+                try {
+                    const cfg = JSON.parse(row.valor);
+                    if (Array.isArray(cfg) && cfg.length > 0) {
+                        MODELOS = cfg;
+                        KS.POSICOES = Math.max(...cfg.flatMap(m => m.pos));
+                        recalcPosModelo();
+                        console.log('[Supabase] Modelos carregados —', MODELOS.length, 'modelos,', KS.POSICOES, 'posições');
+                    }
+                } catch(e) {
+                    console.warn('[Supabase] Erro ao carregar modelos:', e.message);
+                }
+            }
+            if (row.chave === 'kanban_estruturas_ext' && row.valor) {
+                try {
+                    const ext = JSON.parse(row.valor);
+                    Object.assign(ESTRUTURAS, ext);
+                    console.log('[Supabase] Estruturas ext carregadas —', Object.keys(ext).join(', '));
+                } catch(e) {
+                    console.warn('[Supabase] Erro ao carregar estruturas ext:', e.message);
+                }
+            }
         });
     } catch(e) { console.warn('Config kanban:', e.message); }
 }
@@ -238,6 +273,22 @@ async function salvarQtdNoSupabase(qtds) {
     const user = window.auth?.getUser?.() || window.auth?.getCurrentUser?.();
     await supabaseClient.from('system_config').upsert({
         chave: 'kanban_qtd_base', valor: JSON.stringify(qtds),
+        updated_at: new Date().toISOString(), updated_by: user?.email || 'admin'
+    });
+}
+
+async function salvarModelosNoSupabase(modelos) {
+    const user = window.auth?.getUser?.() || window.auth?.getCurrentUser?.();
+    await supabaseClient.from('system_config').upsert({
+        chave: 'kanban_modelos_config', valor: JSON.stringify(modelos),
+        updated_at: new Date().toISOString(), updated_by: user?.email || 'admin'
+    });
+}
+
+async function salvarEstruturasExtNoSupabase(ext) {
+    const user = window.auth?.getUser?.() || window.auth?.getCurrentUser?.();
+    await supabaseClient.from('system_config').upsert({
+        chave: 'kanban_estruturas_ext', valor: JSON.stringify(ext),
         updated_at: new Date().toISOString(), updated_by: user?.email || 'admin'
     });
 }
@@ -1039,6 +1090,327 @@ function closeKanbanDetail() {
 
 // ── MODAL CONSUMO POR HORA ─────────────────────────────────────
 
+
+// ══════════════════════════════════════════════════════════════
+// CONFIGURAÇÃO DE PRATELEIRAS — Reclassificação de modelos
+// ══════════════════════════════════════════════════════════════
+
+const CORES_PRESET = [
+    { bg:'#93c5fd', bar:'#3b82f6', label:'Azul' },
+    { bg:'#86efac', bar:'#22c55e', label:'Verde' },
+    { bg:'#5eead4', bar:'#14b8a6', label:'Teal' },
+    { bg:'#67e8f9', bar:'#06b6d4', label:'Cyan' },
+    { bg:'#a5b4fc', bar:'#6366f1', label:'Índigo' },
+    { bg:'#fde047', bar:'#eab308', label:'Amarelo' },
+    { bg:'#fca5a5', bar:'#ef4444', label:'Vermelho' },
+    { bg:'#93c5fd', bar:'#2563eb', label:'Azul Escuro' },
+    { bg:'#d8b4fe', bar:'#a855f7', label:'Roxo' },
+    { bg:'#fcd34d', bar:'#f59e0b', label:'Âmbar' },
+    { bg:'#6ee7b7', bar:'#10b981', label:'Esmeralda' },
+    { bg:'#f9a8d4', bar:'#ec4899', label:'Rosa' },
+];
+
+function openPrateleiraConfig() {
+    if ((typeof getNivel === 'function' ? getNivel() : 0) < 3) {
+        showToast && showToast('Apenas Admin pode reconfigurar prateleiras', 'warning'); return;
+    }
+    document.getElementById('prateleira-config-modal')?.remove();
+
+    function buildModeloRow(m, idx) {
+        const posStr = m.pos.join(', ');
+        const coresOpts = CORES_PRESET.map((c, ci) =>
+            `<option value="${ci}" ${m.barColor === c.bar ? 'selected' : ''}>${c.label}</option>`
+        ).join('');
+        const estrutPNs = (ESTRUTURAS[m.nome] || []).length;
+        return `
+        <div class="prateleira-row" data-idx="${idx}" style="
+            background:#1e293b;border:1px solid #334155;border-radius:12px;
+            padding:12px;margin-bottom:8px;cursor:default;">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <!-- Drag handle -->
+                <span class="prat-drag" title="Arrastar para reordenar"
+                      style="color:#475569;cursor:grab;font-size:20px;line-height:1;
+                             user-select:none;flex-shrink:0;">⠿</span>
+
+                <!-- Cor -->
+                <div style="width:14px;height:14px;border-radius:4px;flex-shrink:0;
+                            background:${m.barColor};box-shadow:0 0 6px ${m.barColor}66;"></div>
+
+                <!-- Nome -->
+                <input type="text" data-field="nome" data-idx="${idx}" value="${m.nome}"
+                       placeholder="Nome do modelo"
+                       style="flex:1;min-width:100px;padding:5px 8px;font-size:12px;font-weight:700;
+                              background:#0f172a;border:1px solid #334155;border-radius:8px;
+                              color:#e2e8f0;outline:none;"
+                       onfocus="this.style.borderColor='#6366f1'"
+                       onblur="this.style.borderColor='#334155'"
+                       onchange="updateModeloField(${idx},'nome',this.value)">
+
+                <!-- Posições -->
+                <input type="text" data-field="pos" data-idx="${idx}" value="${posStr}"
+                       placeholder="Ex: 1, 2"
+                       title="Posições (separadas por vírgula)"
+                       style="width:80px;padding:5px 8px;font-size:12px;
+                              background:#0f172a;border:1px solid #334155;border-radius:8px;
+                              color:#94a3b8;outline:none;text-align:center;"
+                       onfocus="this.style.borderColor='#6366f1'"
+                       onblur="this.style.borderColor='#334155'"
+                       onchange="updateModeloField(${idx},'pos',this.value)">
+
+                <!-- Cor preset -->
+                <select data-field="cor" data-idx="${idx}" onchange="updateModeloField(${idx},'cor',this.value)"
+                        style="padding:5px 6px;font-size:11px;background:#0f172a;
+                               border:1px solid #334155;border-radius:8px;color:#94a3b8;outline:none;">
+                    ${coresOpts}
+                </select>
+
+                <!-- Info estrutura -->
+                <span style="font-size:10px;color:#475569;white-space:nowrap;">${estrutPNs} PN(s)</span>
+
+                <!-- Botão remover -->
+                <button onclick="removerModeloRow(${idx})" title="Remover modelo"
+                        style="padding:4px 8px;border-radius:8px;border:1px solid rgba(239,68,68,.3);
+                               background:rgba(239,68,68,.1);color:#f87171;font-size:11px;cursor:pointer;
+                               flex-shrink:0;">✕</button>
+            </div>
+        </div>`;
+    }
+
+    // Estado temporário
+    window._pratCfg = MODELOS.map(m => ({ ...m, pos: [...m.pos] }));
+
+    const html = `
+    <div id="prateleira-config-modal" class="fixed inset-0 z-[97] hidden">
+        <div class="absolute inset-0 bg-black/75 backdrop-blur-sm" onclick="fecharPrateleiraConfig()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+            <div id="prateleira-config-content"
+                 style="background:#0f172a;border:1px solid #1e293b;border-radius:20px;
+                        box-shadow:0 24px 64px rgba(0,0,0,.6);
+                        width:100%;max-width:680px;pointer-events:auto;
+                        transform:scale(.95);opacity:0;transition:all .25s;
+                        max-height:92vh;display:flex;flex-direction:column;">
+
+                <!-- Header -->
+                <div style="padding:20px 24px 16px;border-bottom:1px solid #1e293b;flex-shrink:0;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;">
+                        <div>
+                            <h3 style="font-size:16px;font-weight:800;color:#fff;display:flex;align-items:center;gap:8px;">
+                                <span class="material-symbols-rounded" style="color:#6366f1;font-size:22px;">shelves</span>
+                                Configuração de Prateleiras
+                            </h3>
+                            <p style="font-size:11px;color:#64748b;margin-top:2px;">
+                                Reclassifique modelos, posições e cores · Salvo globalmente para todos
+                            </p>
+                        </div>
+                        <button onclick="fecharPrateleiraConfig()"
+                                style="background:none;border:none;color:#64748b;cursor:pointer;font-size:20px;padding:4px;">✕</button>
+                    </div>
+
+                    <!-- Quick info -->
+                    <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap;">
+                        <div style="background:#1e293b;border-radius:8px;padding:6px 12px;font-size:11px;color:#94a3b8;">
+                            <span style="color:#6366f1;font-weight:700;" id="prat-count">${MODELOS.length}</span> modelos
+                        </div>
+                        <div style="background:#1e293b;border-radius:8px;padding:6px 12px;font-size:11px;color:#94a3b8;">
+                            <span style="color:#22c55e;font-weight:700;" id="prat-pos-count">${KS.POSICOES}</span> posições
+                        </div>
+                        <div style="background:#1e293b;border-radius:8px;padding:6px 12px;font-size:11px;color:#94a3b8;">
+                            Níveis F0 → F12
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lista de modelos -->
+                <div id="prat-lista" style="padding:16px 24px;overflow-y:auto;flex:1;">
+                    ${window._pratCfg.map((m, i) => buildModeloRow(m, i)).join('')}
+                </div>
+
+                <!-- Botão adicionar -->
+                <div style="padding:0 24px 12px;flex-shrink:0;">
+                    <button onclick="adicionarModeloRow()"
+                            style="width:100%;padding:10px;border:2px dashed #334155;
+                                   border-radius:10px;background:none;color:#64748b;
+                                   font-size:12px;font-weight:600;cursor:pointer;
+                                   transition:all .15s;display:flex;align-items:center;
+                                   justify-content:center;gap:6px;"
+                            onmouseenter="this.style.borderColor='#6366f1';this.style.color='#818cf8'"
+                            onmouseleave="this.style.borderColor='#334155';this.style.color='#64748b'">
+                        <span class="material-symbols-rounded" style="font-size:16px;">add</span>
+                        Adicionar Modelo
+                    </button>
+                </div>
+
+                <!-- Footer -->
+                <div style="padding:16px 24px;border-top:1px solid #1e293b;
+                            display:flex;gap:10px;flex-shrink:0;flex-wrap:wrap;">
+                    <button onclick="resetarPrateleiras()"
+                            style="padding:8px 16px;border:1px solid #334155;border-radius:10px;
+                                   background:none;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;">
+                        Restaurar padrão
+                    </button>
+                    <div style="flex:1;"></div>
+                    <button onclick="fecharPrateleiraConfig()"
+                            style="padding:8px 16px;border:1px solid #334155;border-radius:10px;
+                                   background:none;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;">
+                        Cancelar
+                    </button>
+                    <button onclick="salvarPrateleiraConfig()"
+                            style="padding:8px 20px;border:none;border-radius:10px;
+                                   background:linear-gradient(135deg,#4f46e5,#6366f1);
+                                   color:#fff;font-size:12px;font-weight:700;cursor:pointer;
+                                   display:flex;align-items:center;gap:6px;
+                                   box-shadow:0 4px 14px rgba(99,102,241,.4);">
+                        <span class="material-symbols-rounded" style="font-size:16px;">save</span>
+                        Salvar para Todos
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>`;
+
+    document.body.insertAdjacentHTML('beforeend', html);
+    const modal = document.getElementById('prateleira-config-modal');
+    const cont  = document.getElementById('prateleira-config-content');
+    modal.classList.remove('hidden');
+    requestAnimationFrame(() => { cont.style.transform = 'scale(1)'; cont.style.opacity = '1'; });
+}
+
+function updateModeloField(idx, field, value) {
+    if (!window._pratCfg || !window._pratCfg[idx]) return;
+    if (field === 'pos') {
+        window._pratCfg[idx].pos = value.split(',').map(v => parseInt(v.trim())).filter(v => !isNaN(v) && v > 0);
+    } else if (field === 'cor') {
+        const preset = CORES_PRESET[parseInt(value)];
+        if (preset) {
+            window._pratCfg[idx].cor      = preset.bg;
+            window._pratCfg[idx].barColor = preset.bar;
+            // Atualiza o dot de cor
+            const row = document.querySelector(`.prateleira-row[data-idx="${idx}"]`);
+            if (row) {
+                const dot = row.querySelector('div[style*="border-radius:4px"]');
+                if (dot) { dot.style.background = preset.bar; dot.style.boxShadow = `0 0 6px ${preset.bar}66`; }
+            }
+        }
+    } else {
+        window._pratCfg[idx][field] = value;
+    }
+    // Atualiza contadores
+    const total = window._pratCfg.reduce((acc, m) => acc + m.pos.length, 0);
+    const el = document.getElementById('prat-pos-count');
+    if (el) el.textContent = total;
+}
+
+function adicionarModeloRow() {
+    if (!window._pratCfg) return;
+    const nextPos = (Math.max(0, ...window._pratCfg.flatMap(m => m.pos)) + 1);
+    const novo = {
+        nome: 'Novo Modelo',
+        pos: [nextPos],
+        cor: '#d8b4fe',
+        barColor: '#a855f7',
+        cls: 'm-custom' + Date.now()
+    };
+    window._pratCfg.push(novo);
+    const idx = window._pratCfg.length - 1;
+
+    // Adiciona row na lista
+    const lista = document.getElementById('prat-lista');
+    if (lista) {
+        const temp = document.createElement('div');
+        const preset = CORES_PRESET.findIndex(c => c.bar === novo.barColor);
+        const coresOpts = CORES_PRESET.map((c, ci) =>
+            `<option value="${ci}" ${ci === preset ? 'selected' : ''}>${c.label}</option>`).join('');
+        temp.innerHTML = `<div class="prateleira-row" data-idx="${idx}" style="background:#1e293b;border:1px solid #334155;border-radius:12px;padding:12px;margin-bottom:8px;"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span class="prat-drag" style="color:#475569;cursor:grab;font-size:20px;line-height:1;user-select:none;flex-shrink:0;">⠿</span><div style="width:14px;height:14px;border-radius:4px;flex-shrink:0;background:${novo.barColor};box-shadow:0 0 6px ${novo.barColor}66;"></div><input type="text" data-field="nome" data-idx="${idx}" value="${novo.nome}" style="flex:1;min-width:100px;padding:5px 8px;font-size:12px;font-weight:700;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;outline:none;" onchange="updateModeloField(${idx},'nome',this.value)"><input type="text" data-field="pos" data-idx="${idx}" value="${novo.pos.join(', ')}" style="width:80px;padding:5px 8px;font-size:12px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#94a3b8;outline:none;text-align:center;" onchange="updateModeloField(${idx},'pos',this.value)"><select data-field="cor" data-idx="${idx}" onchange="updateModeloField(${idx},'cor',this.value)" style="padding:5px 6px;font-size:11px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#94a3b8;outline:none;">${coresOpts}</select><span style="font-size:10px;color:#475569;">0 PN(s)</span><button onclick="removerModeloRow(${idx})" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.1);color:#f87171;font-size:11px;cursor:pointer;flex-shrink:0;">✕</button></div></div>`;
+        lista.appendChild(temp.firstElementChild);
+    }
+
+    const cnt = document.getElementById('prat-count');
+    if (cnt) cnt.textContent = window._pratCfg.length;
+    ESTRUTURAS[novo.nome] = ESTRUTURAS[novo.nome] || [];
+}
+
+function removerModeloRow(idx) {
+    if (!window._pratCfg || !window._pratCfg[idx]) return;
+    if (!confirm(`Remover "${window._pratCfg[idx].nome}"?`)) return;
+    window._pratCfg.splice(idx, 1);
+    // Re-renderiza a lista
+    const lista = document.getElementById('prat-lista');
+    if (!lista) return;
+    lista.innerHTML = window._pratCfg.map((m, i) => {
+        const coresOpts = CORES_PRESET.map((c, ci) =>
+            `<option value="${ci}" ${m.barColor === c.bar ? 'selected' : ''}>${c.label}</option>`).join('');
+        const estrutPNs = (ESTRUTURAS[m.nome] || []).length;
+        return `<div class="prateleira-row" data-idx="${i}" style="background:#1e293b;border:1px solid #334155;border-radius:12px;padding:12px;margin-bottom:8px;"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span class="prat-drag" style="color:#475569;cursor:grab;font-size:20px;line-height:1;user-select:none;flex-shrink:0;">⠿</span><div style="width:14px;height:14px;border-radius:4px;flex-shrink:0;background:${m.barColor};box-shadow:0 0 6px ${m.barColor}66;"></div><input type="text" data-field="nome" data-idx="${i}" value="${m.nome}" style="flex:1;min-width:100px;padding:5px 8px;font-size:12px;font-weight:700;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;outline:none;" onchange="updateModeloField(${i},'nome',this.value)"><input type="text" data-field="pos" data-idx="${i}" value="${m.pos.join(', ')}" style="width:80px;padding:5px 8px;font-size:12px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#94a3b8;outline:none;text-align:center;" onchange="updateModeloField(${i},'pos',this.value)"><select data-field="cor" data-idx="${i}" onchange="updateModeloField(${i},'cor',this.value)" style="padding:5px 6px;font-size:11px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#94a3b8;outline:none;">${coresOpts}</select><span style="font-size:10px;color:#475569;white-space:nowrap;">${estrutPNs} PN(s)</span><button onclick="removerModeloRow(${i})" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.1);color:#f87171;font-size:11px;cursor:pointer;flex-shrink:0;">✕</button></div></div>`;
+    }).join('');
+    const cnt = document.getElementById('prat-count');
+    if (cnt) cnt.textContent = window._pratCfg.length;
+}
+
+async function salvarPrateleiraConfig() {
+    if (!window._pratCfg || !window._pratCfg.length) return;
+
+    // Valida: nenhuma posição duplicada
+    const allPos = window._pratCfg.flatMap(m => m.pos);
+    const dups   = allPos.filter((p, i) => allPos.indexOf(p) !== i);
+    if (dups.length) {
+        if (typeof showToast === 'function') showToast(`⚠️ Posições duplicadas: ${[...new Set(dups)].join(', ')}`, 'error');
+        return;
+    }
+
+    // Garante campo cls
+    window._pratCfg.forEach(m => {
+        if (!m.cls) m.cls = 'm-' + m.nome.toLowerCase().replace(/\s+/g, '');
+    });
+
+    // Aplica imediatamente
+    MODELOS = window._pratCfg;
+    KS.POSICOES = Math.max(...MODELOS.flatMap(m => m.pos));
+    recalcPosModelo();
+
+    // Salva no Supabase
+    await salvarModelosNoSupabase(MODELOS);
+
+    // Salva estruturas adicionais (modelos sem estrutura definida)
+    const extEstrutura = {};
+    MODELOS.forEach(m => {
+        if (!ESTRUTURAS[m.nome]) ESTRUTURAS[m.nome] = [];
+        if (ESTRUTURAS[m.nome].length === 0) extEstrutura[m.nome] = [];
+    });
+    if (Object.keys(extEstrutura).length) await salvarEstruturasExtNoSupabase(extEstrutura);
+
+    fecharPrateleiraConfig();
+    renderShelf();
+    if (typeof showToast === 'function') showToast('✅ Prateleiras salvas para todos!', 'success');
+}
+
+async function resetarPrateleiras() {
+    if (!confirm('Restaurar configuração padrão das prateleiras?')) return;
+    MODELOS = [...MODELOS_DEFAULT];
+    KS.POSICOES = Math.max(...MODELOS.flatMap(m => m.pos));
+    recalcPosModelo();
+    await salvarModelosNoSupabase(MODELOS);
+    fecharPrateleiraConfig();
+    renderShelf();
+    if (typeof showToast === 'function') showToast('✅ Prateleiras restauradas!', 'success');
+}
+
+function fecharPrateleiraConfig() {
+    const m = document.getElementById('prateleira-config-modal');
+    const c = document.getElementById('prateleira-config-content');
+    if (!m) return;
+    c.style.transform = 'scale(.95)'; c.style.opacity = '0';
+    setTimeout(() => { m.remove(); window._pratCfg = null; }, 250);
+}
+
+window.openPrateleiraConfig  = openPrateleiraConfig;
+window.fecharPrateleiraConfig = fecharPrateleiraConfig;
+window.salvarPrateleiraConfig = salvarPrateleiraConfig;
+window.resetarPrateleiras    = resetarPrateleiras;
+window.adicionarModeloRow    = adicionarModeloRow;
+window.removerModeloRow      = removerModeloRow;
+window.updateModeloField     = updateModeloField;
+
+
 // ── MODAL CONFIG MÚLTIPLOS ───────────────────────────────────
 
 function openMultiplosConfig() {
@@ -1280,6 +1652,7 @@ window.openSheetsConfig = openSheetsConfig; window.closeSheetsConfig = closeShee
 window.openKanbanDetail = openKanbanDetail; window.closeKanbanDetail = closeKanbanDetail;
 window.openQtdConfig = openQtdConfig; window.closeQtdConfig = closeQtdConfig; window.salvarQtdConfig = salvarQtdConfig;
 window.openMultiplosConfig = openMultiplosConfig; window.fecharMultiplosConfig = fecharMultiplosConfig;
+window.openPrateleiraConfig = openPrateleiraConfig;
 window.openConsumoConfig = openConsumoConfig; window.fecharConsumoConfig = fecharConsumoConfig; window.salvarConsumoConfig = salvarConsumoConfig;
 
 document.addEventListener('pageChanged', e => { if (e.detail === 'kanban') initKanban(); });
