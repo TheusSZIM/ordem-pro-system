@@ -603,20 +603,20 @@ IMAGENS: Quando o usuário pedir para VER ou MOSTRAR algo, adicione ao final:
     // Tenta extrair posição específica (ex: F11-01, f11-1)
     const matchPos = texto.match(/[Ff](\d+)[-\s]?0*(\d+)/);
     // Tenta extrair modelo por nome
-    const modelos  = window.MODELOS || [];
+    const modelos  = MODELOS || [];
     const matchMod = modelos.find(m =>
       texto.toLowerCase().includes(m.nome.toLowerCase())
     );
 
     // ── Monta a lista de posições a exportar ──────────────────────
     let targets = []; // [{posKey, nivel, pos, modelo}]
-    const KS = window.KS;
+    
 
     if (matchPos) {
       // Posição específica: F11-01
       const nivel = parseInt(matchPos[1]);
       const pos   = parseInt(matchPos[2]);
-      const modelo = window.POS_MODELO?.[pos];
+      const modelo = POS_MODELO?.[pos];
       if (modelo) targets = [{ posKey: `F${nivel}-${String(pos).padStart(2,'0')}`, nivel, pos, modelo }];
     } else if (matchMod) {
       // Modelo inteiro: todas as posições e níveis com material
@@ -654,7 +654,7 @@ IMAGENS: Quando o usuário pedir para VER ou MOSTRAR algo, adicione ao final:
 
     // ── Monta workbook ────────────────────────────────────────────
     const wb  = XLSX.utils.book_new();
-    const estruturas = window.ESTRUTURAS || {};
+    const estruturas = ESTRUTURAS || {};
     const multiplos  = KS?.multiplos || {};
     const qtdBase    = KS?.qtdBase   || {};
     const lotesMap   = KS?.lotesMap  || new Map();
