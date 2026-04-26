@@ -43,7 +43,6 @@
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- SheetJS — leitura de arquivos XLS/XLSX do TOTVS -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <style>
@@ -67,26 +66,19 @@
         <div id="equipe-container"></div>
         <div id="estoque-container"></div>
         <div id="configuracoes-container"></div>
-        <!-- ✅ NOVO: Separação -->
         <div id="separacao-container"></div>
     </main>
 
     <div id="modals-container"></div>
 
-    <!-- ══════════════════════════════════════════════════
-         MODAL LOGIN — Background animado
-    ══════════════════════════════════════════════════ -->
+    <!-- MODAL LOGIN -->
     <div id="login-modal" class="fixed inset-0 z-50 hidden" style="background:#060d1f;">
-
         <canvas id="login-canvas" class="absolute inset-0 w-full h-full" style="pointer-events:none;"></canvas>
-
         <div class="absolute inset-0" style="background:radial-gradient(ellipse at 50% 45%,rgba(99,102,241,.18) 0%,transparent 65%);pointer-events:none;"></div>
-
         <div class="absolute inset-0 flex items-center justify-center p-4">
             <div class="w-full max-w-md" style="animation:slideUp .5s cubic-bezier(.16,1,.3,1) both;">
                 <div class="rounded-2xl p-8"
                      style="background:rgba(8,16,35,.88);border:1px solid rgba(99,102,241,.22);backdrop-filter:blur(24px);box-shadow:0 30px 80px rgba(0,0,0,.8),0 0 60px rgba(99,102,241,.07);">
-
                     <div class="text-center mb-8">
                         <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 relative"
                              style="background:linear-gradient(135deg,#4338ca,#6366f1);box-shadow:0 0 40px rgba(99,102,241,.5);">
@@ -96,7 +88,6 @@
                         <h2 class="text-2xl font-bold text-white tracking-tight">Bem-vindo de volta</h2>
                         <p class="text-slate-500 mt-1.5 text-sm">Faça login para acessar o sistema</p>
                     </div>
-
                     <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
                         <div>
                             <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Email</label>
@@ -126,13 +117,11 @@
                                 </button>
                             </div>
                         </div>
-
                         <div id="login-error" class="hidden p-3 rounded-xl flex items-center gap-2 text-sm text-red-400"
                              style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);">
                             <span class="material-symbols-rounded text-lg flex-shrink-0">error</span>
                             <span id="login-error-message">Erro ao fazer login</span>
                         </div>
-
                         <button type="submit" id="login-submit-btn"
                             class="w-full py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 mt-2"
                             style="background:linear-gradient(135deg,#4338ca,#6366f1);box-shadow:0 8px 30px rgba(99,102,241,.45);">
@@ -140,13 +129,11 @@
                             <span class="material-symbols-rounded" id="login-btn-icon">login</span>
                         </button>
                     </form>
-
                     <div class="flex items-center gap-3 my-5">
                         <div class="flex-1 h-px" style="background:rgba(148,163,184,.08)"></div>
                         <span class="text-xs text-slate-700">ou</span>
                         <div class="flex-1 h-px" style="background:rgba(148,163,184,.08)"></div>
                     </div>
-
                     <button type="button" onclick="entrarComoVisualizador()"
                         class="w-full py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:text-slate-200 flex items-center justify-center gap-2 transition-all"
                         style="border:1px solid rgba(148,163,184,.1);"
@@ -155,7 +142,6 @@
                         <span class="material-symbols-rounded text-lg">visibility</span>
                         Entrar como Visualizador
                     </button>
-
                     <p class="text-center text-xs text-slate-700 mt-5">Vetore · Controle Pro Enterprise + ZLP</p>
                 </div>
             </div>
@@ -191,13 +177,12 @@
     <script src="js/user-profile.js"></script>
     <script src="js/ai.js"></script>
     <script src="js/theme-manager.js"></script>
-    <!-- ✅ NOVO: Separação + Kanban Print + Animations -->
     <script src="js/separacao.js"></script>
     <script src="js/kanban-print.js"></script>
     <script src="js/animations.js"></script>
 
     <script>
-        /* ── Bloqueia autocomplete em inputs com URLs ── */
+        /* ── Autocomplete blocker ── */
         document.addEventListener('DOMContentLoaded', function() {
             var clearInputs = function() {
                 document.querySelectorAll('input').forEach(function(inp) {
@@ -212,18 +197,16 @@
         /* ── Login ── */
         async function handleLogin(event) {
             event.preventDefault();
-            var email    = document.getElementById('login-email').value;
-            var password = document.getElementById('login-password').value;
+            var email     = document.getElementById('login-email').value;
+            var password  = document.getElementById('login-password').value;
             var submitBtn = document.getElementById('login-submit-btn');
             var btnText   = document.getElementById('login-btn-text');
             var btnIcon   = document.getElementById('login-btn-icon');
             var errorDiv  = document.getElementById('login-error');
-
             submitBtn.disabled = true;
             btnText.textContent = 'Entrando...';
             btnIcon.textContent = 'hourglass_empty';
             errorDiv.classList.add('hidden');
-
             try {
                 var result = await auth.login(email, password);
                 if (result.success) {
@@ -262,7 +245,7 @@
             } catch(e) { console.error('Erro ao carregar ' + url + ':', e); }
         }
 
-        /* ── Sidebar JS ── */
+        /* ── Sidebar ── */
         function initSidebar() {
             var LS = 'sb_mini', W_OPEN = 280, W_MINI = 76;
             var mini = localStorage.getItem(LS) === 'true';
@@ -310,22 +293,17 @@
                 loadComponent('pages/equipe.html',        'equipe-container'),
                 loadComponent('pages/estoque.html',       'estoque-container'),
                 loadComponent('pages/configuracoes.html', 'configuracoes-container'),
-                // ✅ NOVO: Separação
                 loadComponent('pages/separacao.html',     'separacao-container'),
             ]);
 
             initSidebar();
 
-            var _origShowPage = window.showPage;
-            window.showPage = function(page) {
-                if (_origShowPage) _origShowPage(page);
-                document.querySelectorAll('.nav-item[data-page]').forEach(function(el) {
-                    el.classList.toggle('active-nav', el.dataset.page === page);
-                });
-                if (window.innerWidth < 1024) document.getElementById('sidebar')?.classList.remove('mobile-open');
-                // ✅ Dispara evento para módulos de página (kanban, separacao, etc.)
-                document.dispatchEvent(new CustomEvent('pageChanged', { detail: page }));
-            };
+            // showPage já está definido e completo em app.js
+            // Não sobrescrever aqui — apenas garantir que outros scripts
+            // que possam ter redefinido não quebrem a lógica nova
+            if (typeof wrapShowPageComPermissao === 'function') {
+                wrapShowPageComPermissao();
+            }
 
             setTimeout(function() {
                 if (typeof initTheme            === 'function') initTheme();
@@ -337,7 +315,6 @@
                 if (typeof updateDashboard      === 'function') { updateDashboard(); setInterval(updateDashboard, 30000); }
                 if (typeof setupAuthenticatedUI === 'function') setupAuthenticatedUI();
                 if (typeof aplicarPermissoes    === 'function') aplicarPermissoes();
-                if (typeof wrapShowPageComPermissao === 'function') wrapShowPageComPermissao();
 
                 document.querySelectorAll('input').forEach(function(inp) {
                     inp.setAttribute('autocomplete','off');
@@ -367,18 +344,16 @@
     <!-- Alias de segurança para funções de formulários -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        if (!window.handleNewOrder && window.handleCreateOrder) {
+        if (!window.handleNewOrder && window.handleCreateOrder)
             window.handleNewOrder = window.handleCreateOrder;
-        }
         setTimeout(function() {
-            if (!window.handleNewOrder && window.handleCreateOrder) {
+            if (!window.handleNewOrder && window.handleCreateOrder)
                 window.handleNewOrder = window.handleCreateOrder;
-            }
         }, 1000);
     });
     </script>
 
-    <!-- ══ Canvas animado do login ══ -->
+    <!-- Canvas animado do login -->
     <script>
     (function() {
         var raf, boxes, W, H;
@@ -391,12 +366,12 @@
             boxes = [];
             for (var i = 0; i < 30; i++) {
                 boxes.push({
-                    x: Math.random()*W, y: Math.random()*H,
-                    s: Math.random()*36+10,
+                    x:Math.random()*W, y:Math.random()*H,
+                    s:Math.random()*36+10,
                     vx:(Math.random()-.5)*.42, vy:(Math.random()-.5)*.42,
                     rot:Math.random()*Math.PI*2, rv:(Math.random()-.5)*.005,
-                    a: Math.random()*.06+.02,
-                    hue: Math.random()>.5?245:262
+                    a:Math.random()*.06+.02,
+                    hue:Math.random()>.5?245:262
                 });
             }
             window.addEventListener('resize', function() {
@@ -405,11 +380,11 @@
             });
             function tick() {
                 ctx.clearRect(0,0,W,H);
-                for (var i=0; i<boxes.length; i++) {
-                    var b = boxes[i];
+                for (var i=0;i<boxes.length;i++) {
+                    var b=boxes[i];
                     b.x+=b.vx; b.y+=b.vy; b.rot+=b.rv;
-                    if(b.x<-b.s) b.x=W+b.s; if(b.x>W+b.s) b.x=-b.s;
-                    if(b.y<-b.s) b.y=H+b.s; if(b.y>H+b.s) b.y=-b.s;
+                    if(b.x<-b.s)b.x=W+b.s; if(b.x>W+b.s)b.x=-b.s;
+                    if(b.y<-b.s)b.y=H+b.s; if(b.y>H+b.s)b.y=-b.s;
                     ctx.save();
                     ctx.translate(b.x,b.y); ctx.rotate(b.rot);
                     ctx.strokeStyle='hsla('+b.hue+',75%,65%,'+b.a+')';
@@ -419,8 +394,8 @@
                     ctx.strokeRect(-b.s/4,-b.s/4,b.s/2,b.s/2);
                     ctx.restore();
                 }
-                for (var i=0; i<boxes.length; i++) {
-                    for (var j=i+1; j<boxes.length; j++) {
+                for (var i=0;i<boxes.length;i++) {
+                    for (var j=i+1;j<boxes.length;j++) {
                         var dx=boxes[i].x-boxes[j].x, dy=boxes[i].y-boxes[j].y;
                         var d=Math.sqrt(dx*dx+dy*dy);
                         if(d<155){
@@ -432,21 +407,20 @@
                         }
                     }
                 }
-                raf = requestAnimationFrame(tick);
+                raf=requestAnimationFrame(tick);
             }
             if(raf) cancelAnimationFrame(raf);
             tick();
         }
         var observer = new MutationObserver(function() {
-            var m = document.getElementById('login-modal');
-            if (m && !m.classList.contains('hidden') && m.style.display !== 'none') {
-                setTimeout(startCanvas, 50);
-            }
+            var m=document.getElementById('login-modal');
+            if(m && !m.classList.contains('hidden') && m.style.display!=='none')
+                setTimeout(startCanvas,50);
         });
         document.addEventListener('DOMContentLoaded', function() {
-            observer.observe(document.body, {subtree:true, attributes:true, attributeFilter:['class','style']});
-            var m = document.getElementById('login-modal');
-            if (m && !m.classList.contains('hidden')) setTimeout(startCanvas, 100);
+            observer.observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','style']});
+            var m=document.getElementById('login-modal');
+            if(m && !m.classList.contains('hidden')) setTimeout(startCanvas,100);
         });
     })();
     </script>
