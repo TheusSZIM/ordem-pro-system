@@ -336,6 +336,12 @@
                     }
                     if (typeof updateTime    === 'function') { updateTime(); setInterval(updateTime, 1000); }
                     if (typeof dashUpdateAll === 'function') dashUpdateAll();
+
+                    // ✅ Restaura última página ativa — deve ser o ÚLTIMO passo
+                    // para não ser sobrescrito por dashUpdateAll ou setDashLayout
+                    setTimeout(function() {
+                        if (typeof restoreActivePage === 'function') restoreActivePage();
+                    }, 150);
                 }, 300);
             }, 100);
         });
