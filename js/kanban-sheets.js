@@ -972,6 +972,8 @@ function renderShelf() {
     setText('ks-ok', cntOk); setText('ks-low', cntInc); setText('ks-empty', cntEst); setText('ks-dup', cntDup);
     applyFilter(KS.currentFilter);
     startGaugeAutoFlip();
+    // Sincroniza referência global (para o Vito e outros módulos)
+    window.KS = KS;
 }
 
 function buildCardHTML(avalia, modelo) {
@@ -1654,6 +1656,14 @@ window.openQtdConfig = openQtdConfig; window.closeQtdConfig = closeQtdConfig; wi
 window.openMultiplosConfig = openMultiplosConfig; window.fecharMultiplosConfig = fecharMultiplosConfig;
 window.openPrateleiraConfig = openPrateleiraConfig;
 window.openConsumoConfig = openConsumoConfig; window.fecharConsumoConfig = fecharConsumoConfig; window.salvarConsumoConfig = salvarConsumoConfig;
+
+// ── Expõe dados globais para o Vito e outros módulos ─────────
+window.KS         = KS;
+// MODELOS e ESTRUTURAS são const globais — acessíveis diretamente
+// mas garantimos referência via window para módulos externos
+Object.defineProperty(window, 'MODELOS', { get: () => MODELOS, configurable: true });
+Object.defineProperty(window, 'ESTRUTURAS', { get: () => ESTRUTURAS, configurable: true });
+Object.defineProperty(window, 'POS_MODELO', { get: () => POS_MODELO, configurable: true });
 
 document.addEventListener('pageChanged', e => { if (e.detail === 'kanban') initKanban(); });
 console.log('✅ kanban-sheets.js — XLS compartilhado via Supabase');
