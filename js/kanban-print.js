@@ -58,12 +58,13 @@ function imprimirKanban(avalia, modelo, posKey) {
 
   .modelo-header {
     text-align: center;
-    font-size: 16pt;
+    font-size: 18pt;
     font-weight: bold;
-    padding: 6px 0 4px;
+    padding: 8px 0 6px;
     background: #ffffcc;
     border: 1px solid #ccc;
     margin-bottom: 0;
+    letter-spacing: .05em;
   }
 
   table {
@@ -73,8 +74,8 @@ function imprimirKanban(avalia, modelo, posKey) {
   thead tr { background: #f4a460; }
   thead th {
     border: 1px solid #888;
-    padding: 5px 6px;
-    font-size: 9pt;
+    padding: 7px 8px;
+    font-size: 10pt;
     font-weight: bold;
     font-style: italic;
     text-align: left;
@@ -83,31 +84,31 @@ function imprimirKanban(avalia, modelo, posKey) {
   tbody tr:nth-child(even) { background: #fafafa; }
   tbody td {
     border: 1px solid #ccc;
-    padding: 5px 6px;
-    font-size: 9.5pt;
+    padding: 9px 8px;
+    font-size: 11pt;
     vertical-align: middle;
   }
-  .pn   { font-family: 'Courier New', monospace; font-size: 8.5pt; white-space: nowrap; }
+  .pn   { font-family: 'Courier New', monospace; font-size: 9.5pt; white-space: nowrap; }
   .num  { text-align: right; white-space: nowrap; }
-  .lote { font-size: 8.5pt; }
+  .lote { font-size: 10pt; }
 
   .posicao-block {
-    margin-top: 14mm;
+    margin-top: 20mm;
     text-align: center;
   }
   .posicao-label {
-    font-size: 72pt;
+    font-size: 96pt;
     font-weight: 900;
-    letter-spacing: -2px;
+    letter-spacing: -4px;
     line-height: 1;
     color: #000;
   }
 
   .footer {
-    margin-top: 14mm;
+    margin-top: 18mm;
     display: flex;
     justify-content: space-between;
-    font-size: 13pt;
+    font-size: 14pt;
     font-weight: bold;
   }
 </style>
