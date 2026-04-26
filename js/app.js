@@ -1,6 +1,5 @@
 /* ============================================
    CONTROLE DE ORDENS PRO - app.js
-   Sem DOMContentLoaded próprio (index.html gerencia)
    ============================================ */
 
 function isAuthSystemAvailable() {
@@ -12,20 +11,35 @@ function getNivelNome(nivel) {
     return niveis[nivel] || 'Usuário';
 }
 
-// ── showPage — controla qual página está visível ──────────────
-// Funciona para TODAS as páginas, inclusive as novas (separacao, etc.)
+// ── Controle de página ────────────────────────────────────────
+
+let _initMode  = true;   // true enquanto o sistema ainda está inicializando
+let _savedPage = 'dashboard';
+
+// Lê a última página salva imediatamente
+try { _savedPage = localStorage.getItem('vt_active_page') || 'dashboard'; } catch(_) {}
+
+// ── showPage ──────────────────────────────────────────────────
 
 function showPage(page) {
-    // 1. Salva página ativa no localStorage
-    try { localStorage.setItem('vt_active_page', page); } catch(_) {}
+    // Durante o init, bloqueia qualquer chamada para 'dashboard'
+    // quando o usuário estava em outra página (ex: separacao, kanban)
+    if (_initMode && page === 'dashboard' && _savedPage && _savedPage !== 'dashboard') {
+        console.log('[showPage] Init mode — bloqueando dashboard, página salva:', _savedPage);
+        return;
+    }
 
-    // 2. Esconde todas as .page
+    // Salva a página escolhida
+    try { localStorage.setItem('vt_active_page', page); } catch(_) {}
+    _savedPage = page;
+
+    // Esconde todas as .page
     document.querySelectorAll('.page').forEach(function(p) {
         p.classList.add('hidden');
         p.classList.remove('active');
     });
 
-    // 2. Mostra a solicitada (busca por ID direto)
+    // Mostra a solicitada
     const target = document.getElementById(page);
     if (target) {
         target.classList.remove('hidden');
@@ -34,20 +48,20 @@ function showPage(page) {
         console.warn('[showPage] Página não encontrada:', page);
     }
 
-    // 3. Atualiza nav-items (active-nav)
+    // Atualiza nav-items
     document.querySelectorAll('.nav-item[data-page]').forEach(function(el) {
         el.classList.toggle('active-nav', el.dataset.page === page);
     });
 
-    // 4. Fecha sidebar no mobile
+    // Fecha sidebar no mobile
     if (window.innerWidth < 1024) {
         document.getElementById('sidebar')?.classList.remove('mobile-open');
     }
 
-    // 5. Dispara evento para módulos que escutam (kanban, separacao, etc.)
+    // Dispara evento para módulos (kanban, separacao, etc.)
     document.dispatchEvent(new CustomEvent('pageChanged', { detail: page }));
 
-    // 6. Inits específicos por página
+    // Inits específicos
     const inits = {
         kanban:    () => { if (typeof initKanban    === 'function') initKanban(); },
         separacao: () => { if (typeof initSeparacao === 'function') initSeparacao(); },
@@ -57,6 +71,42 @@ function showPage(page) {
     if (inits[page]) inits[page]();
 
     console.log('[showPage]', page);
+}
+
+// ── Finaliza o init e restaura a página salva ─────────────────
+// Chamado pelo index.html após todos os setups terminarem
+
+function restoreActivePage() {
+    _initMode = false; // libera o bloqueio
+
+    const page = _savedPage || 'dashboard';
+    const el   = document.getElementById(page);
+
+    if (el) {
+        // Força direto no DOM sem passar pelo guard do init
+        document.querySelectorAll('.page').forEach(p => {
+            p.classList.add('hidden');
+            p.classList.remove('active');
+        });
+        el.classList.remove('hidden');
+        el.classList.add('active');
+
+        // Atualiza nav
+        document.querySelectorAll('.nav-item[data-page]').forEach(function(nav) {
+            nav.classList.toggle('active-nav', nav.dataset.page === page);
+        });
+
+        // Dispara evento e inits
+        document.dispatchEvent(new CustomEvent('pageChanged', { detail: page }));
+        if (page === 'separacao' && typeof initSeparacao === 'function') initSeparacao();
+        if (page === 'kanban'    && typeof initKanban    === 'function') initKanban();
+
+        console.log('[restoreActivePage] →', page);
+    } else {
+        // Fallback para dashboard
+        _savedPage = 'dashboard';
+        showPage('dashboard');
+    }
 }
 
 // ── setupAuthenticatedUI ──────────────────────────────────────
@@ -83,20 +133,16 @@ function setupAuthenticatedUI() {
     const cargo    = user.cargo || getNivelNome(nivel);
     const iniciais = nome.split(' ').filter(Boolean).map(p=>p[0]).slice(0,2).join('').toUpperCase() || '?';
 
-    console.log('👤 setupAuthenticatedUI →', nome, '(nível', nivel, ')');
-
     const setTxt = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
 
     setTxt('header-user-name', nome);
     setTxt('header-user-role', cargo);
-
     const avatarEl = document.getElementById('header-avatar');
     if (avatarEl) avatarEl.textContent = iniciais;
 
     setTxt('menu-user-name',  nome);
     setTxt('menu-user-email', email);
     setTxt('menu-user-badge', getNivelNome(nivel));
-
     const menuAvatarEl = document.getElementById('menu-avatar');
     if (menuAvatarEl) menuAvatarEl.textContent = iniciais;
 
@@ -105,16 +151,12 @@ function setupAuthenticatedUI() {
     setTxt('profile-cargo', cargo);
     setTxt('profile-nivel', getNivelNome(nivel));
     setTxt('profile-badge', getNivelNome(nivel));
-
     const profileAvatarEl = document.getElementById('profile-avatar-big');
     if (profileAvatarEl) profileAvatarEl.textContent = iniciais;
 
     try {
         const s = JSON.parse(localStorage.getItem('ordem_pro_session')||'{}');
-        if (s.loginTime) {
-            const dt = new Date(s.loginTime);
-            setTxt('profile-sessao', dt.toLocaleString('pt-BR'));
-        }
+        if (s.loginTime) setTxt('profile-sessao', new Date(s.loginTime).toLocaleString('pt-BR'));
     } catch(_) {}
 
     const gs = document.getElementById('global-search');
@@ -123,11 +165,7 @@ function setupAuthenticatedUI() {
     console.log('✅ UI atualizada para:', nome);
 }
 
-// ── setupUserHeader (alias) ───────────────────────────────────
-
 function setupUserHeader() { setupAuthenticatedUI(); }
-
-// ── Refresh Dashboard ─────────────────────────────────────────
 
 function refreshDashboard() {
     const btn = document.getElementById('refresh-btn');
@@ -142,22 +180,6 @@ function refreshDashboard() {
     }, 800);
 }
 
-// ── Restaura última página ativa ─────────────────────────────
-// Chamada no final do init do index.html, após todos os setups
-function restoreActivePage() {
-    try {
-        var saved = localStorage.getItem('vt_active_page') || 'dashboard';
-        // Só restaura se a página existir no DOM
-        if (document.getElementById(saved)) {
-            showPage(saved);
-        } else {
-            showPage('dashboard');
-        }
-    } catch(_) {
-        showPage('dashboard');
-    }
-}
-
 // ── Exports ───────────────────────────────────────────────────
 
 window.showPage              = showPage;
@@ -168,4 +190,4 @@ window.refreshDashboard      = refreshDashboard;
 window.getNivelNome          = getNivelNome;
 window.isAuthSystemAvailable = isAuthSystemAvailable;
 
-console.log('✅ app.js carregado');
+console.log('✅ app.js carregado | página salva:', _savedPage);
