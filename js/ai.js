@@ -274,7 +274,7 @@ IMAGENS: Quando o usuário pedir para VER ou MOSTRAR algo, adicione ao final:
     <div id="vito-hints">
       <span class="vhint" onclick="VetoAI.suggest('Qual o status das ordens agora?')">📊 Status</span>
       <span class="vhint" onclick="VetoAI.suggest('Como iniciar uma separação?')">🚀 Separação</span>
-      <span class="vhint" onclick="VetoAI.suggest('Como imprimir etiquetas ZLP?')">🏷️ Etiquetas</span>
+      <span class="vhint" onclick="VetoAI.suggest('espelho kanban FIREFLY')">📥 Espelho XLS</span>
       <span class="vhint" onclick="VetoAI.suggest('Explica o Kanban da prateleira F')">📦 Kanban</span>
     </div>
 
@@ -471,6 +471,14 @@ IMAGENS: Quando o usuário pedir para VER ou MOSTRAR algo, adicione ao final:
       return;
     }
 
+    // ── Detecção de intenção: espelho do kanban ─────────────────
+    const txtNorm = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (/espelho|folha|ficha|imprimir|xls|excel/.test(txtNorm) && /kanban|prateleira|posicao|posição/.test(txtNorm)) {
+      _addMsg('user', text);
+      _gerarEspelhoXLS(text);
+      return;
+    }
+
     if (!CFG.key) { _showSetup(); return; }
     _addMsg('user', text);
     _busy = true;
@@ -581,6 +589,171 @@ IMAGENS: Quando o usuário pedir para VER ou MOSTRAR algo, adicione ao final:
         _addMsg('bot', `Oi! 👋 Sou o **Vito**! Temos **${cnt} ordens** no sistema. Em que posso ajudar?`);
       }
     }, 1200);
+  }
+
+  // ── Gera XLS do espelho Kanban e oferece download ─────────────
+  function _gerarEspelhoXLS(texto) {
+    const XLSX = window.XLSX;
+    if (!XLSX) {
+      _addMsg('bot', '⚠️ SheetJS não carregado. Verifique se o CDN está no index.html.');
+      return;
+    }
+
+    // ── Detecta o que o usuário quer ──────────────────────────────
+    // Tenta extrair posição específica (ex: F11-01, f11-1)
+    const matchPos = texto.match(/[Ff](\d+)[-\s]?0*(\d+)/);
+    // Tenta extrair modelo por nome
+    const modelos  = window.MODELOS || [];
+    const matchMod = modelos.find(m =>
+      texto.toLowerCase().includes(m.nome.toLowerCase())
+    );
+
+    // ── Monta a lista de posições a exportar ──────────────────────
+    let targets = []; // [{posKey, nivel, pos, modelo}]
+    const KS = window.KS;
+
+    if (matchPos) {
+      // Posição específica: F11-01
+      const nivel = parseInt(matchPos[1]);
+      const pos   = parseInt(matchPos[2]);
+      const modelo = window.POS_MODELO?.[pos];
+      if (modelo) targets = [{ posKey: `F${nivel}-${String(pos).padStart(2,'0')}`, nivel, pos, modelo }];
+    } else if (matchMod) {
+      // Modelo inteiro: todas as posições e níveis com material
+      for (let nivel = 0; nivel <= 12; nivel++) {
+        for (const pos of matchMod.pos) {
+          const pnsPos = KS?.grade?.[nivel]?.[pos];
+          if (pnsPos && pnsPos.size > 0) {
+            targets.push({ posKey: `F${nivel}-${String(pos).padStart(2,'0')}`, nivel, pos, modelo: matchMod });
+          }
+        }
+      }
+    } else {
+      // Tudo — todas as posições com material
+      modelos.forEach(m => {
+        for (let nivel = 0; nivel <= 12; nivel++) {
+          for (const pos of m.pos) {
+            const pnsPos = KS?.grade?.[nivel]?.[pos];
+            if (pnsPos && pnsPos.size > 0) {
+              targets.push({ posKey: `F${nivel}-${String(pos).padStart(2,'0')}`, nivel, pos, modelo: m });
+            }
+          }
+        }
+      });
+    }
+
+    if (!targets.length) {
+      const dica = matchPos
+        ? `Posição F${matchPos[1]}-${matchPos[2].padStart(2,'0')} não tem material registrado.`
+        : matchMod
+          ? `Modelo ${matchMod.nome} não tem posições com material.`
+          : 'Nenhuma posição com material encontrada. Carregue o XLS do TOTVS primeiro.';
+      _addMsg('bot', `⚠️ ${dica}`);
+      return;
+    }
+
+    // ── Monta workbook ────────────────────────────────────────────
+    const wb  = XLSX.utils.book_new();
+    const estruturas = window.ESTRUTURAS || {};
+    const multiplos  = KS?.multiplos || {};
+    const qtdBase    = KS?.qtdBase   || {};
+    const lotesMap   = KS?.lotesMap  || new Map();
+
+    // Uma sheet por posição se ≤5 posições, senão tudo em uma sheet
+    if (targets.length <= 5) {
+      targets.forEach(({ posKey, nivel, pos, modelo }) => {
+        const estrutura = estruturas[modelo.nome] || [];
+        const pnsPos    = KS?.grade?.[nivel]?.[pos] || new Map();
+        const base      = qtdBase[modelo.nome] || 1000;
+
+        const rows = [
+          [modelo.nome],                          // linha 1 — modelo
+          [],                                      // linha 2 — vazia
+          ['Componente','Descrição','Quantidade','Lote','Múltiplo','Esperado','Status'],
+        ];
+
+        estrutura.forEach(comp => {
+          const multKey = modelo.nome + '|' + comp.pn;
+          const mult    = multiplos[multKey] !== undefined ? multiplos[multKey] : comp.mult;
+          const qtdReal = pnsPos.get(comp.pn) || 0;
+          const esperado = base * mult;
+          const loteKey  = posKey + '|' + comp.pn;
+          const lotes    = lotesMap.get(loteKey) || [];
+          const status   = qtdReal <= 0 ? '⚠️ Falta' : qtdReal >= esperado * 1.8 ? '🔵 Duplicado' : '✅ OK';
+          rows.push([
+            comp.pn,
+            comp.desc,
+            qtdReal,
+            lotes.join(' / ') || '—',
+            mult,
+            esperado,
+            status,
+          ]);
+        });
+
+        rows.push([], [posKey], [], ['CONFERENTE:', '', '', 'DATA:', '']);
+
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+
+        // Larguras de coluna
+        ws['!cols'] = [
+          { wch: 16 }, // PN
+          { wch: 36 }, // Descrição
+          { wch: 12 }, // Quantidade
+          { wch: 22 }, // Lote
+          { wch: 8  }, // Múltiplo
+          { wch: 10 }, // Esperado
+          { wch: 12 }, // Status
+        ];
+
+        XLSX.utils.book_append_sheet(wb, ws, posKey);
+      });
+    } else {
+      // Uma única sheet com tudo
+      const allRows = [['Posição','Modelo','PN','Descrição','Quantidade','Lote','Múltiplo','Esperado','Status']];
+      targets.forEach(({ posKey, nivel, pos, modelo }) => {
+        const estrutura = estruturas[modelo.nome] || [];
+        const pnsPos    = KS?.grade?.[nivel]?.[pos] || new Map();
+        const base      = qtdBase[modelo.nome] || 1000;
+        estrutura.forEach(comp => {
+          const multKey  = modelo.nome + '|' + comp.pn;
+          const mult     = multiplos[multKey] !== undefined ? multiplos[multKey] : comp.mult;
+          const qtdReal  = pnsPos.get(comp.pn) || 0;
+          const esperado = base * mult;
+          const loteKey  = posKey + '|' + comp.pn;
+          const lotes    = lotesMap.get(loteKey) || [];
+          const status   = qtdReal <= 0 ? 'Falta' : qtdReal >= esperado * 1.8 ? 'Duplicado' : 'OK';
+          allRows.push([posKey, modelo.nome, comp.pn, comp.desc, qtdReal, lotes.join(' / ') || '—', mult, esperado, status]);
+        });
+      });
+      const ws = XLSX.utils.aoa_to_sheet(allRows);
+      ws['!cols'] = [
+        {wch:10},{wch:16},{wch:16},{wch:36},{wch:12},{wch:22},{wch:8},{wch:10},{wch:12}
+      ];
+      XLSX.utils.book_append_sheet(wb, ws, 'Espelho Kanban');
+    }
+
+    // ── Download ──────────────────────────────────────────────────
+    const nomeArq = targets.length === 1
+      ? `espelho_kanban_${targets[0].posKey}.xlsx`
+      : matchMod
+        ? `espelho_kanban_${matchMod.nome.replace(/\s+/g,'_')}.xlsx`
+        : `espelho_kanban_completo.xlsx`;
+
+    XLSX.writeFile(wb, nomeArq);
+
+    // ── Mensagem de confirmação no chat ───────────────────────────
+    const desc = targets.length === 1
+      ? `posição **${targets[0].posKey}** (${targets[0].modelo.nome})`
+      : matchMod
+        ? `modelo **${matchMod.nome}** — ${targets.length} posições`
+        : `kanban completo — ${targets.length} posições`;
+
+    _addMsg('bot',
+      `📥 Espelho gerado! O arquivo **${nomeArq}** foi baixado automaticamente.\n\n` +
+      `Conteúdo: ${desc}.\n\n` +
+      `Cada aba contém: PN, Descrição, Quantidade, Lote, Múltiplo, Esperado e Status (✅/⚠️/🔵).`
+    );
   }
 
   return { init, toggle, send, suggest, saveKey, removeKey };
